@@ -19,12 +19,14 @@ import { useState, useCallback, memo, useEffect, useRef } from "react";
 import { IoThumbsUp, IoArrowUndo, IoCreateOutline, IoAdd, IoTrashOutline } from "react-icons/io5";
 import { sanitizeDefaultHtml } from "@/components/security/sanitize";
 import { ClientDate } from "@/utils/hydration";
+import { getIdentityGlowStyle } from "@/utils/identityGlow";
 
 // Import components
 import Image from "next/image";
 import ImpressionReactions from './ImpressionReactions';
 import { useImpressions, ImpressionTargetType } from '@/hooks/useImpressions';
 import TiptapEditor from "@/components/tiptap/tiptap-editor";
+import ContextSwitcher from "@/components/Header/ContextSwitcher";
 // Import the canonical editor card from tiptap folder
 export { TTCommentsEditorCard } from "@/components/tiptap/TT_Comments";
 
@@ -32,17 +34,21 @@ function buildCommentsState(initialComments = []) {
     return initialComments.map(comment => ({
         ...comment,
         // Normalize API response to component expectations
-        author: comment.user?.name || comment.author || "Anonymous",
-        authorDisplayName: comment.user?.name || comment.authorDisplayName || comment.author || "Anonymous",
-        avatarUrl: comment.user?.image || comment.avatarUrl || "/images/default-avatar.png",
+        author: comment.authorDisplayName || comment.user?.name || comment.author || "Anonymous",
+        authorDisplayName: comment.authorDisplayName || comment.user?.name || comment.author || "Anonymous",
+        avatarUrl: comment.authorImage || comment.avatarUrl ||
+            (comment.authorEntityType === "user" ? comment.user?.image : null) ||
+            "/blank_image.png",
         created: comment.createdAt || comment.created,
         isEditing: false,
         replies: comment.replies?.map(reply => ({
             ...reply,
             // Normalize reply data too
-            author: reply.user?.name || reply.author || "Anonymous",
-            authorDisplayName: reply.user?.name || reply.authorDisplayName || reply.author || "Anonymous",
-            avatarUrl: reply.user?.image || reply.avatarUrl || "/images/default-avatar.png",
+            author: reply.authorDisplayName || reply.user?.name || reply.author || "Anonymous",
+            authorDisplayName: reply.authorDisplayName || reply.user?.name || reply.author || "Anonymous",
+            avatarUrl: reply.authorImage || reply.avatarUrl ||
+                (reply.authorEntityType === "user" ? reply.user?.image : null) ||
+                "/blank_image.png",
             created: reply.createdAt || reply.created,
             isEditing: false
         })) || []
@@ -180,6 +186,8 @@ const SocialComments = ({
             id: `temp-${Date.now()}`, // Change semicolon to comma here
             content: "",
             userId: currentUser.id,
+            authorRole: currentUser.type || "user",
+            contextId: currentUser.contextId || "user-primary",
             user: {
                 name: currentUser.name || "Anonymous",
                 image: currentUser.image || "/images/default-avatar.png",
@@ -205,6 +213,8 @@ const SocialComments = ({
                     id: `temp-reply-${Date.now()}`, // Make sure this is a comma
                     content: "",
                     userId: currentUser.id,
+                    authorRole: currentUser.type || "user",
+                    contextId: currentUser.contextId || "user-primary",
                     user: {
                         name: currentUser.name || "Anonymous",
                         image: currentUser.image || "/images/default-avatar.png",
@@ -436,12 +446,22 @@ const SocialComments = ({
             : isEven 
                 ? 'bg-base-100' // Even comments get default background
                 : 'bg-base-200'; // Odd comments get slightly darker background
+        const authorType = comment.authorEntityType || comment.authorRole || (comment.artistID ? "artist" : "user");
+        const authorName = comment.authorDisplayName || comment.user?.name || comment.author || "Anonymous";
+        const authorImage = comment.authorImage || comment.avatarUrl ||
+            (authorType === "user" ? comment.user?.image : null) ||
+            "/blank_image.png";
+        const authorIdentity = {
+            type: authorType,
+            id: comment.authorEntityId || comment.artistID || comment.userID || comment.userId,
+            contextId: comment.authorContextId || comment.contextId,
+        };
         
         return (
             <div 
                 className={`rounded-lg shadow-md mb-4 transition-all duration-200
                     ${comment.isEditing 
-                        ? 'bg-base-100 border-2 border-primary p-3' // Editing state - brightest background
+                        ? 'bg-base-100 border border-base-300 p-3' // Editing state - brightest background
                         : `${bgClass} border-l-4 border-primary p-4`}`}
                 data-theme={currentTheme} // Apply the selected theme
                 id={`comment-${comment.id}`}
@@ -449,25 +469,28 @@ const SocialComments = ({
                 {/* Edit Mode */}
                 {comment.isEditing ? (
                     <div>
-                        <div className="flex items-center gap-3 mb-3">
-                            {/* Avatar in edit mode */}
-                            <div className="avatar">
-                                <div className="w-10 h-10 rounded-full overflow-hidden">
-                                    {(comment.user?.image || comment.avatarUrl) && (
+                        <div className="flex items-center justify-between gap-3 mb-3">
+                            <div className="flex items-center gap-3">
+                                {/* Avatar in edit mode */}
+                                <div className="avatar">
+                                    <div
+                                        className="w-10 h-10 rounded-full overflow-hidden border"
+                                        style={getIdentityGlowStyle(authorIdentity, { contextId: authorIdentity.contextId })}
+                                    >
                                         <Image 
-                                            src={comment.user?.image || comment.avatarUrl} 
-                                            alt={`${comment.user?.name || comment.authorDisplayName || comment.author}'s avatar`}
+                                            src={authorImage}
+                                            alt={`${authorName}'s avatar`}
                                             width={40}
                                             height={40}
                                             className="object-cover"
                                         />
-                                    )}
+                                    </div>
                                 </div>
-                            </div>
-                            
-                            <div>
-                                <p className="font-semibold text-sm">{comment.user?.name || comment.authorDisplayName || comment.author}</p>
-                                <p className="text-xs text-primary">{isNew ? 'New Comment' : 'Editing...'}</p>
+                                
+                                <div>
+                                    <p className="font-semibold text-sm">{authorName}</p>
+                                    <p className="text-xs text-primary">{isNew ? 'New Comment' : 'Editing...'}</p>
+                                </div>
                             </div>
                         </div>
                         
@@ -480,6 +503,7 @@ const SocialComments = ({
                             }}
                             placeholder={isReply ? "Write your reply..." : "What's on your mind?"}
                             className="bg-base-100"
+                            containerStyle={getIdentityGlowStyle(currentUser || comment)}
                             preset={allowMedia ? "medium" : "minimal"}
                         />
                         
@@ -510,21 +534,22 @@ const SocialComments = ({
                         <div className="flex items-center gap-3 mb-2">
                             {/* Avatar */}
                             <div className="avatar">
-                                <div className="w-10 h-10 rounded-full overflow-hidden">
-                                    {(comment.user?.image || comment.avatarUrl) && (
-                                        <Image 
-                                            src={comment.user?.image || comment.avatarUrl} 
-                                            alt={`${comment.user?.name || comment.authorDisplayName || comment.author}'s avatar`}
-                                            width={40}
-                                            height={40}
-                                            className="object-cover"
-                                        />
-                                    )}
+                                <div
+                                    className="w-10 h-10 rounded-full overflow-hidden border"
+                                    style={getIdentityGlowStyle(authorIdentity, { contextId: authorIdentity.contextId })}
+                                >
+                                    <Image 
+                                        src={authorImage}
+                                        alt={`${authorName}'s avatar`}
+                                        width={40}
+                                        height={40}
+                                        className="object-cover"
+                                    />
                                 </div>
                             </div>
                             
                             <div className="flex justify-between w-full">
-                                <p className="font-semibold">{comment.user?.name || comment.authorDisplayName || comment.author}</p>
+                                <p className="font-semibold">{authorName}</p>
                                     <ClientDate
                                         dateString={comment.createdAt}
                                         className="text-sm text-base-content/60"

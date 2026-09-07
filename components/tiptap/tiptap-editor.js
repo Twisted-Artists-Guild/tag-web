@@ -132,7 +132,8 @@ export default function TiptapEditor({
   mediaToolbarSlot,
   onPickImageFromLibrary,
   onGalleryPreviewClick,
-  resizable = false
+  resizable = false,
+  containerStyle
 }) {
   const [isUploading, setIsUploading] = useState(false);
   const [isSelectingImage, setIsSelectingImage] = useState(false);
@@ -959,6 +960,7 @@ export default function TiptapEditor({
         minHeight: `${minHeight}px`,
         resize: resizable ? "vertical" : undefined,
         overflow: resizable ? "auto" : undefined,
+        ...containerStyle,
       }}
     >
       {!readOnly && (        

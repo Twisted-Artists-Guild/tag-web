@@ -12,18 +12,44 @@
 
 import Image from "next/image"
 import { useMemo, useState } from "react"
-import { Check, ChevronsUpDown } from "lucide-react"
+import { Check, ChevronsUpDown, Lock, Palette, Sparkles } from "lucide-react"
 
-const PRESET_COLORS = [
-	"#3B82F6",
-	"#22C55E",
-	"#EF4444",
-	"#F59E0B",
-	"#8B5CF6",
-	"#14B8A6",
-	"#EC4899",
-	"#F97316",
+export const RESERVED_ROLE_COLORS = {
+	admin: "#DC2626",
+	moderator: "#EA580C",
+	staff: "#F43F5E",
+}
+
+export const RESERVED_ROLE_COLOR_PRESETS = {
+	admin: ["#DC2626", "#B91C1C", "#EF4444", "#991B1B"],
+	moderator: ["#EA580C", "#C2410C", "#F59E0B", "#9A3412"],
+	staff: ["#F43F5E", "#E11D48", "#EC4899", "#BE123C"],
+}
+
+export const STANDARD_PROFILE_COLOR_PRESETS = [
+	"#3B82F6", // Royal Blue
+	"#0EA5E9", // Sky Blue
+	"#14B8A6", // Teal
+	"#22C55E", // Emerald Green
+	"#10B981", // Mint
+	"#8B5CF6", // Purple
+	"#A855F7", // Violet
+	"#06B6D4", // Cyan
+	"#D97706", // Golden Amber
+	"#6366F1", // Indigo
 ]
+
+export const ALL_RESERVED_HEXES = [
+	"#DC2626", "#B91C1C", "#EF4444", "#991B1B",
+	"#EA580C", "#C2410C", "#F59E0B", "#9A3412",
+	"#F43F5E", "#E11D48", "#EC4899", "#BE123C",
+]
+
+export function isReservedCoreColor(colorHex) {
+	if (!colorHex) return false
+	const hex = String(colorHex).trim().toUpperCase()
+	return ALL_RESERVED_HEXES.includes(hex)
+}
 
 function getContextRoleVisual(type) {
 	const normalizedType = String(type || "").toLowerCase()
@@ -31,24 +57,27 @@ function getContextRoleVisual(type) {
 	if (normalizedType === "admin") {
 		return {
 			label: "Admin",
-			pillClass: "bg-error/15 text-error border border-error/35",
-			ringClass: "border-error/70",
+			pillClass: "bg-error/15 text-error border border-error/35 font-semibold",
+			ringClass: "border-error/80",
+			isCore: true,
 		}
 	}
 
 	if (normalizedType === "moderator") {
 		return {
 			label: "Moderator",
-			pillClass: "bg-warning/20 text-warning-content border border-warning/40",
-			ringClass: "border-warning/70 border-dashed",
+			pillClass: "bg-warning/20 text-warning-content border border-warning/40 font-semibold",
+			ringClass: "border-warning/80 border-dashed",
+			isCore: true,
 		}
 	}
 
 	if (normalizedType === "staff") {
 		return {
 			label: "Staff",
-			pillClass: "bg-secondary/20 text-secondary-content border border-secondary/40",
-			ringClass: "border-secondary/70 border-dotted",
+			pillClass: "bg-secondary/20 text-secondary-content border border-secondary/40 font-semibold",
+			ringClass: "border-secondary/80 border-dotted",
+			isCore: true,
 		}
 	}
 
@@ -56,6 +85,7 @@ function getContextRoleVisual(type) {
 		label: String(type || "profile"),
 		pillClass: "bg-base-200 text-base-content/70 border border-base-content/15",
 		ringClass: "",
+		isCore: false,
 	}
 }
 
@@ -86,7 +116,7 @@ function getHaloClasses(isActive, needsAttention) {
 }
 
 function AvatarWithHalo({ context, isActive, size = "md" }) {
-	const color = context.color || PRESET_COLORS[0]
+	const color = context.color || STANDARD_PROFILE_COLOR_PRESETS[0]
 	const roleVisual = getContextRoleVisual(context.type)
 	const sizeClass = size === "sm" ? "w-8" : "w-10"
 	const haloStyle = {
@@ -113,42 +143,193 @@ function AvatarWithHalo({ context, isActive, size = "md" }) {
 	)
 }
 
-function ContextListItem({ context, isActive, onSelect }) {
+function ContextListItem({ context, isActive, onSelect, onColorChange }) {
 	const roleVisual = getContextRoleVisual(context.type)
-	const color = context.color || PRESET_COLORS[0]
+	const color = context.color || STANDARD_PROFILE_COLOR_PRESETS[0]
+	const [isPickerOpen, setIsPickerOpen] = useState(false)
+	const [customHex, setCustomHex] = useState("")
+	const [hexError, setHexError] = useState("")
+
+	const normalizedType = String(context.type || "").toLowerCase()
+	const isCoreRole = roleVisual.isCore
+
+	const availablePresets = isCoreRole
+		? (RESERVED_ROLE_COLOR_PRESETS[normalizedType] || RESERVED_ROLE_COLOR_PRESETS.admin)
+		: STANDARD_PROFILE_COLOR_PRESETS
+
 	const rowStyle = {
 		backgroundColor: isActive ? `${color}24` : `${color}14`,
 		borderColor: isActive ? `${color}66` : `${color}44`,
 		boxShadow: `inset 0 0 0 1px ${isActive ? `${color}33` : `${color}1F`}`,
 	}
 
+	const handleApplyCustomHex = (e) => {
+		e.preventDefault()
+		let raw = customHex.trim()
+		if (!raw) return
+		if (!raw.startsWith("#")) {
+			raw = `#${raw}`
+		}
+
+		if (!/^#[0-9A-Fa-f]{6}$/.test(raw)) {
+			setHexError("Please enter a valid 6-character hex code (e.g. #3B82F6).")
+			return
+		}
+
+		if (!isCoreRole && isReservedCoreColor(raw)) {
+			setHexError("This color is reserved for TAG Core staff/mod/admin identities.")
+			return
+		}
+
+		setHexError("")
+		onColorChange?.(context.id, raw.toUpperCase())
+		setCustomHex("")
+	}
+
+	const handleSwatchClick = (swatchColor, e) => {
+		e.stopPropagation()
+		if (!isCoreRole && isReservedCoreColor(swatchColor)) {
+			setHexError("Reserved for TAG Core (Admin/Mod/Staff)")
+			return
+		}
+		setHexError("")
+		onColorChange?.(context.id, swatchColor)
+	}
+
 	return (
-		<button
-			type="button"
-			onClick={() => onSelect(context.id)}
-			className="w-full flex items-center gap-3 rounded-box px-2 py-2 text-left transition-colors border hover:brightness-95"
-			style={rowStyle}
-		>
-			<span className="h-8 w-1 rounded-full shrink-0" style={{ backgroundColor: color }} />
-			<AvatarWithHalo context={context} isActive={isActive} />
-			<div className="min-w-0 flex-1">
-				<div className="font-medium text-sm text-base-content truncate flex items-center gap-1.5">
-					<span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: color }} />
-					<span className="truncate">{context.label}</span>
-				</div>
-				{context.subtitle ? <div className="text-[11px] text-base-content/60 truncate">{context.subtitle}</div> : null}
-				<div className="mt-0.5 flex items-center gap-1">
-					<span className={`badge badge-xs ${roleVisual.pillClass}`}>{roleVisual.label}</span>
-					{["admin", "moderator", "staff"].includes(String(context.type || "").toLowerCase()) ? (
-						<span className="badge badge-xs bg-base-300/50 text-base-content/70 border border-base-content/15">TAG Core</span>
-					) : null}
-				</div>
+		<div className="space-y-1">
+			<div
+				className="w-full flex items-center gap-2.5 rounded-box px-2 py-2 text-left transition-colors border group"
+				style={rowStyle}
+			>
+				<button
+					type="button"
+					onClick={() => onSelect(context.id)}
+					className="flex items-center gap-2.5 min-w-0 flex-1 text-left"
+				>
+					<span className="h-8 w-1 rounded-full shrink-0" style={{ backgroundColor: color }} />
+					<AvatarWithHalo context={context} isActive={isActive} />
+					<div className="min-w-0 flex-1">
+						<div className="font-medium text-sm text-base-content truncate flex items-center gap-1.5">
+							<span className="inline-block h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: color }} />
+							<span className="truncate">{context.label}</span>
+						</div>
+						{context.subtitle ? <div className="text-[11px] text-base-content/60 truncate">{context.subtitle}</div> : null}
+						<div className="mt-0.5 flex items-center gap-1">
+							<span className={`badge badge-xs ${roleVisual.pillClass}`}>{roleVisual.label}</span>
+							{isCoreRole ? (
+								<span className="badge badge-xs bg-base-300/80 text-base-content font-medium border border-base-content/20 flex items-center gap-0.5">
+									<Sparkles className="w-2.5 h-2.5 text-warning" />
+									TAG Core
+								</span>
+							) : null}
+						</div>
+					</div>
+				</button>
+
+				{context.unreadCount > 0 ? (
+					<span className="badge badge-error badge-sm">{context.unreadCount}</span>
+				) : null}
+
+				{typeof onColorChange === "function" ? (
+					<button
+						type="button"
+						onClick={(e) => {
+							e.stopPropagation()
+							setIsPickerOpen((prev) => !prev)
+						}}
+						className={`btn btn-xs btn-circle ${isPickerOpen ? "btn-primary" : "btn-ghost text-base-content/60 hover:text-base-content"}`}
+						title="Configure Identity Glow Color"
+						aria-label="Configure Identity Glow Color"
+					>
+						<Palette className="w-3.5 h-3.5" />
+					</button>
+				) : null}
+
+				{isActive ? <Check className="w-4 h-4 text-primary shrink-0" /> : null}
 			</div>
-			{context.unreadCount > 0 ? (
-				<span className="badge badge-error badge-sm">{context.unreadCount}</span>
+
+			{isPickerOpen && typeof onColorChange === "function" ? (
+				<div
+					className="rounded-box border p-2.5 space-y-2 text-xs bg-base-100 shadow-inner"
+					style={{ borderColor: `${color}66` }}
+				>
+					<div className="flex items-center justify-between">
+						<span className="font-semibold flex items-center gap-1.5 text-base-content">
+							<span className="w-2.5 h-2.5 rounded-full inline-block" style={{ backgroundColor: color }} />
+							Identity Glow Palette
+						</span>
+						{isCoreRole ? (
+							<span className="badge badge-xs badge-outline text-[10px] text-warning border-warning/50">
+								Core Reserved Palette
+							</span>
+						) : (
+							<span className="text-[10px] text-base-content/50">Personal Glow</span>
+						)}
+					</div>
+
+					<div className="space-y-1.5">
+						<div className="text-[11px] text-base-content/70">Select preset glow color:</div>
+						<div className="flex flex-wrap gap-1.5">
+							{availablePresets.map((preset) => (
+								<button
+									key={preset}
+									type="button"
+									onClick={(e) => handleSwatchClick(preset, e)}
+									className={`w-6 h-6 rounded-full border transition-transform hover:scale-110 flex items-center justify-center ${color.toUpperCase() === preset.toUpperCase() ? "ring-2 ring-primary ring-offset-1" : ""}`}
+									style={{ backgroundColor: preset, borderColor: `${preset}AA` }}
+									title={preset}
+								>
+									{color.toUpperCase() === preset.toUpperCase() ? <Check className="w-3 h-3 text-white drop-shadow" /> : null}
+								</button>
+							))}
+						</div>
+					</div>
+
+					{!isCoreRole ? (
+						<div className="space-y-1 pt-1 border-t border-base-200">
+							<div className="text-[10px] text-base-content/50 uppercase tracking-wider font-semibold">
+								Reserved Core Colors (Locked)
+							</div>
+							<div className="flex flex-wrap gap-1.5 opacity-80">
+								{ALL_RESERVED_HEXES.slice(0, 4).map((reservedColor) => (
+									<div
+										key={reservedColor}
+										className="w-6 h-6 rounded-full border border-base-300 relative flex items-center justify-center cursor-not-allowed"
+										style={{ backgroundColor: reservedColor }}
+										title="Reserved for TAG Core (Admin/Mod/Staff)"
+									>
+										<Lock className="w-3 h-3 text-white drop-shadow" />
+									</div>
+								))}
+							</div>
+						</div>
+					) : null}
+
+					<form onSubmit={handleApplyCustomHex} className="pt-1.5 flex items-center gap-1.5">
+						<input
+							type="text"
+							value={customHex}
+							onChange={(e) => {
+								setCustomHex(e.target.value)
+								setHexError("")
+							}}
+							placeholder="HEX e.g. #3B82F6"
+							className="input input-xs input-bordered flex-1 text-xs font-mono"
+						/>
+						<button type="submit" className="btn btn-xs btn-primary">
+							Apply
+						</button>
+					</form>
+
+					{hexError ? <div className="text-[11px] text-error font-medium">{hexError}</div> : null}
+
+					<div className="text-[10px] text-base-content/60 italic pt-1.5 border-t border-base-200">
+						Note: &ldquo;Everyone sees this color.&rdquo;
+					</div>
+				</div>
 			) : null}
-			{isActive ? <Check className="w-4 h-4 text-primary" /> : null}
-		</button>
+		</div>
 	)
 }
 
@@ -157,6 +338,7 @@ export default function ContextSwitcher({
 	variant = "applet",
 	activeContextId,
 	onChange,
+	onColorChange,
 	compactSize = "md",
 	compactMenuPosition = "bottom-right",
 	title = "Context Switcher",
@@ -169,7 +351,7 @@ export default function ContextSwitcher({
 		() => contexts.find((context) => context.id === selectedContextId) || contexts[0] || null,
 		[contexts, selectedContextId],
 	)
-	const panelColor = selectedContext?.color || PRESET_COLORS[0]
+	const panelColor = selectedContext?.color || STANDARD_PROFILE_COLOR_PRESETS[0]
 	const subPanelTintStyle = {
 		borderColor: `${panelColor}88`,
 		backgroundColor: `${panelColor}20`,
@@ -211,7 +393,7 @@ export default function ContextSwitcher({
 					onClick={() => setIsOpen((current) => !current)}
 					aria-label="Open profile context switcher"
 					aria-expanded={isOpen}
-					style={{ borderColor: `${selectedContext.color || PRESET_COLORS[0]}66` }}
+					style={{ borderColor: `${selectedContext.color || STANDARD_PROFILE_COLOR_PRESETS[0]}66` }}
 				>
 					<AvatarWithHalo context={selectedContext} isActive size={isSmall ? "sm" : "md"} />
 					<span className={`absolute ${isSmall ? "-bottom-1 -right-1 w-4 h-4" : "-bottom-1 -right-1 w-5 h-5"}`}>
@@ -234,19 +416,16 @@ export default function ContextSwitcher({
 								<ChevronsUpDown className="w-4 h-4 text-base-content/50" />
 							</div>
 
-							<div className="space-y-1 max-h-64 overflow-y-auto rounded-box border p-2" style={subPanelTintStyle}>
+							<div className="space-y-1 max-h-64 overflow-y-auto rounded-box border border-base-300 bg-base-200/40 p-2">
 								{contexts.map((context) => (
 									<ContextListItem
 										key={context.id}
 										context={context}
 										isActive={context.id === selectedContextId}
 										onSelect={handleSelect}
+										onColorChange={onColorChange}
 									/>
 								))}
-							</div>
-
-							<div className="text-xs text-base-content/70 rounded-box border p-2" style={subPanelTintStyle}>
-								Compact variant preview for Login Profile integration. This popup is intended for quick context switches.
 							</div>
 						</div>
 					</>
@@ -265,13 +444,14 @@ export default function ContextSwitcher({
 					</div>
 				</div>
 
-				<div className="space-y-1 rounded-box border p-2" style={{ borderColor: `${panelColor}55` }}>
+				<div className="space-y-1.5 rounded-box border p-2" style={{ borderColor: `${panelColor}55` }}>
 					{contexts.map((context) => (
 						<ContextListItem
 							key={context.id}
 							context={context}
 							isActive={context.id === selectedContextId}
 							onSelect={handleSelect}
+							onColorChange={onColorChange}
 						/>
 					))}
 				</div>

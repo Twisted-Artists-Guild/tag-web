@@ -245,6 +245,7 @@ const Artist = (props) => {
                 <ArtistCard
                   showHeaderGallery={false}
                   showContentGallery={false}
+                  showIdentityGlow={false}
                   textRenderMode="html"
                   artist={{
                     ...artistForHtmlRender,

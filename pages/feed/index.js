@@ -71,7 +71,7 @@ const SinglePostView = ({ postId }) => {
             <Link href="/feed" className="btn btn-ghost btn-sm gap-1">
                 <IoArrowBackOutline /> Back to Bloomscroll
             </Link>
-            <FeedPostCard post={post} />
+            <FeedPostCard post={post} showIdentityGlow={false} />
         </div>
     );
 };
@@ -251,7 +251,7 @@ export default function BloomscrollFeed() {
                                 </div>
                             </div>
                         ) : posts.map(post => (
-                            <FeedPostCard key={post.feedPostID} post={post} />
+                            <FeedPostCard key={post.feedPostID} post={post} showIdentityGlow={false} />
                         ))}
 
                         {/* Infinite scroll sentinel */}

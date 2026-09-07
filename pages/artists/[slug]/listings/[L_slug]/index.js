@@ -441,7 +441,7 @@ const ListingDetails = () => {
 
           <div className="mt-8">
             <h2 className="text-xl font-bold mb-4 border-b pb-2 text-primary">Listing Details</h2>
-            <ListingCard listing={listingForCard} panelSize="half" />
+            <ListingCard listing={listingForCard} panelSize="half" showArtistIdentityGlow={false} />
           </div>
 
           <div className="mt-8">

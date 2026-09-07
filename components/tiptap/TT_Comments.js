@@ -18,6 +18,8 @@ import { sanitizeDefaultHtml } from "@/components/security/sanitize";
 import Image from "next/image";
 import SocialReactions from '../social/Reactions';
 import TiptapEditor from "@/components/tiptap/tiptap-editor";
+import { getIdentityGlowStyle } from "@/utils/identityGlow";
+import ContextSwitcher from "@/components/Header/ContextSwitcher";
 
 function buildCommentsState(initialComments = []) {
     return initialComments.map(comment => ({
@@ -585,13 +587,30 @@ const SocialComments = ({
     );
 };
 
-export function TTCommentsEditorCard({ value, onChange, onSubmit, onCancel }) {
+export function TTCommentsEditorCard({ value, onChange, onSubmit, onCancel, currentUser = null, contextProfiles = [], activeContextId = null, onContextChange }) {
     return (
-        <div className="rounded-lg border border-base-300 bg-base-100 p-4 space-y-3">
-            <h2 className="text-lg font-semibold">Comment</h2>
-            <p className="text-sm text-base-content/70">
-                Minimal preset with Cancel / Post Comment actions.
-            </p>
+        <div
+            className="rounded-lg border bg-base-100 p-4 space-y-3 transition-all"
+            style={getIdentityGlowStyle(currentUser || "user", { type: currentUser?.type || "user" })}
+        >
+            <div className="flex items-center justify-between gap-3">
+                <div>
+                    <h2 className="text-lg font-semibold">Comment</h2>
+                    <p className="text-sm text-base-content/70">
+                        Posting as {currentUser?.displayName || currentUser?.username || "user"}
+                    </p>
+                </div>
+                {contextProfiles && contextProfiles.length > 0 ? (
+                    <ContextSwitcher
+                        variant="compact"
+                        compactSize="sm"
+                        compactMenuPosition="bottom-right"
+                        contexts={contextProfiles}
+                        activeContextId={activeContextId}
+                        onChange={onContextChange}
+                    />
+                ) : null}
+            </div>
             <TiptapEditor
                 value={value}
                 onChange={onChange}

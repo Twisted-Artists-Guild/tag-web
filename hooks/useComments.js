@@ -103,7 +103,10 @@ export function useComments(targetId, targetType, enabled = true) {
         targetType,
         content: commentData.content || commentData.body,
         userId: commentData.userId,
-        parentCommentId: parentCommentId || null
+        parentCommentId: parentCommentId || null,
+        authorContextId: commentData.authorContextId || null,
+        authorEntityType: commentData.authorEntityType || null,
+        authorEntityId: commentData.authorEntityId || null,
       }
       
       console.log('API Payload:', payload)
