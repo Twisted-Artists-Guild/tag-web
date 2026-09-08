@@ -22,6 +22,7 @@ import { getSeededStockPhoto } from '@/utils/stockPhotos'
 import { sanitizeCardHtml } from '@/components/security/sanitize'
 import longDateOptions from '@/utils/longdateoptions'
 import ReportButton from "@/components/moderation/ReportButton"
+import { getIdentityGlowStyle } from '@/utils/identityGlow'
 
 function toUniformPlainText(html) {
   return String(html || "")
@@ -33,7 +34,7 @@ function toUniformPlainText(html) {
 
 const MOCK_ARTIST_NAME = "Artist Goes Here"
 
-const BlogCard = ({ blog }) => {
+const BlogCard = ({ blog, showIdentityGlow = true }) => {
   const { data: session } = useSession()
   const [showComments, setShowComments] = useState(false)
   
@@ -103,7 +104,10 @@ const BlogCard = ({ blog }) => {
 
         <div className="mt-3 flex items-center gap-3 rounded-box border border-base-300 bg-base-100 p-3">
           <div className="avatar">
-            <div className="relative h-12 w-12 rounded-full overflow-hidden border border-base-300">
+            <div
+              className={`relative h-12 w-12 rounded-full overflow-hidden border ${showIdentityGlow ? "" : "border-base-300"}`}
+              style={showIdentityGlow ? getIdentityGlowStyle(blog, { type: "artist" }) : undefined}
+            >
               <Image
                 src={blog.image || getSeededStockPhoto(`${blog.path}-artist`)}
                 alt={`${MOCK_ARTIST_NAME} avatar`}

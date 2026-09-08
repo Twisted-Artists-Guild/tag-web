@@ -126,7 +126,7 @@ const Artists = (props) => {
                   const artistKey = `${artist.path || artist.artistid || artist.title || "artist"}-${index}`
                   return (
                     <div key={artistKey} className={`${getPanelClass(artist.panelSize)} self-start`}>
-                      <ArtistCard artist={artist} />
+                      <ArtistCard artist={artist} showIdentityGlow={false} />
                     </div>
                   )
                 })}
