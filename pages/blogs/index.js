@@ -49,7 +49,7 @@ const Blog = (props) => {
         <main className="container mx-auto px-4 py-8 flex-1 w-full">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {props.blogs.map((blog) => (
-              <BlogCard key={blog.path} blog={blog} />
+              <BlogCard key={blog.path} blog={blog} showIdentityGlow={false} />
             ))}
           </div>
         </main>

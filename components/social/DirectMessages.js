@@ -24,6 +24,7 @@ import { useMessagingRealtime } from '@/components/messaging/MessagingRealtimePr
 // Import components
 import Image from "next/image";
 import TiptapEditor from "@/components/tiptap/tiptap-editor";
+import { getIdentityGlowStyle } from "@/utils/identityGlow";
 import { useConversations } from '@/hooks/useConversations';
 import { useMessages } from '@/hooks/useMessages';
 import { useMessageActions } from '@/hooks/useMessageActions';
@@ -48,10 +49,13 @@ const DirectMessages = ({
     readOnly = false,
     maxHeight = compact ? 300 : 600,
     initialConversationId = null,
-    currentUserId = null
+    currentUserId = null,
+    currentUser: propCurrentUser = null,
+    panelColor = null,
+    composerContextControl = null,
 }) => {
     const { data: session } = useSession();
-    const currentUser = session?.user || { id: currentUserId };
+    const currentUser = propCurrentUser || session?.user || { id: currentUserId };
     
     // State management
     const [newMessageContent, setNewMessageContent] = useState("");
@@ -749,8 +753,17 @@ const DirectMessages = ({
             
             {/* Message composer */}
             {!readOnly && (
-                <div className="p-4 border-t border-base-300 bg-base-200">
-                    <div className="flex gap-2">
+                <div className="p-3 border-t border-base-300 bg-base-200 space-y-2">
+                    {composerContextControl ? (
+                        <div className="flex items-center justify-between gap-2 px-1">
+                            <span className="text-[11px] text-base-content/60 font-medium">Posting Identity:</span>
+                            {composerContextControl}
+                        </div>
+                    ) : null}
+                    <div
+                        className="flex gap-2 items-center p-1.5 rounded-box bg-base-100 border transition-all"
+                        style={getIdentityGlowStyle(panelColor || currentUser, { type: currentUser?.type || "user" })}
+                    >
                         <input
                             ref={fileInputRef}
                             type="file"
@@ -762,16 +775,17 @@ const DirectMessages = ({
                             className="btn btn-sm btn-circle btn-ghost"
                             onClick={() => fileInputRef.current?.click()}
                             disabled={uploadingFiles}
+                            title="Attach file"
                         >
                             <IoAttachOutline className="text-lg" />
                         </button>
                         
-                        <div className="flex-1">
+                        <div className="flex-1 min-w-0">
                             <TiptapEditor
                                 value={newMessageContent}
                                 onChange={handleTyping}
                                 placeholder="Type a message..."
-                                className="bg-base-100"
+                                className="bg-transparent border-0"
                                 preset={allowMedia ? "medium" : "minimal"}
                             />
                         </div>

@@ -151,6 +151,7 @@ export default function ContextSwitcherTestPage() {
 								contexts={contexts}
 								activeContextId={activeContextId}
 								onChange={setActiveContextId}
+								onColorChange={handleColorChange}
 							/>
 							<span className="text-xs text-base-content/60">Click avatar to open popup</span>
 						</div>

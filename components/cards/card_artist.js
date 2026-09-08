@@ -21,6 +21,7 @@ import { CARD_SHELL_CLASS } from "@/components/cards/sizes/panel-layout"
 import { useImpressions, ImpressionTargetType } from "@/hooks/useImpressions"
 import { sanitizeCardHtml } from "@/components/security/sanitize"
 import ReportButton from "@/components/moderation/ReportButton"
+import { getIdentityGlowStyle } from "@/utils/identityGlow"
 
 const stripHtmlTags = (value) =>
 	String(value || "")
@@ -160,6 +161,7 @@ const ArtistCard = ({
 	enableDynamicImpressions = false,
 	showReactions = false,
 	textRenderMode = "strip",
+	showIdentityGlow = true,
 }) => {
 	const { data: session } = useSession()
 	const currentUser = propCurrentUser || session?.user || null
@@ -263,7 +265,10 @@ const ArtistCard = ({
 
 				<div className={`flex items-start ${compact ? "gap-2" : "gap-3"}`}>
 					<div className="avatar mt-0.5">
-						<div className={`${compact ? "w-9" : "w-11"} rounded-full border-2 border-base-300 bg-base-200`}>
+						<div
+							className={`${compact ? "w-9" : "w-11"} rounded-full border-2 bg-base-200 overflow-hidden ${showIdentityGlow ? "" : "border-base-300"}`}
+							style={showIdentityGlow ? getIdentityGlowStyle(artist, { type: "artist" }) : undefined}
+						>
 							<Image
 								src={logoSrc}
 								alt={artist?.profilePic?.alttext || `${artist?.title || "Artist"} logo`}

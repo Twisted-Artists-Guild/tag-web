@@ -137,7 +137,8 @@ const ListingCard = ({
   hideGallery = false,
   currentUser: propCurrentUser = null,
   enableDynamicImpressions = true,
-  textRenderMode = "strip"
+  textRenderMode = "strip",
+  showArtistIdentityGlow = true,
 }) => {
   const { data: session } = useSession()
   const currentUser = propCurrentUser || session?.user || null
@@ -234,6 +235,7 @@ const ListingCard = ({
             enableDynamicImpressions={true}
             showReactions={true}
             textRenderMode={textRenderMode}
+            showIdentityGlow={showArtistIdentityGlow}
           />
         </div>
 

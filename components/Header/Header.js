@@ -69,7 +69,16 @@ export default function Header() {
     activeContext: null,
     availableContexts: [],
   })
-  const [activeContextId, setActiveContextId] = useState(null)
+  const [activeContextId, setActiveContextId] = useState(() => {
+    if (typeof window !== "undefined") {
+      try {
+        return window.localStorage.getItem("tag:activeContextId")
+      } catch {
+        return null
+      }
+    }
+    return null
+  })
 
   const mobileNavOptions = useMemo(
     () => [
@@ -385,8 +394,24 @@ export default function Header() {
       return
     }
 
-    if (!activeContextId || !contexts.some((context) => context.id === activeContextId)) {
-      setActiveContextId(contextSnapshot?.activeContext?.id || contexts[0].id)
+    let savedId = null
+    try {
+      if (typeof window !== "undefined") {
+        savedId = window.localStorage.getItem("tag:activeContextId")
+      }
+    } catch {
+      // Ignore localStorage errors
+    }
+
+    const targetId = savedId || activeContextId
+    const targetExists = targetId && contexts.some((c) => c.id === targetId)
+
+    if (targetExists && activeContextId !== targetId) {
+      setActiveContextId(targetId)
+    } else if (!targetExists && !savedId) {
+      if (!activeContextId || !contexts.some((c) => c.id === activeContextId)) {
+        setActiveContextId(contextSnapshot?.activeContext?.id || contexts[0].id)
+      }
     }
   }, [activeContextId, contextSnapshot])
 
@@ -674,7 +699,13 @@ export default function Header() {
             contextProfiles={contextSnapshot?.availableContexts || []}
             activeContextId={activeContextId || resolvedActiveContext?.id || null}
             onContextChange={(nextContextId) => {
-              setActiveContextId(nextContextId)
+              if (nextContextId && nextContextId !== activeContextId) {
+                setActiveContextId(nextContextId)
+                if (typeof window !== "undefined") {
+                  window.localStorage.setItem("tag:activeContextId", nextContextId)
+                  window.location.reload()
+                }
+              }
             }}
           />
         </div>

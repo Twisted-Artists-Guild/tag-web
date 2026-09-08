@@ -21,6 +21,7 @@ import { useCommentCount } from '@/hooks/useCommentCount';
 import SharedPreview from '@/components/feed/SharedPreview';
 import SharePopover from '@/components/feed/SharePopover';
 import FeedPostComments from '@/components/feed/FeedPostComments';
+import { getIdentityGlowStyle } from '@/utils/identityGlow';
 import {
     IoPersonOutline,
     IoStorefrontOutline,
@@ -43,7 +44,7 @@ const ENTITY_ICONS = {
     Listing: IoImageOutline,
 };
 
-export default function FeedPostCard({ post }) {
+export default function FeedPostCard({ post, showIdentityGlow = true }) {
     const { data: session } = useSession();
     const [showShare, setShowShare] = useState(false);
     const [showComments, setShowComments] = useState(false);
@@ -92,7 +93,13 @@ export default function FeedPostCard({ post }) {
                 {/* Author row */}
                 <div className="flex items-center gap-3">
                     <div className="avatar">
-                        <div className="w-10 rounded-full bg-base-300">
+                        <div
+                            className={`w-10 rounded-full bg-base-300 overflow-hidden border ${showIdentityGlow ? "" : "border-base-300"}`}
+                            style={showIdentityGlow ? getIdentityGlowStyle({
+                                type: post.authorEntityName ? "artist" : "user",
+                                id: post.authorUserID || post.authorEntityName,
+                            }) : undefined}
+                        >
                             <Image
                                 src={post.authorImage || '/blank_image.png'}
                                 alt={post.authorName || 'User'}

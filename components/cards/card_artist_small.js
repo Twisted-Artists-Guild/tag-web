@@ -14,6 +14,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { useState } from "react"
 import ContentTags, { hasExplicitWarning, extractContentWarnings } from "@/components/social/ContentTags"
+import { getIdentityGlowStyle } from "@/utils/identityGlow"
 
 const getSafeArtistImageSrc = (artist) => {
   const candidate =
@@ -53,7 +54,10 @@ const ArtistCardSmall = ({ artist }) => {
             </div>
           )}
 
-          <div className="relative w-16 h-16 rounded-full overflow-hidden border-2 border-base-300 bg-base-200">
+          <div
+            className="relative w-16 h-16 rounded-full overflow-hidden border-2 bg-base-200"
+            style={getIdentityGlowStyle(artist, { type: "artist" })}
+          >
             {hideAvatar ? (
               <div className="flex h-full w-full items-center justify-center text-[10px] font-semibold uppercase tracking-wide text-error">
                 18+

@@ -11,9 +11,23 @@
 
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/router'
-import { useState, useRef } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import SocialComments from './Comments'
 import { useComments, CommentTargetType } from '@/hooks/useComments'
+
+function getStoredActiveContext() {
+  if (typeof window === "undefined") return null
+
+  try {
+    const activeContextId = window.localStorage.getItem("tag:activeContextId")
+    const contexts = JSON.parse(window.localStorage.getItem("tag:availableContexts") || "[]")
+    return Array.isArray(contexts)
+      ? contexts.find((context) => context.id === activeContextId) || null
+      : null
+  } catch {
+    return null
+  }
+}
 
 const DynamicComments = ({
   targetId,
@@ -25,11 +39,25 @@ const DynamicComments = ({
 }) => {
   const router = useRouter()
   const { data: session } = useSession()
-  const currentUser = propCurrentUser || session?.user || null
+  const [activeContext, setActiveContext] = useState(getStoredActiveContext)
+  const currentUser = propCurrentUser || (activeContext && session?.user ? {
+    ...session.user,
+    name: activeContext.label,
+    image: activeContext.avatarUrl || "/blank_image.png",
+    type: activeContext.type,
+    contextId: activeContext.id,
+  } : session?.user || null)
     
   const [feedbackMessage, setFeedbackMessage] = useState(null)
   const [showLoginPrompt, setShowLoginPrompt] = useState(false)
   const processingRef = useRef(false) // Prevent double calls
+
+  useEffect(() => {
+    const refreshActiveContext = () => setActiveContext(getStoredActiveContext())
+    refreshActiveContext()
+    window.addEventListener("tag:contexts-updated", refreshActiveContext)
+    return () => window.removeEventListener("tag:contexts-updated", refreshActiveContext)
+  }, [])
 
   const {
     comments,
@@ -66,7 +94,10 @@ const DynamicComments = ({
       
       const result = await addComment({
         content: commentData.content, // Changed from commentData.body
-        userId: currentUser.id
+        userId: currentUser.id,
+        authorContextId: activeContext?.id || "user-primary",
+        authorEntityType: activeContext?.type || "user",
+        authorEntityId: activeContext?.rawId || null,
       }, parentId)
 
       if (result.success) {
