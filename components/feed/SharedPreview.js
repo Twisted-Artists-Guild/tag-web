@@ -9,19 +9,47 @@
 
  Open source - low-profit - human-first*/
 
-import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import longDateOptions from '@/utils/longdateoptions';
 
+const DEFAULT_PREVIEW_IMAGE = '/blank_image.png';
+
+function resolvePreviewImage(preview) {
+    const candidates = [
+        preview.image,
+        preview.imageUrl,
+        preview.imageURL,
+        preview.thumbnail,
+        preview.thumbnailUrl,
+        preview.thumbnailURL,
+        preview.pictureURL,
+        preview.coverImage,
+        preview.heroImage,
+        preview.profilePic?.url,
+        preview.profilePic?.URL,
+        preview.artist?.profilePic?.url,
+        preview.artist?.profilePic?.URL,
+        preview.vendor?.profilePic?.url,
+        preview.vendor?.profilePic?.URL,
+    ];
+
+    return candidates.find((candidate) => typeof candidate === 'string' && candidate.trim()) || DEFAULT_PREVIEW_IMAGE;
+}
+
 export default function SharedPreview({ preview }) {
     if (!preview) return null;
+
+    const href = preview.path || preview.href || '#';
+    const typeLabel = String(preview.type || 'Post').trim() || 'Post';
+    const image = resolvePreviewImage(preview);
+
     return (
-        <Link href={preview.path || '#'} className="block mt-3 rounded-box border border-base-300 bg-base-200 overflow-hidden hover:shadow-md transition-shadow">
+        <Link href={href} className="block mt-3 rounded-box border border-base-300 bg-base-200 overflow-hidden hover:shadow-md transition-shadow">
             <div className="flex gap-3 p-3">
-                {preview.image && (
+                {image && (
                     <div className="relative w-16 h-16 rounded overflow-hidden flex-shrink-0 bg-base-300">
-                        <Image src={preview.image} alt={preview.title || ''} fill className="object-cover" />
+                        <Image src={image} alt={preview.title || ''} fill className="object-cover" />
                     </div>
                 )}
                 <div className="flex-1 min-w-0">
@@ -32,7 +60,7 @@ export default function SharedPreview({ preview }) {
                     {preview.price != null && <p className="text-xs font-mono text-success">${Number(preview.price).toFixed(2)}</p>}
                     {preview.startTime && <p className="text-xs text-base-content/50">{new Date(preview.startTime).toLocaleDateString('en-US', longDateOptions)}</p>}
                 </div>
-                <span className="badge badge-xs badge-outline self-start">{preview.type}</span>
+                <span className="badge badge-xs badge-outline self-start">{typeLabel}</span>
             </div>
         </Link>
     );

@@ -25,6 +25,25 @@ export const PANEL_SIZE_LABELS = {
 export const CARD_SHELL_CLASS =
   "card h-full bg-base-100 text-base-content border border-base-300 shadow-lg transition-all duration-300 hover:shadow-2xl";
 
+export const CARD_SIZE_CLASSES = {
+  xs: "gap-2 p-2",
+  sm: "gap-3 p-3",
+  md: "gap-4 p-4",
+  lg: "gap-5 p-5",
+};
+
+export const CARD_ORIENTATION_CLASSES = {
+  vertical: "flex-col",
+  horizontal: "flex-row",
+};
+
+export const CARD_MEDIA_SIZE_CLASSES = {
+  xs: "h-28",
+  sm: "h-36",
+  md: "h-48",
+  lg: "h-60",
+};
+
 export const PANEL_SCROLL_CLASS = "min-h-0 overflow-auto overscroll-contain";
 
 export const normalizeThirdSpan = (span) => {

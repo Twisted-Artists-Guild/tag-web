@@ -62,7 +62,7 @@ Blog.getInitialProps = async () => {
   let data = []
 
   try {
-    const res = await serverFetch("/blog")
+    const res = await serverFetch("/blog/published")
     data = await res.json()
   } catch (error) {
     console.error("Error fetching blogs:", error)

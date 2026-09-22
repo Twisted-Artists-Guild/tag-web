@@ -449,7 +449,7 @@ Artist.getInitialProps = async (context) => {
     listings: [],
     links: [],
   })
-
+console.log("Fetched artist data:", artistData);
   const artistGalleryData = await fetchData(`/artist/${slug}`, null)
   if (artistData?.artist && artistGalleryData?.gallery) {
     artistData.artist.gallery = artistGalleryData.gallery
@@ -484,8 +484,7 @@ Artist.getInitialProps = async (context) => {
   const artistID = Number(artistData?.artist?.artistID || artistData?.artist?.ArtistID || 0)
   if (artistID > 0) {
     try {
-      const contactUrl = getApiUrl(`/contact/artist/${artistID}`, context)
-      const contactsRes = await serverFetch(contactUrl)
+      const contactsRes = await serverFetch(`/contact/artist/${artistID}`)
       if (contactsRes.ok) {
         const contactsData = await contactsRes.json()
         const rows = Array.isArray(contactsData?.contacts) ? contactsData.contacts : []

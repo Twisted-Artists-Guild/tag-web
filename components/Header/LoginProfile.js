@@ -259,7 +259,7 @@ export default function LoginProfile({
     return ROLE_CONTEXT_ORDER
       .filter((roleName) => roleList.includes(roleName))
       .map((roleName) => mapRoleToContext(roleName, session?.user))
-  }, [session?.user])
+  }, [session])
 
   const baseContexts = useMemo(() => {
     if (!session?.user) {
@@ -273,7 +273,7 @@ export default function LoginProfile({
       ...venueContexts,
       ...roleContexts,
     ]
-  }, [artistContexts, vendorContexts, venueContexts, roleContexts, session?.user, userProfile])
+  }, [artistContexts, vendorContexts, venueContexts, roleContexts, session, userProfile])
 
   const availableContexts = useMemo(() => {
     return baseContexts.map((context, index) => {

@@ -16,6 +16,7 @@ import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react"
 import longDateOptions from "@/utils/longdateoptions"
 import TagSEO from "@/components/TagSEO"
+import PhotoGallery from "@/components/cards/card_photoGallery"
 import DynamicComments, { CommentTargetType } from "@/components/social/DynamicComments"
 import ImpressionReactions from "@/components/social/ImpressionReactions"
 import { useImpressions, ImpressionTargetType } from "@/hooks/useImpressions"

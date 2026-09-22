@@ -15,6 +15,7 @@ import Image from "next/image"
 import { useMemo, useState } from "react"
 import { useSession } from "next-auth/react"
 import PhotoGallery from "@/components/cards/card_photoGallery"
+import UnifiedCard from "@/components/cards/UnifiedCard"
 import ImpressionReactions from "@/components/social/ImpressionReactions"
 import { extractContentWarnings } from "@/components/social/ContentTags"
 import { CARD_SHELL_CLASS } from "@/components/cards/sizes/panel-layout"
@@ -99,11 +100,15 @@ const getArtistHeaderGalleryImages = (artist) => {
 	const galleryMedia = mapGalleryItemsToMedia(artist)
 	const firstImage = galleryMedia.find((item) => item?.mediaType !== "video") || galleryMedia[0]
 	if (firstImage) {
-		return [firstImage]
+		return [firstImage.original || firstImage.thumbnail || firstImage.sourceURL || "/blank_image.png"]
 	}
 
 	const images = getArtistGalleryImages(artist)
-	return images.length > 0 ? [images[0]] : ["/blank_image.png"]
+	return images.length > 0 ? [
+		typeof images[0] === "string"
+			? images[0]
+			: (images[0]?.original || images[0]?.url || images[0]?.src || images[0]?.thumbnail || images[0]?.thumbnailURL || "/blank_image.png")
+	] : ["/blank_image.png"]
 }
 
 const getArtistContentGalleryImages = (artist) => {
@@ -119,7 +124,7 @@ const getArtistContentGalleryImages = (artist) => {
 		.flatMap((collection) => (Array.isArray(collection) ? collection : []))
 		.map((item) => {
 			if (typeof item === "string") return item
-			return item?.contentUrl || item?.contentURL || item?.url || item?.src || ""
+			return item?.contentUrl || item?.contentURL || item?.url || item?.src || item?.original || item?.thumbnail || item?.thumbnailURL || ""
 		})
 		.map((url) => String(url || "").trim())
 		.filter(Boolean)
@@ -128,7 +133,11 @@ const getArtistContentGalleryImages = (artist) => {
 		return metadataUrls
 	}
 
-	return getArtistGalleryImages(artist)
+	return getArtistGalleryImages(artist).map((item) =>
+		typeof item === "string"
+			? item
+			: (item?.original || item?.url || item?.src || item?.thumbnail || item?.thumbnailURL || "/blank_image.png")
+	)
 }
 
 const formatSinceMonthYear = (value) => {
@@ -171,8 +180,20 @@ const ArtistCard = ({
 	const headerGalleryImages = useMemo(() => getArtistHeaderGalleryImages(artist), [artist])
 	const contentGalleryImages = useMemo(() => getArtistContentGalleryImages(artist), [artist])
 	const contentWarnings = useMemo(() => extractContentWarnings(artist), [artist])
+	const galleryImages = useMemo(() => getArtistGalleryImages(artist), [artist])
+	const primaryImage = useMemo(() => {
+		if (!galleryImages.length) return "/blank_image.png"
+		const firstItem = galleryImages[0]
+		if (typeof firstItem === "string") return firstItem
+		return firstItem?.original || firstItem?.thumbnail || firstItem?.url || firstItem?.src || "/blank_image.png"
+	}, [galleryImages])
 	
 	const artistId = artist?.artistid || artist?.artistID || artist?.id || artist?.path || artist?.title || "artist"
+	const artistHref = artist?.path ? `/artists/${artist.path}` : "#"
+	const authorRoles = [artist?.type, artist?.entityType, artist?.role, "Artist"].filter(Boolean)
+	const authorRole = authorRoles[0] || "Artist"
+	const galleryCount = galleryImages.length
+	const hasGallery = galleryCount > 0
 	
 	const panelSize = artist?.panelSize || "third"
 	const isLargePanel = ["twoThirds", "threeQuarters", "full"].includes(panelSize)
@@ -191,6 +212,7 @@ const ArtistCard = ({
 	const artistDescriptionText = stripHtmlTags(artistDescription) || "Creative portfolio and artist highlights."
 	const artistTitleHtml = sanitizeCardHtml(artist?.title || "Untitled Artist")
 	const artistDescriptionHtml = sanitizeCardHtml(artistDescription || "Creative portfolio and artist highlights.")
+	const enhancedSummary = renderHtml ? artistDescriptionHtml : artistDescriptionText
 
 	const metadataSummary = useMemo(() => {
 		const categories = Array.isArray(artist?.artistCategoryLinks)
@@ -222,6 +244,13 @@ const ArtistCard = ({
 		}
 	}, [artist])
 
+	const metadataTags = [
+		`Since: ${metadataSummary.since}`,
+		...metadataSummary.categories,
+		...metadataSummary.seoTags,
+		...(Array.isArray(artist?.artForms) ? artist.artForms : []),
+	]
+
 	const detailRows = useMemo(() => {
 		const rows = []
 
@@ -236,147 +265,64 @@ const ArtistCard = ({
 		return rows
 	}, [artist])
 
+	const unifiedCardMediaContent = hasGallery && showHeaderGallery ? (
+		<PhotoGallery
+			images={galleryImages}
+			mode="standalone"
+			navigationMode={galleryImages.length > 1 ? "hover" : "manual"}
+			imageEffect="landscape"
+			showThumbnails={galleryImages.length > 1}
+			contentWarnings={contentWarnings}
+			contentWarningSize="sm"
+		/>
+	) : (
+		undefined
+	)
+
+	const unifiedImage = hasGallery ? primaryImage : ""
+
 	return (
-		<article className={`${CARD_SHELL_CLASS} h-auto self-start w-full overflow-hidden`}>
-			<div className={`card-body ${compact ? "gap-2 p-3" : "gap-4 p-4"}`}>
-				{!compact && showHeaderGallery && (
-					<PhotoGallery
-						images={headerGalleryImages}
-						mode="standalone"
-						navigationMode={headerGalleryImages.length > 1 ? "hover" : "manual"}
-						imageEffect="landscape"
-						showThumbnails={false}
-						contentWarnings={contentWarnings}
-						contentWarningSize="sm"
-					/>
-				)}
-
-				{!compact && showContentGallery && contentGalleryImages.length > 0 && (
-					<PhotoGallery
-						images={contentGalleryImages}
-						mode="standalone"
-						navigationMode={contentGalleryImages.length > 1 ? "hover" : "manual"}
-						imageEffect="landscape"
-						showThumbnails={contentGalleryImages.length > 1}
-						contentWarnings={contentWarnings}
-						contentWarningSize="sm"
-					/>
-				)}
-
-				<div className={`flex items-start ${compact ? "gap-2" : "gap-3"}`}>
-					<div className="avatar mt-0.5">
-						<div
-							className={`${compact ? "w-9" : "w-11"} rounded-full border-2 bg-base-200 overflow-hidden ${showIdentityGlow ? "" : "border-base-300"}`}
-							style={showIdentityGlow ? getIdentityGlowStyle(artist, { type: "artist" }) : undefined}
-						>
-							<Image
-								src={logoSrc}
-								alt={artist?.profilePic?.alttext || `${artist?.title || "Artist"} logo`}
-								width={compact ? 36 : 44}
-								height={compact ? 36 : 44}
-								onError={() => setLogoSrc("/blank_image.png")}
-								style={{ objectFit: "cover" }}
-							/>
-						</div>
-					</div>
-					<div className="min-w-0 flex-1">
-						{renderHtml ? (
-							<Link
-								href={`/artists/${artist?.path || ""}`}
-								className={`hover:underline block text-primary leading-tight ${compact ? "[&_h1]:text-base [&_h2]:text-base [&_h3]:text-base" : "[&_h1]:text-lg [&_h2]:text-lg [&_h3]:text-lg"} [&_h1]:font-semibold [&_h2]:font-semibold [&_h3]:font-semibold`}
-								dangerouslySetInnerHTML={{ __html: artistTitleHtml }}
-							/>
-						) : (
-							<h3 className={`${compact ? "text-base" : "text-lg"} font-semibold text-primary leading-tight`}>
-								<Link href={`/artists/${artist?.path || ""}`} className="hover:underline">
-									{artistTitleText}
-								</Link>
-							</h3>
-						)}
-						{renderHtml ? (
-							<div
-								className={`${compact ? "mt-0.5 text-xs line-clamp-2" : "mt-1 text-sm leading-relaxed"} text-base-content/70`}
-								dangerouslySetInnerHTML={{ __html: artistDescriptionHtml }}
-							/>
-						) : (
-							<p className={`${compact ? "mt-0.5 text-xs line-clamp-2" : "mt-1 text-sm leading-relaxed"} text-base-content/70`}>
-								{artistDescriptionText}
-							</p>
-						)}
-					</div>
-				</div>
-
-				{showReactions && (
-					<div className={compact ? "mt-1" : "mt-2"}>
-						{!impressionsLoading && impressions && impressions.length > 0 ? (
-							<div className="space-y-1">
-								<ImpressionReactions
-									impressions={impressions}
-									currentUser={currentUser}
-									onToggle={toggleReaction}
-									readOnly={false}
-									size="sm"
-									showDetails={!compact}
-									targetId={artistId}
-									targetType="artist"
-								/>
-								{totalReactionCount > 0 && !compact && (
-									<p className="text-xs text-base-content/65">
-										{totalReactionCount} reactions
-									</p>
-								)}
-							</div>
-						) : impressionsLoading ? (
-							<div className="text-xs text-base-content/50">Loading reactions...</div>
-						) : impressionError ? (
-							<div className="text-xs text-error">Error loading reactions</div>
-						) : (
-							<div className="text-xs text-base-content/50">No reactions available</div>
-						)}
-					</div>
-				)}
-
-				<div className={`flex flex-wrap ${compact ? "gap-1.5" : "gap-2"}`}>
-					<span className="badge badge-outline badge-sm">Since: {metadataSummary.since}</span>
-					{(isMediumPanel || isLargePanel) && metadataSummary.categories.length > 0 && (
-						<>
-							<span className="badge badge-info badge-sm">(Categories)</span>
-							{metadataSummary.categories.slice(0, isLargePanel ? metadataSummary.categories.length : 3).map((cat) => (
-								<span key={cat} className="badge badge-primary badge-sm badge-outline">{cat}</span>
-							))}
-						</>
-					)}
-					{(isMediumPanel || isLargePanel) && metadataSummary.seoTags.length > 0 && (
-						<>
-							<span className="badge badge-warning badge-sm">(SEO)</span>
-							{metadataSummary.seoTags.slice(0, isLargePanel ? metadataSummary.seoTags.length : 3).map((tag) => (
-								<span key={tag} className="badge badge-warning badge-sm badge-outline">{tag}</span>
-							))}
-						</>
-					)}
-				</div>
-
-				{!compact && (isMediumPanel || isLargePanel) && detailRows.length > 0 && (
-					<div className="rounded-box border border-base-300 bg-base-100/70 p-3">
-						<div className="space-y-2">
-							{detailRows.slice(0, isLargePanel ? detailRows.length : 2).map((row) => (
-								<div key={row.label} className="grid grid-cols-1 gap-1 sm:grid-cols-[7rem_1fr]">
-									<span className="text-xs font-semibold uppercase tracking-wide text-primary/90">{row.label}</span>
-									<p className="text-sm text-base-content/75 line-clamp-3">{row.value}</p>
-								</div>
-							))}
-						</div>
-					</div>
-				)}
-
-				{!compact && (
-					<div className="card-actions mt-1 justify-start">
-						<ReportButton targetType="Artist" targetId={artist?.artistID || artist?.artistid} />
-					</div>
-				)}
-			</div>
-		</article>
+		<UnifiedCard
+			title={artistTitleText}
+			summary={enhancedSummary}
+			image={unifiedImage}
+			galleryImages={galleryImages}
+			mediaContent={showHeaderGallery ? unifiedCardMediaContent : undefined}
+			contentWarnings={contentWarnings}
+			imageAlt={artist?.title || "Artist media"}
+			href={artistHref}
+			badge="Artist"
+			date={artist?.since || artist?.updated || ""}
+			authorName={artist?.title || "Unknown artist"}
+			authorImage={getArtistLogoSrc(artist)}
+			authorRole={authorRole}
+			showAuthor={false}
+			tags={metadataTags}
+			maxTags={isLargePanel ? 10 : 3}
+			size={compact ? "sm" : isLargePanel ? "lg" : "md"}
+			orientation="vertical"
+			compact={compact}
+			showIdentityGlow={showIdentityGlow}
+			showImpressions={showReactions}
+			showComments={false}
+			showReport={true}
+			impressionTargetId={artistId}
+			impressionTargetType={ImpressionTargetType.ARTIST}
+			commentTargetId={artistId}
+			commentTargetType={ImpressionTargetType.ARTIST}
+			reportTargetId={artistId}
+			reportTargetType="Artist"
+			reportTargetURL={artistHref}
+			interactionVisibility={{
+				impressions: showReactions,
+				comments: false,
+				report: true,
+			}}
+			className="h-full"
+			mediaClassName={compact ? "h-36" : "h-auto"}
+		/>
 	)
 }
+
 
 export default ArtistCard

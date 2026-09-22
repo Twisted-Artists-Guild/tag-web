@@ -919,7 +919,21 @@ export default function GalleryManager({ entityType, entityId, entityLabel, curr
 
     setSelectedWarnings(Array.isArray(cachedWarnings) ? cachedWarnings : [])
     setWarningsDirty(false)
-  }, [pictureByUrl, creditsByUrl, warningsByUrl, defaultRoleID])
+  }, [
+    pictureByUrl,
+    creditsByUrl,
+    warningsByUrl,
+    defaultRoleID,
+    setPicMetadata,
+    setPicMetaDirty,
+    setVideoCredits,
+    setPicCredits,
+    setPicCreditsDirty,
+    setVideoCreditsDirty,
+    setSelectedWarnings,
+    setWarningsDirty,
+    setCreditsByUrl,
+  ])
 
   const toggleWarning = (warningKey) => {
     setWarningsDirty(true)
