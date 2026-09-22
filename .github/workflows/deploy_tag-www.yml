@@ -19,36 +19,15 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Set up Node.js version
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v3
         with:
           node-version: '22.x'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build application
-        run: npm run build
-        env:
-          NEXT_PUBLIC_TAG_API_URL: ${{ secrets.NEXT_PUBLIC_TAG_API_URL }}
-          NEXT_PUBLIC_APPINSIGHTS: ${{ secrets.NEXT_PUBLIC_APPINSIGHTS }}
-          NEXT_PUBLIC_BUILD_NUMBER: ${{ github.run_number }}.${{ github.run_attempt }}
-          NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA: ${{ github.sha }}
-
-      - name: Create deployment package
-        run: |
-          zip -r release.zip .
-
-      - name: Show package details
-        run: |
-          ls -lh release.zip
-          unzip -l release.zip | head -n 30
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
         with:
-          name: node-app-package
-          path: release.zip
+          name: node-app
+          path: .
 
   deploy:
     runs-on: ubuntu-latest
@@ -61,15 +40,14 @@ jobs:
       - name: Download artifact from build job
         uses: actions/download-artifact@v4
         with:
-          name: node-app-package
-          path: .
+          name: node-app
       
       - name: Login to Azure
         uses: azure/login@v2
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_55E03128DE7A4E658AF88F47D34FE9E8 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_00CAC81F5B8F4780843BA1D99F829F51 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_A8593A5433C84261BA0EC526044F477F }}
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_E44921D3FD1A4AF38D3FA188ABCB0189 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_1557E059E79C4539B84EFBE9ACFFABD5 }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_DACDCFA1BE0D47EB8CE4A9B4A7752BA1 }}
 
       - name: 'Deploy to Azure Web App'
         id: deploy-to-webapp
@@ -77,5 +55,5 @@ jobs:
         with:
           app-name: 'tag-www'
           slot-name: 'Production'
-          package: release.zip
+          package: .
           
