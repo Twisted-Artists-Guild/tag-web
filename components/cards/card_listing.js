@@ -14,7 +14,7 @@ import Link from "next/link"
 import { useMemo } from "react"
 import { useSession } from "next-auth/react"
 import PhotoGallery from "@/components/cards/card_photoGallery"
-import ArtistCard from "@/components/cards/card_artist"
+import UnifiedCard from "@/components/cards/UnifiedCard"
 import ImpressionReactions from "@/components/social/ImpressionReactions"
 import { extractContentWarnings } from "@/components/social/ContentTags"
 import { CARD_SHELL_CLASS } from "@/components/cards/sizes/panel-layout"
@@ -95,38 +95,25 @@ const formatCreatedDate = (value) => {
   })
 }
 
-const getSmallerArtistPanelSize = (listingPanelSize) => {
-  switch (listingPanelSize) {
-    case "full":
-      return "twoThirds"
-    case "threeQuarters":
-      return "half"
-    case "twoThirds":
-      return "half"
-    case "half":
-      return "third"
-    case "third":
-      return "quarter"
-    default:
-      return "quarter"
-  }
-}
+const getListingIdentity = (listing) => {
+  const entity = listing?.vendor || listing?.artist || {}
+  const isVendor = Boolean(listing?.vendor)
+  const entityPath = entity?.path || entity?.slug || ""
+  const entityImage =
+    entity?.profilePic?.url ||
+    entity?.profilePic?.URL ||
+    entity?.profilePicUrl ||
+    entity?.logoUrl ||
+    entity?.image ||
+    listing?.profilePic?.url ||
+    "/blank_image.png"
 
-const getArtistProfilePic = (listing) => {
-  const artist = listing?.artist || {}
-  const profilePic = artist?.profilePic || artist?.profilepic || null
   return {
-    url:
-      profilePic?.url ||
-      artist?.profilePicUrl ||
-      artist?.profile_image ||
-      artist?.image ||
-      listing?.profilePic?.url ||
-      "/blank_image.png",
-    alttext:
-      profilePic?.alttext ||
-      profilePic?.altText ||
-      `${artist?.title || "Artist"} profile picture`,
+    title: entity?.title || entity?.name || (isVendor ? "Unknown vendor" : "Unknown artist"),
+    summary: entity?.byline || entity?.description || (isVendor ? "Vendor" : "Artist"),
+    image: entityImage,
+    href: entityPath ? `/${isVendor ? "vendors" : "artists"}/${entityPath}` : "",
+    badge: isVendor ? "Vendor" : "Artist",
   }
 }
 
@@ -157,125 +144,88 @@ const ListingCard = ({
   const galleryImages = useMemo(() => getListingGalleryImages(listing), [listing])
   const contentWarnings = useMemo(() => extractContentWarnings(listing), [listing])
   const listingPath = `/artists/${listing?.artist?.path}/listings/${listing?.path}`
-  const artistProfilePic = useMemo(() => getArtistProfilePic(listing), [listing])
   const renderHtml = textRenderMode === "html"
   const listingTitleText = stripHtmlText(listing?.title) || "Untitled"
   const listingDescriptionText = stripHtmlText(listing?.description) || "No description available"
   const listingTitleHtml = sanitizeCardHtml(listing?.title || "Untitled")
   const listingDescriptionHtml = sanitizeCardHtml(listing?.description || "No description available")
 
-  const artistForCard = useMemo(
-    () => ({
-      path: listing?.artist?.path || "",
-      title: listing?.artist?.title || "Unknown artist",
-      description: listing?.artist?.description || listing?.artist?.byline || listing?.artist?.title || "Artist",
-      byline: listing?.artist?.byline || listing?.artist?.title || "Artist",
-      since: listing?.artist?.since,
-      roleSummary: listing?.artist?.roleSummary,
-      artForms: listing?.artist?.artForms,
-      panelSize: getSmallerArtistPanelSize(panelSize),
-      images: Array.isArray(listing?.artist?.images) && listing.artist.images.length > 0
-        ? listing.artist.images
-        : [artistProfilePic.url],
-      profilePic: artistProfilePic,
-          artistID: listing?.artistID,
-    }),
-    [artistProfilePic, listing, panelSize],
-  )
+  const listingIdentity = useMemo(() => getListingIdentity(listing), [listing])
 
   const totalReactionCount = impressions?.reduce((sum, imp) => sum + (imp.count || 0), 0) || 0
+  const listingTags = [
+    ...(Array.isArray(listing?.artForms) ? listing.artForms : []),
+    ...(Array.isArray(listing?.seoTags) ? listing.seoTags : []),
+  ].filter(Boolean).slice(0, 3)
 
   return (
-    <article className={`${CARD_SHELL_CLASS} h-auto w-full overflow-hidden`}>
-      <div className="card-body gap-4 p-4">
-        {!hideGallery && (
-          <PhotoGallery
-            images={galleryImages}
-            mode="standalone"
-            navigationMode={galleryImages.length > 1 ? "hover" : "manual"}
-            imageEffect="landscape"
-            showThumbnails={showGalleryThumbnails}
-            contentWarnings={contentWarnings}
-            hasViewerConsent={Boolean(listing?.viewerHasContentConsent)}
-          />
-        )}
-
-        <div className="space-y-2">
-          <Link href={listingPath} className="block text-xl font-semibold leading-tight text-primary hover:underline">
-            {renderHtml ? (
-              <span dangerouslySetInnerHTML={{ __html: listingTitleHtml }} />
+    <UnifiedCard
+      title={listing?.title || "Untitled listing"}
+      summary={renderHtml ? listingDescriptionHtml : listingDescriptionText}
+      image={galleryImages[0]?.original || galleryImages[0]?.thumbnail || galleryImages[0] || ""}
+      imageAlt={listing?.title || "Listing media"}
+      href={listingPath}
+      badge="Listing"
+      date={listing?.created}
+      price={listing?.price}
+      authorName={listingIdentity.title}
+      authorImage={listingIdentity.image}
+      authorRole={listingIdentity.badge}
+      authorHref={listingIdentity.href}
+      enableAuthorLink
+      tags={[...listingTags, listing?.artCategory?.category].filter(Boolean).slice(0, 3)}
+      size={isLargePanel ? "lg" : "md"}
+      showIdentityGlow={showArtistIdentityGlow}
+      showImpressions={false}
+      showComments={false}
+      showReport={false}
+      mediaContent={!hideGallery ? (
+        <PhotoGallery
+          images={galleryImages}
+          mode="standalone"
+          navigationMode={galleryImages.length > 1 ? "hover" : "manual"}
+          imageEffect="landscape"
+          showThumbnails={showGalleryThumbnails}
+          contentWarnings={contentWarnings}
+          hasViewerConsent={Boolean(listing?.viewerHasContentConsent)}
+        />
+      ) : null}
+      footer={(
+        <>
+          <div className="space-y-2 border-t border-base-300 pt-3">
+            {!impressionsLoading && impressions && impressions.length > 0 ? (
+              <ImpressionReactions
+                impressions={impressions}
+                currentUser={currentUser}
+                onToggle={toggleReaction}
+                readOnly={false}
+                size="sm"
+                showDetails
+                targetId={`listing-${targetId}`}
+                targetType="listing"
+              />
+            ) : impressionsLoading ? (
+              <div className="text-sm text-base-content/50">Loading reactions...</div>
             ) : (
-              listingTitleText
+              <div className="text-sm text-base-content/50">No reactions data</div>
             )}
-          </Link>
-          {renderHtml ? (
-            <p
-              className="text-sm text-base-content/80 line-clamp-3"
-              dangerouslySetInnerHTML={{ __html: listingDescriptionHtml }}
-            />
-          ) : (
-            <p className="text-sm text-base-content/80 line-clamp-3">
-              {listingDescriptionText}
+            <p className="text-xs text-base-content/65">
+              {totalReactionCount} reactions • {listing.commentCount ?? getSeededCount(listingSeed, 15, 1, "comments")} comments
             </p>
-          )}
-        </div>
-
-        <div className="flex flex-wrap gap-2">
-          <span className="badge badge-outline badge-sm">Created: {formatCreatedDate(listing?.created)}</span>
-          <span className="badge badge-outline badge-sm">Category: {listing?.artCategory?.category || "No category"}</span>
-          {isLargePanel && listing?.price !== undefined && listing?.price !== null && (
-            <span className="badge badge-primary badge-outline badge-sm">${Number(listing.price).toFixed(2)}</span>
-          )}
-        </div>
-
-        <div className="rounded-box border border-base-300 bg-base-100/70 p-1.5 md:max-w-120">
-          <ArtistCard
-            artist={artistForCard}
-            compact
-            enableDynamicImpressions={true}
-            showReactions={true}
-            textRenderMode={textRenderMode}
-            showIdentityGlow={showArtistIdentityGlow}
-          />
-        </div>
-
-        <div className="space-y-2">
-          {!impressionsLoading && impressions && impressions.length > 0 ? (
-            <ImpressionReactions
-              impressions={impressions}
-              currentUser={currentUser}
-              onToggle={toggleReaction}
-              readOnly={false}
-              size="sm"
-              showDetails
-              targetId={`listing-${targetId}`}
-              targetType="listing"
-            />
-          ) : impressionsLoading ? (
-            <div className="text-sm text-base-content/50">Loading reactions...</div>
-          ) : (
-            <div className="text-sm text-base-content/50">No reactions data</div>
-          )}
-          <p className="text-xs text-base-content/65">
-            {totalReactionCount} reactions • {listing.commentCount ?? getSeededCount(listingSeed, 15, 1, "comments")} comments
-          </p>
-        </div>
-
-        <div className="card-actions mt-1 justify-start gap-2">
-          <Link href={listingPath} className="btn btn-primary btn-sm">
-            View Listing
-          </Link>
-          <Link href={`/artists/${listing?.artist?.path || ""}`} className="btn btn-outline btn-sm">
-            View Artist
-          </Link>
-          {/* Add to Cart Button Logic */}
-          {listing?.price !== undefined && listing?.price !== null && Number(listing.price) > 0 && (
-            <AddToCartButton listing={listing} />
-          )}
-          <ReportButton targetType="Listing" targetId={listing?.listingID || listing?.listingid} />
-        </div>
-      </div>
-    </article>
+          </div>
+          <div className="card-actions mt-1 justify-start gap-2">
+            <Link href={listingPath} className="btn btn-primary btn-sm">View Listing</Link>
+            <Link href={listingIdentity.href || `/artists/${listing?.artist?.path || ""}`} className="btn btn-outline btn-sm">
+              View {listingIdentity.badge}
+            </Link>
+            {listing?.price !== undefined && listing?.price !== null && Number(listing.price) > 0 && (
+              <AddToCartButton listing={listing} />
+            )}
+            <ReportButton targetType="Listing" targetId={listing?.listingID || listing?.listingid} />
+          </div>
+        </>
+      )}
+    />
   )
 }
 
@@ -285,9 +235,8 @@ import { IoCartOutline } from 'react-icons/io5';
 
 const AddToCartButton = ({ listing }) => {
   const { addToCart } = useCart();
-  
-  // Try to safely access the toggleRightSidebar - if it's deeply nested, the global CartContext uses setIsCartOpen equivalent
-  const { toggleRightSidebar } = useLayout ? useLayout() : { toggleRightSidebar: () => {} };
+  const layout = useLayout();
+  const toggleRightSidebar = layout?.toggleRightSidebar || (() => {});
 
   const handleAddToCart = () => {
       // Normalize listing ID property safely

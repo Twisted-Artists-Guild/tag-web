@@ -31,7 +31,7 @@ export default function CreateMotionForm(props) {
         return { 
             proposedById: sessionUser?.id ? parseInt(sessionUser.id) : 0 
         };
-    }, [sessionUser?.id]);
+    }, [sessionUser]);
 
     return (
         <div className="p-4 pt-12 bg-base-200 min-h-screen">

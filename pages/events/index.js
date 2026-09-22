@@ -14,6 +14,7 @@ import { BuildingIcon, GraduationCapIcon, CheckIcon, HeartIcon, MessageCircleIco
 import { getRandomStockPhotoByCategory } from "@/utils/stockPhotos"
 import { useState } from "react"
 import TagSEO from "@/components/TagSEO"
+import UnifiedCard from "@/components/cards/UnifiedCard"
 
 const performanceCards = [
   {
@@ -202,53 +203,45 @@ export default function EventsLanding() {
           </p>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-10">
             {performanceCards.map((card) => (
-              <div key={card.id} className={`card bg-base-200 shadow-xl image-full overflow-hidden${card.enableSocial ? " group" : ""}`}>
-                <figure>
-                  <Image
-                    src={card.image}
-                    alt={card.alt}
-                    width={600}
-                    height={400}
-                    className={card.imageClassName}
-                    style={{ objectFit: "cover" }}
-                  />
-                </figure>
-                <div className="card-body">
-                  <h3 className="card-title text-2xl text-white">{card.title}</h3>
-                  <p className="text-white">{card.description}</p>
-                  {card.enableSocial && (
-                    <div className="flex items-center justify-between mt-4 pt-4 border-t border-white/20">
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-1 text-white/80">
-                          <EyeIcon className="w-4 h-4" />
-                          <span className="text-xs">{socialData[card.id].views}</span>
-                        </div>
-                        <button
-                          onClick={() => handleSocialAction(card.id, "loves")}
-                          className="flex items-center gap-1 text-red-400 hover:scale-105 transition-transform cursor-pointer"
-                        >
-                          <HeartIcon className="w-4 h-4" />
-                          <span className="text-xs">{socialData[card.id].loves}</span>
-                        </button>
-                        <div className="flex items-center gap-1 text-white/80">
-                          <MessageCircleIcon className="w-4 h-4" />
-                          <span className="text-xs">{socialData[card.id].comments}</span>
-                        </div>
-                        <button
-                          onClick={() => handleSocialAction(card.id, "attending")}
-                          className="flex items-center gap-1 text-green-400 hover:scale-105 transition-transform cursor-pointer"
-                        >
-                          <CalendarIcon className="w-4 h-4" />
-                          <span className="text-xs">{socialData[card.id].attending}</span>
-                        </button>
+              <div key={card.id} className="self-start">
+                <UnifiedCard
+                  title={card.title}
+                  summary={card.description}
+                  image={card.image}
+                  imageAlt={card.alt}
+                  badge={card.primaryBadge}
+                  tags={[card.secondaryBadge]}
+                  size="md"
+                  showImpressions={false}
+                  showComments={false}
+                  showReport={false}
+                  footer={card.enableSocial ? (
+                    <div className="flex items-center gap-3 border-t border-base-300 pt-3">
+                      <div className="flex items-center gap-1 text-base-content/70">
+                        <EyeIcon className="h-4 w-4" />
+                        <span className="text-xs">{socialData[card.id].views}</span>
                       </div>
+                      <button
+                        onClick={() => handleSocialAction(card.id, "loves")}
+                        className="flex items-center gap-1 text-error transition-transform hover:scale-105"
+                      >
+                        <HeartIcon className="h-4 w-4" />
+                        <span className="text-xs">{socialData[card.id].loves}</span>
+                      </button>
+                      <div className="flex items-center gap-1 text-base-content/70">
+                        <MessageCircleIcon className="h-4 w-4" />
+                        <span className="text-xs">{socialData[card.id].comments}</span>
+                      </div>
+                      <button
+                        onClick={() => handleSocialAction(card.id, "attending")}
+                        className="flex items-center gap-1 text-success transition-transform hover:scale-105"
+                      >
+                        <CalendarIcon className="h-4 w-4" />
+                        <span className="text-xs">{socialData[card.id].attending}</span>
+                      </button>
                     </div>
-                  )}
-                  <div className="card-actions justify-end">
-                    <div className="badge badge-outline text-white border-white">{card.primaryBadge}</div>
-                    <div className="badge badge-primary">{card.secondaryBadge}</div>
-                  </div>
-                </div>
+                  ) : null}
+                />
               </div>
             ))}
           </div>

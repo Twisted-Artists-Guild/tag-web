@@ -15,6 +15,8 @@ import { isAdmin, isArtist, isStaff } from "@/utils/authHelpers";
 import React, { useMemo } from "react";
 import TagSEO from "@/components/TagSEO";
 import ArtistContextNav from "@/components/portal/ArtistContextNav";
+import GalleryManager from "@/components/gallery/GalleryManager";
+import ListingCard from "@/components/cards/card_listing";
 import serverFetch from "@/libs/serverFetch"
 
 const formName = "ListingForm1";
