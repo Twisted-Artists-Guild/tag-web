@@ -10,13 +10,10 @@
  Open source · low-profit · human-first*/
 
 
-import Image from "next/image" // Import Image component
-import Link from "next/link" // Import Link component
-import { HeartIcon, MessageCircleIcon, ShareIcon, EyeIcon } from "lucide-react" // Import Lucide icons
-import { useState } from "react"
+import Image from "next/image"
+import Link from "next/link"
 import TagSEO from "@/components/TagSEO"
-import { getSeededStockPhoto } from "@/utils/stockPhotos"
-import { sanitizeCardHtml } from "@/components/security/sanitize";
+import NewsCard from "@/components/cards/card_news"
 import serverFetch from "@/libs/serverFetch"
 
 const featuredArticles = [
@@ -75,24 +72,6 @@ export default function News(props) {
     },
   }
 
-  // Social data state for articles
-  const [socialData, setSocialData] = useState({
-    "beyond-canvas": { views: 1234, loves: 89, comments: 23, shares: 45 },
-    "member-interviews": { views: 2156, loves: 167, comments: 42, shares: 78 },
-    "art-algorithms": { views: 1890, loves: 203, comments: 67, shares: 91 },
-    "studio-cooperative": { views: 1567, loves: 134, comments: 38, shares: 56 }
-  });
-
-  const handleSocialAction = (articleId, action) => {
-    setSocialData(prev => ({
-      ...prev,
-      [articleId]: {
-        ...prev[articleId],
-        [action]: prev[articleId][action] + 1
-      }
-    }));
-  };
-
   return (
     
     <div className="min-h-screen flex flex-col bg-base-100 text-base-content">
@@ -141,73 +120,46 @@ export default function News(props) {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
             {/* Featured Articles + Blog Posts Combined */}
             {[
-              ...featuredArticles,
+              ...featuredArticles.map((item) => ({
+                ...item,
+                id: item.id,
+                url: `/news/${item.id}`,
+                badge: "News",
+                summary: item.description,
+                date: "2026-09-17",
+                authorName: "TAG Editorial",
+                tags: ["Community", "Feature"],
+                image: item.image,
+              })),
               ...(props.blogs || []).map((blog) => ({
                 id: `blog-${blog.path}`,
                 title: toUniformPlainText(blog.title),
-                description: sanitizeCardHtml(blog.byline),
-                image: blog.image || getSeededStockPhoto(blog.path),
-                alt: "Article cover image",
-                isBlog: true,
-                blog: blog,
-                enableSocial: false,
+                summary: blog.byline || blog.summary || "",
+                image: blog.image || "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80",
+                badge: "Blog",
+                date: blog.created || blog.date,
+                authorName: blog.author || "TAG Community",
+                tags: Array.isArray(blog.tags) ? blog.tags : ["Blog"],
+                href: `/blogs/${blog.path}`,
               })),
             ].map((item) => (
-              <div key={item.id} className={`card bg-base-200 text-base-content shadow-xl overflow-hidden${item.enableSocial ? " group" : ""}`}>
-                <figure className="relative h-48 w-full">
-                  <Image
-                    src={item.image}
-                    alt={item.alt}
-                    fill
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                    style={{ objectFit: "cover" }}
-                    className={item.enableSocial ? "group-hover:scale-105 transition-transform duration-300" : undefined}
-                  />
-                </figure>
-                <div className="card-body p-6">
-                  <h4 className="card-title text-xl text-primary">{item.title}</h4>
-                  <p className="text-base-content/80 text-sm" dangerouslySetInnerHTML={{ __html: sanitizeCardHtml(item.description) }}></p>
-                  {item.enableSocial && (
-                    <div className="flex items-center justify-between mt-4 pt-4 border-t border-base-300">
-                      <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-1 text-base-content/60">
-                          <EyeIcon className="w-4 h-4" />
-                          <span className="text-xs">{socialData[item.id].views}</span>
-                        </div>
-                        <button
-                          onClick={() => handleSocialAction(item.id, "loves")}
-                          className="flex items-center gap-1 text-error hover:scale-105 transition-transform cursor-pointer"
-                        >
-                          <HeartIcon className="w-4 h-4" />
-                          <span className="text-xs">{socialData[item.id].loves}</span>
-                        </button>
-                        <div className="flex items-center gap-1 text-base-content/60">
-                          <MessageCircleIcon className="w-4 h-4" />
-                          <span className="text-xs">{socialData[item.id].comments}</span>
-                        </div>
-                        <button
-                          onClick={() => handleSocialAction(item.id, "shares")}
-                          className="flex items-center gap-1 text-info hover:scale-105 transition-transform cursor-pointer"
-                        >
-                          <ShareIcon className="w-4 h-4" />
-                          <span className="text-xs">{socialData[item.id].shares}</span>
-                        </button>
-                      </div>
-                    </div>
-                  )}
-                  <div className="card-actions justify-end mt-4">
-                    {item.isBlog ? (
-                      <Link href="/blogs/[slug]" as={`/blogs/${item.blog.path}`} className="btn btn-sm btn-outline btn-primary">
-                        Read More
-                      </Link>
-                    ) : (
-                      <Link href="#" className="btn btn-sm btn-outline btn-primary">
-                        Read More
-                      </Link>
-                    )}
-                  </div>
-                </div>
-              </div>
+              <NewsCard
+                key={item.id}
+                news={{
+                  id: item.id,
+                  title: item.title,
+                  summary: item.summary,
+                  image: item.image,
+                  href: item.href || item.url,
+                  description: item.summary,
+                  date: item.date,
+                  authorName: item.authorName,
+                  tags: item.tags,
+                }}
+                size="md"
+                orientation="vertical"
+                showIdentityGlow={false}
+              />
             ))}
           </div>
         </section>

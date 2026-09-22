@@ -1,3 +1,4 @@
+import Link from "next/link"
 import CrmSocialChat from "@/components/ghl/CrmSocialChat"
 import { getServerSession } from "next-auth/next"
 import { authOptions } from "@/pages/api/auth/[...nextauth]"
@@ -24,12 +25,12 @@ export default function GHLChatPage() {
                 This workspace is our company GoHighLevel inbox for conversations coming from connected social media and CRM messaging channels. Staff can review active threads and send outbound replies from one place.
               </p>
             </div>
-            <a
+            <Link
               href="/portal/staff/ghl-index"
               className="inline-flex items-center justify-center rounded-md border border-base-300 bg-base-200 px-4 py-2 text-sm font-medium text-base-content transition hover:bg-base-300"
             >
               Back to CRM Index
-            </a>
+            </Link>
           </div>
         </div>
 

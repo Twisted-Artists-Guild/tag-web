@@ -8,153 +8,132 @@
  This software comes with NO WARRANTY; see the license for details.
 
  Open source · low-profit · human-first*/
-"use client" // This component now uses client-side state
+"use client"
 
-import Link from "next/link"
-import Image from "next/image"
-import ContentTags, { hasExplicitWarning, extractContentWarnings } from "@/components/social/ContentTags"
-import { sanitizeCardHtml, stripHtmlText } from "@/components/security/sanitize"
+import UnifiedCard from "@/components/cards/UnifiedCard"
+import { useCart } from "@/components/cart/CartContext"
+import { useLayout } from "@/components/LayoutProvider"
+import { hasExplicitWarning, extractContentWarnings } from "@/components/social/ContentTags"
+import { IoCartOutline } from "react-icons/io5"
+
+const getListingIdentity = (listing) => {
+  const entity = listing?.vendor || listing?.artist || {}
+  const isVendor = Boolean(listing?.vendor)
+  const entityPath = entity?.path || entity?.slug || ""
+  const entityName = entity?.title || entity?.name || (isVendor ? "Unknown vendor" : "Unknown artist")
+  const image =
+    entity?.profilePic?.url ||
+    entity?.profilePic?.URL ||
+    entity?.profilePicUrl ||
+    entity?.logoUrl ||
+    entity?.image ||
+    listing?.profilePic?.url ||
+    "/blank_image.png"
+
+  return {
+    name: entityName,
+    image,
+    role: isVendor ? "Vendor" : "Artist",
+    href: entityPath ? `/${isVendor ? "vendors" : "artists"}/${entityPath}` : "",
+  }
+}
 
 const ListingCardSmall = ({ listing, artist, textRenderMode = "strip" }) => {
-  const contentWarnings = extractContentWarnings(listing)
-  const hideImage = hasExplicitWarning(contentWarnings)
+  if (!listing) return null
+
   if (!listing.artist && artist) {
     listing.artist = artist
   }
 
-  const renderHtml = textRenderMode === "html"
-  const titleText = stripHtmlText(listing?.title) || "Untitled"
-  const descriptionText = stripHtmlText(listing?.description) || "No description available"
-  const artistText = stripHtmlText(listing?.artist?.title) || "No artist found"
-  const titleHtml = sanitizeCardHtml(listing?.title || "Untitled")
-  const descriptionHtml = sanitizeCardHtml(listing?.description || "No description available")
-  const artistHtml = sanitizeCardHtml(listing?.artist?.title || "No artist found")
+  const contentWarnings = extractContentWarnings(listing)
+  const hideImage = hasExplicitWarning(contentWarnings)
+  const listingPath = listing?.artist && listing?.path
+    ? `/artists/${listing.artist.path}/listings/${listing.path}`
+    : "#"
 
-  return (
-    <div 
-      className="card bg-base-100 text-base-content shadow-xl hover:shadow-2xl transition-all duration-300 ease-in-out w-full rounded-box group border border-base-300"
-    >
-      <figure className="relative h-32 w-full overflow-hidden">
-        {contentWarnings.length > 0 && (
-          <div className="absolute left-0 right-0 top-0 z-10">
-            <ContentTags
-              warnings={contentWarnings.slice(0, 2)}
-              size="sm"
-              showTitle={false}
-              className="rounded-none border-0 bg-base-100/92 px-2 py-1"
-            />
-          </div>
-        )}
+  const identity = getListingIdentity(listing)
+  const image = listing?.profilePic?.url || listing?.defaultImageURL || listing?.image || "/blank_image.png"
+  const summary = listing?.description || listing?.byline || "No description available"
+  const tags = [listing?.artCategory?.category, listing?.medium].filter(Boolean).slice(0, 2)
 
-        {hideImage ? (
-          <div className="flex h-full w-full items-center justify-center bg-base-200 text-center">
-            <div className="space-y-1 px-3">
-              <p className="text-[10px] font-semibold uppercase tracking-wide text-error">18+ Explicit</p>
-              <p className="text-[10px] text-base-content/70">Preview hidden</p>
-            </div>
-          </div>
-        ) : (
-          <Link href={`/artists/${listing?.artist?.path}/listings/${listing?.path}`} className="relative block h-full w-full">
-            <Image
-              src={listing?.profilePic?.url || "/blank_image.png"}
-              alt={listing?.profilePic?.alttext || `${listing?.title || "Unknown"}'s picture`}
-              fill
-              sizes="(max-width: 768px) 100vw, 320px"
-              style={{ objectFit: "cover" }}
-              className="rounded-t-box group-hover:scale-105 transition-transform duration-300"
-            />
-          </Link>
-        )}
-      </figure>
-      <div className="card-body p-3">
-        <Link
-          href={`/artists/${listing?.artist?.path}/listings/${listing?.path}`}
-          className="card-title text-xl text-primary hover:underline"
-        >
-          {renderHtml ? (
-            <span dangerouslySetInnerHTML={{ __html: titleHtml }} />
-          ) : (
-            titleText
-          )}
-        </Link>
-        {renderHtml ? (
-          <p
-            className="text-lg text-base-content/90 line-clamp-3"
-            dangerouslySetInnerHTML={{ __html: descriptionHtml }}
-          />
-        ) : (
-          <p className="text-lg text-base-content/90 line-clamp-3">
-            {descriptionText}
-          </p>
-        )}
-        <p className="text-xs text-base-content/80 mt-2">
-          Listing created:{" "}
-          {listing?.created ? new Date(listing.created).toLocaleDateString("en-US") : "No date available"}
-        </p>
-        {renderHtml ? (
-          <p className="text-xs text-base-content/80">
-            Artist: <span dangerouslySetInnerHTML={{ __html: artistHtml }} />
-          </p>
-        ) : (
-          <p className="text-xs text-base-content/80">Artist: {artistText}</p>
-        )}
-        
-        <div className="flex justify-between items-center mt-2">
-          <p className="text-xs text-base-content/80">
-            Category: {listing?.artCategory?.category || "No category found"}
-          </p>
-          
-          {listing?.price !== undefined && listing?.price !== null && Number(listing.price) > 0 && (
-            <span className="font-bold text-primary font-mono">${Number(listing.price).toFixed(2)}</span>
-          )}
-        </div>
-
-        {/* Add to Cart Actions */}
-        {listing?.price !== undefined && listing?.price !== null && Number(listing.price) > 0 && (
-          <div className="card-actions justify-end mt-2">
-              <AddToCartButtonSmall listing={listing} />
-          </div>
-        )}
+  const mediaContent = hideImage ? (
+    <div className="flex h-full w-full items-center justify-center bg-base-200 text-center">
+      <div className="space-y-1 px-3">
+        <p className="text-[10px] font-semibold uppercase tracking-wide text-error">18+ Explicit</p>
+        <p className="text-[10px] text-base-content/70">Preview hidden</p>
       </div>
     </div>
+  ) : null
+
+  return (
+    <UnifiedCard
+      title={listing?.title || "Untitled listing"}
+      summary={summary}
+      image={image}
+      mediaContent={mediaContent}
+      imageAlt={listing?.profilePic?.alttext || `${listing?.title || "Unknown"}'s listing`}
+      href={listingPath}
+      badge="Listing"
+      date={listing?.created}
+      price={listing?.price}
+      authorName={identity.name}
+      authorImage={identity.image}
+      authorRole={identity.role}
+      authorHref={identity.href}
+      enableAuthorLink
+      tags={tags}
+      size="xs"
+      orientation="vertical"
+      compact
+      mediaClassName="w-full h-32"
+      className="mb-3"
+      showImpressions={false}
+      showComments={false}
+      showReport={false}
+      showIdentityGlow={false}
+      footer={
+        listing?.price !== undefined && listing?.price !== null && Number(listing.price) > 0 ? (
+          <div className="card-actions justify-end mt-1">
+            <AddToCartButtonSmall listing={listing} />
+          </div>
+        ) : null
+      }
+    />
   )
 }
 
-// Ensure you add these imports strictly at the top of the file!
-import { useCart } from "@/components/cart/CartContext";
-import { IoCartOutline } from 'react-icons/io5';
-import { useLayout } from "@/components/LayoutProvider";
-
 const AddToCartButtonSmall = ({ listing }) => {
-  const { addToCart } = useCart();
-  const { toggleRightSidebar } = useLayout ? useLayout() : { toggleRightSidebar: () => {} };
+  const { addToCart } = useCart()
+  const layout = useLayout()
+  const toggleRightSidebar = layout?.toggleRightSidebar || (() => {})
 
   const handleAddToCart = (e) => {
-      e.preventDefault(); // Prevent accidental navigation if nested in strange link structures
-      
-      const normalizedListing = {
-          ...listing,
-          id: listing.listingID || listing.id,
-          price: Number(listing.price || 0)
-      };
+    e.preventDefault()
 
-      addToCart(normalizedListing, 1);
-      
-      if (typeof toggleRightSidebar === 'function') {
-          setTimeout(() => toggleRightSidebar(true), 100);
-      }
-  };
+    const normalizedListing = {
+      ...listing,
+      id: listing.listingID || listing.id,
+      price: Number(listing.price || 0),
+    }
+
+    addToCart(normalizedListing, 1)
+
+    if (typeof toggleRightSidebar === "function") {
+      setTimeout(() => toggleRightSidebar(true), 100)
+    }
+  }
 
   return (
-    <button 
+    <button
       onClick={handleAddToCart}
       className="btn btn-secondary btn-sm"
       title="Add to Cart"
+      type="button"
     >
       <IoCartOutline size={18} />
       Add to Cart
     </button>
-  );
-};
+  )
+}
 
 export default ListingCardSmall

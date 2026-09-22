@@ -12,7 +12,6 @@ import { useEffect, useMemo, useState } from "react"
 import TagSEO from "@/components/TagSEO"
 import ArtistCard from "@/components/cards/card_artist"
 import { getRandomStockPhotoByCategory } from "@/utils/stockPhotos"
-import { getPanelClass } from "@/components/cards/sizes/panel-layout"
 import serverFetch from "@/libs/serverFetch"
 
 const BATCH_SIZE = 12
@@ -58,7 +57,7 @@ const Artists = (props) => {
     () =>
       (props.artists || []).map((artist) => ({
         ...artist,
-        panelSize: inferPanelSizeFromDescription(artist),
+        panelSize: "twoThirds",
       })),
     [props.artists],
   )
@@ -121,11 +120,11 @@ const Artists = (props) => {
 				<section className="w-full flex-1 min-h-100 flex flex-col justify-stretch">
           {loadedArtists.length > 0 ? (
             <>
-              <div className="grid grid-cols-1 items-start md:grid-cols-6 lg:grid-cols-12 gap-6">
+              <div className="grid grid-cols-1 items-start gap-6 md:grid-cols-2">
                 {visibleLoadedArtists.map((artist, index) => {
                   const artistKey = `${artist.path || artist.artistid || artist.title || "artist"}-${index}`
                   return (
-                    <div key={artistKey} className={`${getPanelClass(artist.panelSize)} self-start`}>
+                    <div key={artistKey} className="self-start">
                       <ArtistCard artist={artist} showIdentityGlow={false} />
                     </div>
                   )

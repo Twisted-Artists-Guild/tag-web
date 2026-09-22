@@ -216,14 +216,14 @@ const DirectMessages = ({
     }, [activeConversationId, isConnected, contextJoinConversation, contextLeaveConversation]);
 
     // Scroll to bottom
-    const scrollToBottom = useCallback(() => {
+    const scrollToBottom = () => {
         setTimeout(() => {
             if (messagesContainerRef.current) {
                 // Scroll the container, not the page
                 messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
             }
         }, 100);
-    }, []);
+    };
     
     // Scroll on new messages
     useEffect(() => {

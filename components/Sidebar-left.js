@@ -12,8 +12,8 @@
 
 import { useState, useEffect, useRef } from "react"
 import { useLayout } from "./LayoutProvider"
-import ArtistCardSmall from "@/components/cards/card_artist_small"
 import ListingCardSmall from "@/components/cards/card_listing_small"
+import UnifiedCard from "@/components/cards/UnifiedCard"
 import Navigation from "@/components/Navigation"
 import { useRouter } from "next/router"
 import { PanelLeftOpen, PanelLeftClose } from 'lucide-react';
@@ -154,7 +154,24 @@ export default function LeftSidebar(props) {
           <>
             <h3 className="font-medium text-base-content mb-3">Featured Artists</h3>
             {artists.filter(filterItem).map((artist, index) => (
-              <ArtistCardSmall key={artist.id || index} artist={artist} />
+              <UnifiedCard
+                key={artist.id || artist.artistID || index}
+                title={artist.title || "Untitled artist"}
+                summary={artist.byline || artist.description || artist.locationSummary || "Artist profile"}
+                image={artist.profilePic?.url || artist.profilePic?.URL || artist.profilePicUrl || "/blank_image.png"}
+                imageAlt={artist.profilePic?.alttext || `${artist.title || "Artist"} profile picture`}
+                href={artist.path ? `/artists/${artist.path}` : "/artists"}
+                badge="Artist"
+                size="xs"
+                compact
+                mediaClassName="h-28 w-full"
+                showAuthor={false}
+                showImpressions={false}
+                showComments={false}
+                showReport={false}
+                showIdentityGlow={false}
+                className="mb-3"
+              />
             ))}
           </>
         );
@@ -163,13 +180,24 @@ export default function LeftSidebar(props) {
           <>
             <h3 className="font-medium text-base-content mb-3">Upcoming Events</h3>
             {events.filter(filterItem).map((event, index) => (
-              <div key={event.id || index} className="card card-compact bg-base-100 shadow">
-                <div className="card-body">
-                  <h4 className="font-medium text-sm">{event.name}</h4>
-                  <p className="text-xs text-base-content/60">{event.date}</p>
-                  <p className="text-xs">{event.location}</p>
-                </div>
-              </div>
+              <UnifiedCard
+                key={event.id || event.eventID || index}
+                title={event.name || event.title || "Untitled event"}
+                summary={event.description || event.location?.name || event.location || event.venue?.name || "Upcoming event"}
+                image={event.image || event.coverImage || event.heroImage || event.imageUrl || "/blank_image.png"}
+                imageAlt={event.name || event.title || "Event media"}
+                href={event.href || (event.path ? `/events/${event.path}` : "/events")}
+                badge="Event"
+                date={event.date || event.startDate || event.startsAt}
+                size="xs"
+                compact
+                mediaClassName="h-28 w-full"
+                showAuthor={false}
+                showImpressions={false}
+                showComments={false}
+                showReport={false}
+                className="mb-3"
+              />
             ))}
           </>
         );

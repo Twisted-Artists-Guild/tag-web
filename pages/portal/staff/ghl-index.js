@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react"
 import { getServerSession } from "next-auth/next"
+import Link from "next/link"
 import {
   BarChart,
   Bar,
@@ -241,12 +242,12 @@ export default function GHLIndexPage() {
                 Open the dedicated GoHighLevel chat interface for staff messaging across Facebook, Instagram, WhatsApp, SMS, and email conversations tied to our social channels.
               </p>
             </div>
-            <a
+            <Link
               href="/portal/staff/ghl-chat"
               className="inline-flex items-center justify-center rounded-md bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700"
             >
               Open GHL Chat
-            </a>
+            </Link>
           </div>
         </div>
 

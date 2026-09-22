@@ -11,15 +11,7 @@
 
 import UnifiedCard from "@/components/cards/UnifiedCard"
 
-function toUniformPlainText(value) {
-  return String(value || "")
-    .replace(/<[^>]*>/g, " ")
-    .replace(/&nbsp;/gi, " ")
-    .replace(/\s+/g, " ")
-    .trim()
-}
-
-const defaultImage = "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=1200&q=80"
+const defaultImage = "https://tagstatic.blob.core.windows.net/pexels/pexels-markus-winkler-1430818-3812433-merchandiseclothingrack.jpg"
 
 const normalizeTags = (value) => {
   if (!value) return []
@@ -28,11 +20,11 @@ const normalizeTags = (value) => {
   return [String(value)]
 }
 
-const getBlogIdentity = (data, fallbackImage) => {
+const getNewsIdentity = (data, fallbackImage) => {
   const entity = data.artist || data.user || data.authorArtist || data.authorUser || (typeof data.author === "object" ? data.author : null) || {}
   const isArtist = Boolean(data.artist || data.authorArtist || entity.artistID || entity.artistid || entity.artistPath)
   const isUser = Boolean(data.user || data.authorUser || entity.userID || entity.userid || entity.username)
-  const role = isArtist ? "Artist" : isUser ? "User" : "Blog"
+  const role = isArtist ? "Artist" : isUser ? "User" : "News"
   const path = entity.path || entity.slug || entity.username || entity.userName || ""
   const image =
     entity.profilePic?.url ||
@@ -50,7 +42,7 @@ const getBlogIdentity = (data, fallbackImage) => {
     `${entity.firstName || ""} ${entity.lastName || ""}`.trim() ||
     (typeof data.author === "string" ? data.author : "") ||
     data.authorName ||
-    "TAG Community"
+    "TAG News"
 
   return {
     name,
@@ -60,24 +52,25 @@ const getBlogIdentity = (data, fallbackImage) => {
   }
 }
 
-const BlogCard = ({
-  blog,
-  showIdentityGlow = true,
+export default function NewsCard({
+  news,
   size = "md",
   orientation = "vertical",
+  showIdentityGlow = true,
   showImpressions = true,
   showComments = true,
   showReport = true,
   interactionVisibility = null,
-}) => {
-  const data = blog || {}
-  const blogId = data.blogID || data.BlogID || data.id
-  const title = toUniformPlainText(data.title || "Untitled blog")
-  const summary = data.byline || data.summary || data.description || ""
-  const image = data.image || data.coverImage || data.heroImage || defaultImage
-  const href = data.href || (data.path ? `/blogs/${data.path}` : "/blogs")
-  const identity = getBlogIdentity(data, image)
-  const tags = normalizeTags(data.tags || data.categories || data.seoTags)
+}) {
+  const article = news || {}
+  const articleId = article.blogID || article.BlogID || article.id
+  const href = article.href || (article.path || article.slug ? `/news/${article.path || article.slug}` : "/news")
+  const title = article.title || article.headline || "TAG News Story"
+  const summary = article.summary || article.description || article.byline || ""
+  const image = article.image || article.heroImage || article.coverImage || defaultImage
+  const identity = getNewsIdentity(article, article.logo || image)
+  const date = article.date || article.publishedAt || article.createdAt || article.created
+  const tags = normalizeTags(article.tags || article.categories || article.seoTags)
 
   return (
     <UnifiedCard
@@ -86,8 +79,8 @@ const BlogCard = ({
       image={image}
       imageAlt={title}
       href={href}
-      badge="Blog"
-      date={data.created || data.date || data.publishedAt}
+      badge="News"
+      date={date}
       authorName={identity.name}
       authorImage={identity.image}
       authorRole={identity.role}
@@ -99,14 +92,12 @@ const BlogCard = ({
       showComments={showComments}
       showReport={showReport}
       interactionVisibility={interactionVisibility}
-      impressionTargetId={blogId}
+      impressionTargetId={articleId}
       impressionTargetType={4}
-      commentTargetId={blogId}
-      commentTargetType={3}
-      reportTargetId={blogId}
+      commentTargetId={articleId}
+      commentTargetType={4}
+      reportTargetId={articleId}
       reportTargetType="Blog"
     />
   )
 }
-
-export default BlogCard

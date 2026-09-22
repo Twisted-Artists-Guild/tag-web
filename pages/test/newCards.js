@@ -16,11 +16,15 @@ import { getPanelClass } from "@/components/cards/sizes/panel-layout";
 import PhotoGallery from "@/components/cards/card_photoGallery";
 import ArtistCard from "@/components/cards/card_artist";
 import ListingCard from "@/components/cards/card_listing";
+import UnifiedCard from "@/components/cards/UnifiedCard";
+import BlogCard from "@/components/cards/card_blog";
+import NewsCard from "@/components/cards/card_news";
 import ColoredTagCard from "@/components/cards/card_coloredTags";
 import ContentTags, { ContentWarningMediaGate } from "@/components/social/ContentTags";
 
 export default function NewCardsTestPage() {
 	const [hasExplicitConsent, setHasExplicitConsent] = useState(false);
+	const [cardInteractions, setCardInteractions] = useState({});
 
 	const artistsForDemo = profiles.slice(0, 3).map((profile, index) => {
 		const artistPath = profile.linkToArtistPage?.replace("/artists/", "") || profile.slug;
@@ -121,6 +125,107 @@ export default function NewCardsTestPage() {
 		},
 	];
 
+	const unifiedCardSamples = [
+		{
+			kind: "Artist",
+			id: 101,
+			title: artistsForDemo[0].title,
+			summary: artistsForDemo[0].byline,
+			image: artistsForDemo[0].profilePic.url,
+			imageAlt: `${artistsForDemo[0].title} profile`,
+			href: `/artists/${artistsForDemo[0].path}`,
+			badge: "Artist",
+			authorName: artistsForDemo[0].title,
+			authorImage: artistsForDemo[0].profilePic.url,
+			tags: artistsForDemo[0].artForms,
+		},
+		{
+			kind: "Vendor",
+			id: 102,
+			title: "Northstar Makers Cooperative",
+			summary: "Shared studio, fabrication, and fulfillment for independent makers.",
+			image: profiles[1]?.images?.[0] || "/blank_image.png",
+			imageAlt: "Northstar Makers Cooperative",
+			href: "/vendor/northstar-makers",
+			badge: "Vendor",
+			authorName: "Northstar Makers Cooperative",
+			authorImage: profiles[1]?.images?.[0] || "/blank_image.png",
+			tags: ["Fabrication", "Cooperative"],
+		},
+		{
+			kind: "Listing",
+			id: 1,
+			title: listingsForDemo[0].title,
+			summary: listingsForDemo[0].description,
+			image: listingsForDemo[0].profilePic.url,
+			imageAlt: listingsForDemo[0].profilePic.alttext,
+			href: `/artists/${listingsForDemo[0].artist.path}/listings/${listingsForDemo[0].path}`,
+			badge: "Listing",
+			date: listingsForDemo[0].created,
+			authorName: listingsForDemo[0].artist.title,
+			authorImage: listingsForDemo[0].profilePic.url,
+			tags: listingsForDemo[0].artForms,
+		},
+		{
+			kind: "Blog",
+			id: 201,
+			path: "unified-card-guide",
+			title: "Designing a Better Home for Creative Work",
+			summary: "A practical guide to making artist-first tools easier to discover.",
+			image: profiles[2]?.images?.[0] || "/blank_image.png",
+			date: "2026-09-17",
+			tags: ["Product", "Community"],
+		},
+		{
+			kind: "News",
+			id: 301,
+			title: "What Artists Are Building Together",
+			summary: "A compact news card showing the shared editorial treatment.",
+			image: profiles[0]?.images?.[0] || "/blank_image.png",
+			date: "2026-09-20",
+			tags: ["News", "Feature"],
+		},
+	];
+
+	const renderUnifiedSample = (sample, size) => {
+		const interactionKey = `${size}-${sample.kind}`;
+		const interactionConfig = cardInteractions[interactionKey] || { impressions: false, comments: false, report: false };
+		const sharedProps = {
+			title: sample.title,
+			summary: sample.summary,
+			image: sample.image,
+			imageAlt: sample.imageAlt || sample.title,
+			href: sample.href,
+			badge: sample.badge,
+			date: sample.date,
+			authorName: sample.authorName,
+			authorImage: sample.authorImage,
+			authorRole: sample.kind,
+			tags: sample.tags,
+			size,
+			showImpressions: interactionConfig.impressions,
+			showComments: interactionConfig.comments,
+			showReport: interactionConfig.report,
+			interactionVisibility: interactionConfig,
+			impressionTargetId: sample.id,
+			impressionTargetType: sample.kind === "Artist" ? 2 : sample.kind === "Listing" ? 1 : 4,
+			commentTargetId: sample.id,
+			commentTargetType: sample.kind === "Artist" ? 1 : sample.kind === "Listing" ? 2 : sample.kind === "News" ? 4 : 3,
+			reportTargetId: sample.id,
+			reportTargetType: sample.kind,
+		};
+
+		if (sample.kind === "Blog") {
+			return <BlogCard blog={{ ...sample, byline: sample.summary, path: sample.path }} {...sharedProps} />;
+		}
+
+		if (sample.kind === "News") {
+			return <NewsCard news={{ ...sample, description: sample.summary, id: sample.id }} {...sharedProps} />;
+		}
+
+		return <UnifiedCard {...sharedProps} />;
+	};
+
 	const galleryImages = profiles.slice(0, 2).flatMap((profile) => profile.images || []);
 	const singleGalleryImage = galleryImages[0] || "/blank_image.png";
 
@@ -143,7 +248,7 @@ export default function NewCardsTestPage() {
 				<TagSEO metadataProp={pageMetaData} canonicalSlug="test/newCards" />
 
 			<div className="mb-6">
-				<div>
+				<div className="self-start">
 					<h1 className="text-3xl md:text-4xl font-bold text-primary">Panel and Gallery Reference</h1>
 					<p className="text-sm text-base-content/70 mt-1">
 						Static examples for gallery, profile cards, artist cards, and art listing cards.
@@ -223,6 +328,55 @@ export default function NewCardsTestPage() {
 					</div>
 				))}
 			</div>
+
+			<h2 className="text-2xl md:text-3xl font-semibold text-primary mt-10 mb-4">Unified Card Size Reference</h2>
+			<p className="text-sm text-base-content/70 mb-6">
+				Every size below includes Artist, Vendor, Listing, Blog, and News cards for direct comparison.
+			</p>
+			{["xs", "sm", "md", "lg"].map((size) => (
+				<section key={size} className="mb-10">
+					<h3 className="text-xl font-semibold text-primary mb-3">{size.toUpperCase()} cards</h3>
+					<div className="grid items-start gap-6 grid-cols-1 md:grid-cols-2 xl:grid-cols-3">
+						{unifiedCardSamples.map((sample) => {
+							const interactionKey = `${size}-${sample.kind}`;
+							const interactionConfig = cardInteractions[interactionKey] || { impressions: false, comments: false, report: false };
+
+							return (
+							<div key={interactionKey} className="self-start min-w-0">
+								<p className="mb-2 text-xs font-semibold uppercase tracking-wide text-base-content/60">{sample.kind}</p>
+								<div className="mb-3 flex flex-wrap gap-x-3 gap-y-1 text-xs text-base-content/70">
+									{[
+										["impressions", "Impressions"],
+										["comments", "Comments"],
+										["report", "Report"],
+									].map(([key, label]) => (
+										<label key={key} className="inline-flex items-center gap-1.5">
+											<input
+												type="checkbox"
+												className="checkbox checkbox-xs"
+															checked={interactionConfig[key]}
+												onChange={(event) => {
+													const checked = event.target.checked;
+													setCardInteractions((current) => ({
+														...current,
+																[interactionKey]: {
+																	...current[interactionKey],
+															[key]: checked,
+														},
+													}));
+												}}
+											/>
+												{label}
+											</label>
+										))}
+								</div>
+								{renderUnifiedSample(sample, size)}
+							</div>
+							);
+						})}
+					</div>
+				</section>
+			))}
 
 			<h2 className="text-2xl md:text-3xl font-semibold text-primary mt-10 mb-4">Art Listing Card Examples</h2>
 			<p className="text-sm text-base-content/70 mb-4">Art piece and project listings with category, artist, and engagement info. Responsive 1-3 column grid.</p>
