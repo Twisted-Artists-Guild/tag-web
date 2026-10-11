@@ -495,9 +495,56 @@
     }
   }
 
+  /* Join panel Bloomscroll logo: on hover its flower morphs into the scroll mouse (JoinPanel.js),
+     then the wheel runs the same cue, scaled to the logo's units */
+  .tag-bloom-logo {
+    display: block;
+    width: 97px;
+    height: 18px;
+    fill: currentColor;
+  }
+
+  .tag-bloom-logo__wheel {
+    opacity: 0;
+    transition: opacity 150ms ease;
+  }
+
+  .tag-bloom-logo__wheel rect {
+    animation: tag-bloom-cue 1.8s ease-in-out infinite paused;
+  }
+
+  .is-scroll .tag-bloom-logo__wheel {
+    opacity: 1;
+  }
+
+  .is-scroll .tag-bloom-logo__wheel rect {
+    animation-play-state: running;
+  }
+
+  @keyframes tag-bloom-cue {
+    0% {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    70% {
+      transform: translateY(31px);
+      opacity: 0;
+    }
+
+    100% {
+      opacity: 0;
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
-    .tag-bs-mouse i {
+    .tag-bs-mouse i,
+    .tag-bloom-logo__wheel rect {
       animation: none;
+    }
+
+    .tag-bloom-logo__wheel {
+      transition: none;
     }
 
     .tag-feature__media img {
