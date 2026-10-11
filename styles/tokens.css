@@ -1,0 +1,141 @@
+/* This file is part of the Twisted Artists Guild project.
+
+ Copyright (C) 2025 Twisted Artists Guild
+
+ Licensed under the GNU General Public License v3.0
+ (https://www.gnu.org/licenses/gpl-3.0.en.html).
+
+ This software comes with NO WARRANTY; see the license for details.
+
+ Open source · low-profit · human-first*/
+
+/* TAG design tokens: the only place raw colours live.
+ * data-palette on <html>: "orig" (brand, default) | "7a" (Magenta). data-mode: "dark" (default) | "light".
+ * Brand: Ghost White #F5F5FC, Electric Indigo #6233FF, Onyx #151318, Chartreuse #CEFF1D. */
+
+:root {
+  /* brand + base (dark) */
+  --tag-indigo: #6233ff;
+  --tag-indigo-rgb: 98, 51, 255;
+  --tag-indigo-soft: #8f72ff;
+  --tag-indigo-deep: #4a22e0;
+  --tag-violet: #a62fd1;
+  --tag-magenta: #ff4fd8;
+  --tag-ghost: #f5f5fc;
+  --tag-on-fill: #ffffff;
+
+  --tag-bg: #151318;
+  --tag-bg-2: #1a171f;
+  --tag-bg-3: #0e0c12;
+  --tag-surface: #1d1a24;
+  --tag-surface-2: #24202d;
+  --tag-line: rgba(255, 255, 255, 0.08);
+  --tag-line-2: rgba(255, 255, 255, 0.14);
+  --tag-text: #f5f5fc;
+  --tag-text-2: #c9c5d6;
+  --tag-muted: #9a96aa;
+  --tag-text-strong: #ffffff;
+  --tag-tint-1: rgba(255, 255, 255, 0.04);
+  --tag-tint-2: rgba(255, 255, 255, 0.07);
+  --tag-edge-mid: rgba(255, 255, 255, 0.06);
+  --tag-band: rgba(255, 255, 255, 0.018);
+  --tag-glass: rgba(18, 16, 22, 0.72);
+  --tag-panel: rgba(22, 19, 28, 0.94);
+  --tag-panel-foot: rgba(14, 12, 18, 0.6);
+  --tag-scrim: rgba(8, 6, 12, 0.55);
+  --tag-inset-highlight: rgba(255, 255, 255, 0.18); /* top sheen on filled buttons */
+  --tag-shadow-rgb: 0, 0, 0; /* drop shadows */
+  --tag-photo-shade: 18, 16, 22; /* rgb of the dark overlay on photos (both modes) */
+  --tag-photo-text: #f5f5fc; /* text on photos: photos stay dark in both modes */
+  --tag-photo-text-2: #c9c5d6;
+  --tag-light-rgb: 255, 255, 255; /* white glass on photos */
+  --tag-mark-start: #ffffff; /* first stop of the static TAG mark gradient */
+
+  /* status */
+  --tag-info: #8f72ff;
+  --tag-success: #b9e614;
+  --tag-warning: #ffd166;
+  --tag-error: #ff5d73;
+
+  /* palette: Original (brand) */
+  --tag-acc: #ceff1d;
+  --tag-acc-rgb: 206, 255, 29;
+  --tag-acc-text: #ceff1d;
+  --tag-btn-end: #7b4dff;
+  --tag-swatch-orig: linear-gradient(135deg, #4a22e0, #6233ff 50%, #ceff1d);
+  --tag-swatch-7a: linear-gradient(135deg, #4a22e0, #6233ff 45%, #ff4fd8);
+  --tag-swatch: var(--tag-swatch-orig);
+
+  /* shape */
+  --tag-r-sm: 10px;
+  --tag-r-md: 14px;
+  --tag-r-lg: 20px;
+  --tag-r-xl: 28px;
+  --tag-r-pill: 999px;
+
+  /* type (MyLayout sets the real next/font family names; these are fallbacks) */
+  --tag-font-body: "Manrope", system-ui, sans-serif;
+  --tag-font-heading: "Sora", var(--tag-font-body);
+  --tag-heading-track: -0.025em;
+
+  /* layout */
+  --tag-container: 1200px;
+  --tag-sb-w: 340px;
+  --tag-sb-top: 0px;
+
+  /* signature gradients */
+  --tag-grad-btn: linear-gradient(135deg, var(--tag-indigo-deep) 0%, var(--tag-indigo) 50%, var(--tag-btn-end) 100%);
+  --tag-grad-text-dark: linear-gradient(100deg, #ffffff 0%, #d9ceff 38%, #8f72ff 62%, var(--tag-acc) 100%);
+  --tag-grad-text: var(--tag-grad-text-dark);
+  --tag-grad-figure: linear-gradient(90deg, var(--tag-text-strong), var(--tag-acc-text));
+  --tag-grad-bar: linear-gradient(90deg, var(--tag-indigo), var(--tag-acc));
+  --tag-grad-edge: linear-gradient(135deg, rgba(var(--tag-indigo-rgb), 0.9), var(--tag-edge-mid) 45%, rgba(var(--tag-acc-rgb), 0.7));
+
+  color-scheme: dark;
+}
+
+/* palettes */
+html[data-palette="7a"] {
+  --tag-acc: #ff4fd8;
+  --tag-acc-rgb: 255, 79, 216;
+  --tag-acc-text: #ff4fd8;
+  --tag-btn-end: #a62fd1;
+  --tag-swatch: var(--tag-swatch-7a);
+}
+
+/* light mode: same palettes, light surfaces; accent text darkened to pass AA. Photo areas stay dark. */
+html[data-mode="light"] {
+  --tag-bg: #f7f5fc;
+  --tag-bg-2: #efecf7;
+  --tag-bg-3: #e7e3f2;
+  --tag-surface: #ffffff;
+  --tag-surface-2: #f3f0fa;
+  --tag-line: rgba(29, 26, 36, 0.1);
+  --tag-line-2: rgba(29, 26, 36, 0.16);
+  --tag-text: #1d1a24;
+  --tag-text-2: #3f3a4d;
+  --tag-muted: #5d586b;
+  --tag-text-strong: #121016;
+  --tag-indigo-soft: #5b2ff0;
+  --tag-tint-1: rgba(29, 26, 36, 0.04);
+  --tag-tint-2: rgba(29, 26, 36, 0.07);
+  --tag-edge-mid: rgba(29, 26, 36, 0.07);
+  --tag-band: rgba(98, 51, 255, 0.035);
+  --tag-glass: rgba(247, 245, 252, 0.8);
+  --tag-panel: rgba(250, 249, 253, 0.97);
+  --tag-panel-foot: rgba(239, 236, 247, 0.85);
+  --tag-scrim: rgba(29, 26, 36, 0.35);
+  --tag-mark-start: #1d1a24;
+  --tag-acc-text: #4a6600;
+  --tag-grad-text: linear-gradient(100deg, #1d1a24 0%, #4a22e0 50%, var(--tag-acc-text) 100%);
+  color-scheme: light;
+}
+
+html[data-mode="light"][data-palette="7a"] {
+  --tag-acc-text: #b0128c;
+}
+
+/* Tailwind's font-sans utility uses the brand body font */
+@theme {
+  --font-sans: var(--tag-font-body);
+}

@@ -1,0 +1,181 @@
+/* This file is part of the Twisted Artists Guild project.
+
+ Copyright (C) 2025 Twisted Artists Guild
+
+ Licensed under the GNU General Public License v3.0
+ (https://www.gnu.org/licenses/gpl-3.0.en.html).
+
+ This software comes with NO WARRANTY; see the license for details.
+
+ Open source · low-profit · human-first*/
+
+/* Footer */
+@layer components {
+  /* TAG mark gradient stops follow the palette and mode */
+  .tag-mark__stop-1 {
+    stop-color: var(--tag-mark-start);
+  }
+
+  .tag-mark__stop-2 {
+    stop-color: var(--tag-indigo-soft);
+  }
+
+  .tag-mark__stop-3 {
+    stop-color: var(--tag-acc);
+  }
+
+  .tag-footer {
+    position: relative;
+    border-top: 1px solid var(--tag-line);
+    background: linear-gradient(180deg, var(--tag-bg-2), var(--tag-bg-3));
+    padding: 72px 0 0;
+  }
+
+  .tag-footer::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -1px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(var(--tag-indigo-rgb), 0.8), rgba(var(--tag-acc-rgb), 0.6), transparent);
+  }
+
+  .tag-footer__grid {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr 1fr 1fr;
+    gap: 40px;
+  }
+
+  .tag-footer__mark {
+    display: inline-block;
+    margin-bottom: 18px;
+    border-radius: var(--tag-r-sm);
+  }
+
+  .tag-footer__mark .tag-mark {
+    display: block;
+    height: 48px;
+    width: auto;
+    filter: drop-shadow(0 4px 14px rgba(var(--tag-indigo-rgb), 0.45));
+  }
+
+  .tag-footer__brand p {
+    color: var(--tag-text-2);
+    font-size: 15px;
+    margin: 0 0 22px;
+    max-width: 340px;
+  }
+
+  .tag-footer__brand .tag-footer__mission {
+    font-family: var(--tag-font-body);
+    font-weight: 500;
+    font-size: 15px;
+    color: var(--tag-text);
+    line-height: 1.6;
+    padding-left: 14px;
+    border-left: 2px solid;
+    border-image: linear-gradient(180deg, var(--tag-indigo), var(--tag-acc)) 1;
+  }
+
+  .tag-footer__socials {
+    display: flex;
+    gap: 8px;
+    margin: 22px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .tag-footer__socials a {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--tag-r-sm);
+    display: grid;
+    place-items: center;
+    color: var(--tag-text-2);
+    background: var(--tag-tint-1);
+    border: 1px solid var(--tag-line);
+  }
+
+  .tag-footer__socials svg {
+    width: 17px;
+    height: 17px;
+  }
+
+  .tag-footer__col h2 {
+    font: 700 12px/1 var(--tag-font-body);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--tag-muted);
+    margin: 6px 0 18px;
+  }
+
+  .tag-footer__col ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .tag-footer__col a {
+    display: block;
+    color: var(--tag-text-2);
+    font-size: 15px;
+    padding: 6px 0;
+  }
+
+  .tag-footer__bottom {
+    margin-top: 56px;
+    border-top: 1px solid var(--tag-line);
+    padding: 22px 0 28px;
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    font-size: 13.5px;
+    color: var(--tag-muted);
+  }
+
+  .tag-footer__bottom nav {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .tag-footer__bottom a {
+    color: var(--tag-muted);
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .tag-footer__socials a:hover {
+      color: var(--tag-text-strong);
+      border-color: rgba(var(--tag-acc-rgb), 0.5);
+      background: rgba(var(--tag-acc-rgb), 0.08);
+    }
+
+    .tag-footer__col a:hover,
+    .tag-footer__bottom a:hover {
+      color: var(--tag-text-strong);
+    }
+  }
+
+  @media (max-width: 900px) {
+    .tag-footer__grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      column-gap: 24px;
+      row-gap: 36px;
+    }
+
+    .tag-footer__brand {
+      grid-column: 1 / -1;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .tag-footer__bottom {
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+  }
+}
+

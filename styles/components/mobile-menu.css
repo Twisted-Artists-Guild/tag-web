@@ -1,0 +1,94 @@
+/* This file is part of the Twisted Artists Guild project.
+
+ Copyright (C) 2025 Twisted Artists Guild
+
+ Licensed under the GNU General Public License v3.0
+ (https://www.gnu.org/licenses/gpl-3.0.en.html).
+
+ This software comes with NO WARRANTY; see the license for details.
+
+ Open source · low-profit · human-first*/
+
+/* Mobile menu (below 1060px) */
+@layer components {
+  .tag-mobile-menu {
+    display: none;
+  }
+
+  @media (max-width: 1059px) {
+    .tag-mobile-menu.is-open {
+      display: block;
+      border-top: 1px solid var(--tag-line);
+      padding: 12px 0 20px;
+      /* not --tag-sb-top: that is the header's bottom edge, which includes this open menu */
+      max-height: calc(100dvh - 120px);
+      overflow-y: auto;
+      overscroll-behavior: contain;
+    }
+  }
+
+  .tag-mobile-menu__bloom {
+    display: inline-flex;
+    align-items: center;
+    padding: 10px 14px;
+    margin: 4px 0 10px;
+    border-radius: 12px;
+  }
+
+  .tag-mobile-menu__bloom img {
+    height: 18px;
+    width: auto;
+  }
+
+  .tag-mobile-menu__links {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .tag-mobile-menu__links a {
+    display: block;
+    font: 600 16px/1.4 var(--tag-font-body);
+    color: var(--tag-text-2);
+    padding: 12px 4px;
+    border-bottom: 1px solid var(--tag-line);
+  }
+
+  .tag-mobile-menu__links a[aria-current="page"] {
+    color: var(--tag-text-strong);
+  }
+
+  .tag-mobile-menu__row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 16px;
+  }
+
+  /* Items fade in one after another (--i set inline) */
+  .tag-mobile-menu.is-open .tag-mobile-menu__bloom,
+  .tag-mobile-menu.is-open .tag-mobile-menu__links li {
+    animation: tag-menu-in 0.32s ease both;
+    animation-delay: calc(var(--i, 0) * 35ms);
+  }
+
+  @keyframes tag-menu-in {
+    from {
+      opacity: 0;
+      transform: translateY(-6px);
+    }
+
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .tag-mobile-menu.is-open .tag-mobile-menu__bloom,
+    .tag-mobile-menu.is-open .tag-mobile-menu__links li {
+      animation: none;
+    }
+  }
+}
