@@ -10,11 +10,22 @@
  Open source · low-profit · human-first*/
 import { Html, Head, Main, NextScript } from "next/document";
 import config from "@/config";
-import { DEFAULT_PREFS, themeHeadScript } from "@/utils/themePrefs";
-import { noticeHeadScript } from "@/components/NoticeBar";
+import { DAISY_THEME_BY_MODE, DEFAULT_PREFS, MODES, PALETTES, STORAGE_KEYS } from "@/components/Header/PalettePicker";
+import { DEV_BANNER_DISMISS_KEY, NOTICE_HIDDEN_CLASS } from "@/components/NoticeBar";
 
 export default function Document() {
   const ghlTrackingId = process.env.NEXT_PUBLIC_GHL_TRACKING_ID;
+  const themeConfig = JSON.stringify({ keys: STORAGE_KEYS, allowed: { palette: PALETTES, mode: MODES }, defaults: DEFAULT_PREFS, daisy: DAISY_THEME_BY_MODE });
+
+  // Runs before first paint: restores the saved palette and mode (moving the old `theme` key over),
+  // marks <html> with tag-js for the scroll reveal, and hides a dismissed notice bar.
+  const headScript = `(function(){try{var c=${themeConfig},s=localStorage,r=document.documentElement;`
+    + `try{var l=s.getItem(c.keys.legacy);if(l!==null){if(s.getItem(c.keys.mode)===null)s.setItem(c.keys.mode,l==="light"?"light":"dark");s.removeItem(c.keys.legacy);}}catch(e){}`
+    + `var p=c.defaults.palette,m=c.defaults.mode;`
+    + `try{var sp=s.getItem(c.keys.palette),sm=s.getItem(c.keys.mode);if(c.allowed.palette.indexOf(sp)>-1)p=sp;if(c.allowed.mode.indexOf(sm)>-1)m=sm;}catch(e){}`
+    + `r.setAttribute("data-palette",p);r.setAttribute("data-mode",m);r.setAttribute("data-theme",c.daisy[m]);r.classList.add("tag-js");`
+    + `}catch(e){}})();`
+    + `(function(){try{var u=Number(localStorage.getItem(${JSON.stringify(DEV_BANNER_DISMISS_KEY)})||"0");if(u>Date.now())document.documentElement.classList.add(${JSON.stringify(NOTICE_HIDDEN_CLASS)});}catch(e){}})();`;
 
   return (
     <Html
@@ -27,8 +38,8 @@ export default function Document() {
       suppressHydrationWarning
     >
       <Head>
-        {/* Restores the saved palette + mode before first paint (no flash). Must stay first. */}
-        <script dangerouslySetInnerHTML={{ __html: themeHeadScript() + noticeHeadScript() }} />
+        {/* Must stay first, so the saved palette applies with no flash */}
+        <script dangerouslySetInnerHTML={{ __html: headScript }} />
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
         <link

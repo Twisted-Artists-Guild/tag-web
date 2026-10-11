@@ -9,8 +9,7 @@
 
  Open source · low-profit · human-first*/
 
-/* Fields: inputs, search, select, textarea. Surface fill, 1px hairline, accent focus ring.
- * Same nested layer as daisyUI so Tailwind utilities can still override (see button.css). */
+/* Fields: inputs, select and textarea. In daisyUI's nested layer so utilities still win. */
 
 @layer utilities {
   @layer daisyui {

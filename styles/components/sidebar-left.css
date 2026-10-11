@@ -9,9 +9,7 @@
 
  Open source · low-profit · human-first*/
 
-@layer properties, theme, base, components, utilities;
-
-/* Browse panel (components/Sidebar-left.js): search field and category chips. */
+/* Browse panel: search and category chips */
 @layer components {
   .tag-panel__search {
     display: flex;

@@ -9,8 +9,7 @@
 
  Open source · low-profit · human-first*/
 
-/* Site shell layout. The old tag-theme/neon backdrops (grid texture, shimmering prism bars)
-   are replaced by one quiet ambient light built from tokens. */
+/* Site shell layout */
 
 .site-shell {
   position: relative;
@@ -30,7 +29,7 @@
   margin: 0 auto;
 }
 
-/* ---------- Page rhythm (shared) ---------- */
+/* Page rhythm */
 @layer components {
   .tag-container {
     width: 100%;
@@ -81,8 +80,7 @@
     }
   }
 }
-/* Dashboard panels push the page from 1280px (below that they overlay with a scrim).
-   Attributes set on .site-shell by components/MyLayout.js. */
+/* Open panels push the page from 1280px; below that they overlay it */
 @media (min-width: 1280px) {
   .site-shell[data-left-open] > :is(.site-main, footer) {
     margin-left: var(--tag-sb-w);
@@ -92,8 +90,7 @@
     margin-right: var(--tag-sb-w);
   }
 }
-/* Full-bleed pages (the landing): no shell padding or width cap. Unlayered on purpose, like the
-   .site-main rules above, so it beats the shell's p-4 utility. */
+/* Full-bleed pages (the landing). Unlayered so it beats the shell's p-4 utility. */
 .site-main:has(> .site-main-inner > .tag-landing) {
   padding: 0;
 }

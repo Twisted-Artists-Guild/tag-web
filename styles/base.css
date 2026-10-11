@@ -9,7 +9,7 @@
 
  Open source · low-profit · human-first*/
 
-/* Site-wide element styles (moved from globals.css, in @layer base so components and Tailwind utilities can override them). */
+/* Site-wide element styles, in @layer base so components and utilities can override them */
 
 @layer base {
   html,
@@ -65,7 +65,7 @@
     text-align: center;
   }
 
-  /* Links: soft indigo passes AA on dark (indigo #6233ff as text would not); accent text on hover */
+  /* Links: soft indigo, because indigo text fails AA on dark */
   a:not(.btn) {
     color: var(--tag-indigo-soft);
     text-decoration: none;
@@ -131,10 +131,7 @@
   }
 }
 
-/* daisyUI colour utilities used as TEXT must pass AA:
-   - text-primary is indigo #6233ff (3.09:1 on dark): dark mode uses soft indigo.
-   - text-secondary / text-accent are the bright accent (chartreuse/magenta): fine on dark, fails on
-     light, so light mode uses the darkened accent text colour. */
+/* Keep daisyUI colour utilities readable as text (AA): indigo fails on dark, the bright accent on light */
 @layer utilities {
   html[data-mode="dark"] .text-primary {
     color: var(--tag-indigo-soft);
@@ -151,7 +148,8 @@
     scroll-behavior: auto !important;
   }
 }
-/* ---------- Brand helpers (shared by every redesigned page) ---------- */
+
+/* Brand helpers */
 @layer components {
   .tag-accent-bar {
     width: 44px;
@@ -198,7 +196,7 @@
     flex-wrap: wrap;
   }
 
-  /* Check list: gradient tick tiles (white tick on the button gradient passes on every palette) */
+  /* Check list with gradient tick tiles */
   .tag-checks {
     list-style: none;
     padding: 0;
@@ -287,7 +285,7 @@
     background: var(--tag-grad-btn);
   }
 
-  /* Reveal on scroll (hooks/useRevealOnScroll). Opt-in: only inside a .tag-reveal-scope that runs the hook,`n     and only when JS runs (html.tag-js), so shared sections stay visible on other pages. */
+  /* Reveal on scroll: only inside .tag-reveal-scope and only when JS runs, so nothing stays hidden */
   html.tag-js .tag-reveal-scope [data-reveal] {
     opacity: 0;
     transform: translateY(18px);

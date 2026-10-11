@@ -9,19 +9,8 @@
 
  Open source · low-profit · human-first*/
 
-@layer properties, theme, base, components, utilities;
-
-/* Header (components/Header/Header.js), per mockup v5 ".header/.nav".
- *
- * Nav hover flicker (owner-reported in the mockup) is prevented by construction:
- *  1. The frosted blur sits on its own ::before layer, not on the box holding the links, so a
- *     link hover never invalidates the blurred layer.
- *  2. No `filter` on the header or any ancestor (a filter above a backdrop-filter forces a full
- *     re-render; the old header's triple drop-shadow filter is gone).
- *  3. A link's hover tint is a ::before that fades with opacity only (compositor work). The text
- *     colour switch has no transition.
- *  4. Hover never changes a box: no border, padding, weight or size change.
- *  5. The link list is paint-contained. */
+/* Header. The blur sits on ::before and link hovers fade opacity only, so hovering never
+ * repaints the header (no filter on it or its ancestors, which would cause flicker). */
 @layer components {
   .tag-header {
     position: sticky;
@@ -109,7 +98,7 @@
     background: var(--tag-tint-2);
     opacity: 0;
     transition: opacity 0.2s ease;
-    will-change: opacity; /* own compositor layer: the hover fade never repaints the header */
+    will-change: opacity;
   }
 
   .tag-header__link[aria-current="page"] {
@@ -315,8 +304,8 @@
   }
 }
 
-/* The bug-report button (forms/bug-report.js) brings its own Tailwind classes; match the icon
-   buttons here. Utilities layer + a two-class selector so it beats those single-class utilities. */
+/* The bug-report button brings its own Tailwind classes; a two-class selector in the utilities
+   layer beats them so it matches the icon buttons */
 @layer utilities {
   .tag-header__bug .btn {
     width: 40px;

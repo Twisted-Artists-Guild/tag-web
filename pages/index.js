@@ -13,7 +13,7 @@
 
 "use client"
 
-import { useRef } from "react"
+import { useEffect, useRef } from "react"
 
 import TagSEO from "@/components/TagSEO"
 import CascadeHero from "@/components/homepage/CascadeHero"
@@ -25,18 +25,37 @@ import CardPricing from "@/components/homepage/Card_Pricing"
 import CardBloomscroll from "@/components/homepage/Card_Bloomscroll"
 import FAQ from "@/components/homepage/FAQ"
 import JoinPanel from "@/components/homepage/JoinPanel"
-import useRevealOnScroll from "@/hooks/useRevealOnScroll"
 
 /**
- * Home/index page component: the landing page (TAG redesign, page 1).
- * Sections: cascade hero with the morph mark, "Tired of Doomscrolling?", five feature cards,
- * FAQ, "Please join us". No divider lines: spacing and faint bands separate the sections.
+ * Home/index page component
+ * Serves as the landing page for the site
  *
- * @returns {JSX.Element} Home page component
+ * @returns {JSX.Element} Home page component with hero, feature cards, FAQ, and join panel
  */
 export default function Home() {
   const pageRef = useRef(null)
-  useRevealOnScroll(pageRef)
+
+  // Fade [data-reveal] sections in once as they scroll into view. Without JS the CSS never hides them.
+  useEffect(() => {
+    const elements = Array.from(pageRef.current?.querySelectorAll("[data-reveal]") || [])
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches || !("IntersectionObserver" in window)) {
+      elements.forEach((element) => element.classList.add("is-in"))
+      return undefined
+    }
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("is-in")
+          observer.unobserve(entry.target)
+        }
+      })
+    }, { rootMargin: "0px 0px -8% 0px" })
+
+    elements.forEach((element) => observer.observe(element))
+    return () => observer.disconnect()
+  }, [])
+
   const pageMetaData = {
     title: "Discover Artists, Events, and Creative Tools",
     description: "Browse artist portfolios, discover original work, and grow your creative business with creator-first tools for payments, POS, pricing, budgeting, payroll, accounting, project workflows, event management, CRM, and marketing.",

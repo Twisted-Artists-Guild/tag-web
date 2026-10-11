@@ -9,11 +9,9 @@
 
  Open source · low-profit · human-first*/
 
-@layer properties, theme, base, components, utilities;
-
-/* Landing page (pages/index.js + components/homepage/*), per mockup v5. */
+/* Landing page */
 @layer components {
-  /* ---------- cascade hero ---------- */
+  /* Cascade hero */
   /* Photo areas stay dark in both modes, so text here uses fixed light values */
   .tag-cascade {
     --tag-text: var(--tag-photo-text);
@@ -53,8 +51,7 @@
       linear-gradient(180deg, rgba(var(--tag-photo-shade), 0.4) 0%, rgba(var(--tag-photo-shade), 0.6) 84%, var(--tag-bg) 100%);
   }
 
-  /* One 12-column grid, equal row gaps: step 1 left edge, step 2 centred, step 3 right edge.
-     Sizes follow the space actually available (cqi), so the cascade holds with sidebars open. */
+  /* Sized in cqi so the cascade keeps its shape when the sidebars narrow the page */
   .tag-cascade__grid {
     container-type: inline-size;
     display: grid;
@@ -107,7 +104,7 @@
     background: var(--tag-grad-bar);
   }
 
-  /* ---------- morph mark ---------- */
+  /* Morph mark */
   .tag-morph-mark {
     position: absolute;
     left: 50%;
@@ -177,7 +174,7 @@
     }
   }
 
-  /* ---------- "Tired of Doomscrolling?" split ---------- */
+  /* "Tired of Doomscrolling?" */
   .tag-split {
     display: grid;
     grid-template-columns: 1.05fr 1fr;
@@ -200,7 +197,7 @@
     justify-content: flex-start;
   }
 
-  /* ---------- intro reel ---------- */
+  /* Intro reel */
   .tag-reel {
     position: relative;
     border-radius: var(--tag-r-lg);
@@ -212,7 +209,7 @@
   .tag-reel__poster {
     object-fit: cover;
     object-position: 40% 25%;
-    transform: scale(1.14); /* crops Vimeo's watermark off the official thumbnail */
+    transform: scale(1.14); /* crops Vimeo's watermark off the thumbnail */
     transform-origin: 35% 30%;
   }
 
@@ -284,7 +281,7 @@
     font-weight: 500;
   }
 
-  /* ---------- feature cards ---------- */
+  /* Feature cards */
   .tag-features {
     display: grid;
     gap: 28px;
@@ -409,7 +406,7 @@
     }
   }
 
-  /* ---------- join panel ---------- */
+  /* Join panel */
   .tag-join {
     padding: 40px 0 104px;
   }
@@ -459,7 +456,7 @@
     font-size: 17px;
   }
 
-  /* ---------- Bloomscroll cue: the original hero scroll-cue animation, endless ---------- */
+  /* Bloomscroll buttons: scrolling mouse-wheel cue */
   .tag-bs-mouse {
     position: relative;
     flex: none;

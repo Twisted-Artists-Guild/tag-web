@@ -9,7 +9,7 @@
 
  Open source · low-profit · human-first*/
 
-/* Accordion (FAQ): rounded <details> rows; the open row gets the gradient edge and a gradient +/- icon. */
+/* Accordion (FAQ) built on <details> */
 
 @layer components {
   .tag-accordion {

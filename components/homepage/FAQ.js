@@ -9,8 +9,6 @@
 
  Open source · low-profit · human-first*/
 
-
-
 // <FAQ> component is a lsit of <Item> component
 // Just import the FAQ & add your FAQ content to the const faqList
 
@@ -69,7 +67,7 @@ const Item = ({ item, defaultOpen = false }) => {
 	)
 }
 
-/** "Questions, answered": the landing FAQ (also used by /about/features). First question open. */
+// Also used on /about/features
 const FAQ = () => {
 	return (
 		<section className="tag-section tag-section--band" id="faq">

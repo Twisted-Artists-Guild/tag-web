@@ -13,11 +13,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { BLOOMSCROLL_HREF } from "@/components/Header/nav-links"
 
-/**
- * Landing "Please join us" panel: compact, gradient-edged, a soft saxophonist photo behind the
- * gradient light, and the two buttons centred directly under the text.
- * (The older full-screen CTA.js stays on /about/pricing until that page is redesigned.)
- */
+/** Landing "Please join us" panel */
 export default function JoinPanel() {
   return (
     <section className="tag-join" aria-labelledby="tag-join-title">

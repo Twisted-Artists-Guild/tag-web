@@ -9,9 +9,7 @@
 
  Open source · low-profit · human-first*/
 
-@layer properties, theme, base, components, utilities;
-
-/* Palette picker (components/Header/PalettePicker.js), per mockup v5 ".pal-*". */
+/* Palette picker */
 @layer components {
   .tag-pal {
     position: relative;
@@ -44,7 +42,7 @@
     transition: opacity 0.18s ease, transform 0.18s ease;
   }
 
-  /* Kept in the layout while closed so it can fade; hidden from everyone (visibility) */
+  /* Stays in the layout while closed so it can fade */
   .tag-pal__pop[hidden] {
     display: block;
     opacity: 0;
@@ -195,7 +193,7 @@
     color: var(--tag-muted);
   }
 
-  /* Mobile-menu copy */
+  /* Inline version in the mobile menu */
   .tag-pal--inline {
     padding: 14px 4px 6px;
   }

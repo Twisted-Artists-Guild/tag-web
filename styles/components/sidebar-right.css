@@ -9,9 +9,7 @@
 
  Open source · low-profit · human-first*/
 
-@layer properties, theme, base, components, utilities;
-
-/* Cart panel (components/Sidebar-right.js): item cards, stepper, totals, empty state. */
+/* Cart panel */
 @layer components {
   .tag-cart__list {
     display: grid;

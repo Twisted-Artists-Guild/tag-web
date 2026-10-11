@@ -10,96 +10,41 @@
  Open source · low-profit · human-first*/
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { Fragment, useEffect, useRef, useState } from "react"
+import Image from "next/image"
 import Link from "next/link"
 import { useRouter } from "next/router"
+import { useSession } from "next-auth/react"
 import { PanelLeft, Search, ShoppingCart } from "lucide-react"
-import { useLayout } from "./LayoutProvider"
+import { BROWSE_PANEL_ID, useLayout } from "./LayoutProvider"
 import { useCart } from "@/components/cart/CartContext"
 import { hasExplicitWarning, extractContentWarnings } from "@/components/social/ContentTags"
-import SidePanel from "@/components/sidebar/SidePanel"
-import EdgeTab from "@/components/sidebar/EdgeTab"
-import SidebarRow from "@/components/sidebar/SidebarRow"
-import SidebarFavorites from "@/components/sidebar/SidebarFavorites"
-import { filterSidebarItems } from "@/utils/sidebarFilter"
 
-export const BROWSE_PANEL_ID = "tag-browse-panel"
 const ROWS_PER_SECTION = 6
+const MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
 const DEFAULT_FILTERS = [
   { label: "All art", value: "-1" },
   { label: "Paintings", value: "3" },
   { label: "Sculpture", value: "30" },
 ]
-
-function listingRow(listing, onAddToCart) {
-  const artist = listing?.artist || listing?.vendor || {}
-  const href = listing?.artist?.path && listing?.path ? `/artists/${listing.artist.path}/listings/${listing.path}` : "/art/"
-  const price = Number(listing?.price || 0)
-  return {
-    key: listing?.id || listing?.listingID || listing?.path || listing?.title,
-    href,
-    title: listing?.title || "Untitled listing",
-    meta: artist?.title || artist?.name || "",
-    media: { kind: "thumb", src: listing?.profilePic?.url || listing?.defaultImageURL || listing?.image || "" },
-    explicit: hasExplicitWarning(extractContentWarnings(listing)),
-    price,
-    action: price > 0 ? (
-      <button
-        type="button"
-        className="tag-row__action"
-        aria-label={`Add ${listing?.title || "listing"} to cart`}
-        title="Add to cart"
-        onClick={() => onAddToCart(listing)}
-      >
-        <ShoppingCart aria-hidden="true" />
-      </button>
-    ) : null,
-  }
+const SEARCH_FIELDS = {
+  artists: ["biography", "byline", "title", "path", "seotags", "statement"],
+  events: ["description", "title", "note", "path"],
+  listings: ["description", "title", "culture", "medium", "path", "artCategory"],
 }
 
-function artistRow(artist) {
-  return {
-    key: artist?.id || artist?.artistID || artist?.path || artist?.title,
-    href: artist?.path ? `/artists/${artist.path}` : "/artists",
-    title: artist?.title || "Untitled artist",
-    meta: artist?.byline || artist?.locationSummary || "",
-    media: { kind: "avatar", src: artist?.profilePic?.url || artist?.profilePic?.URL || artist?.profilePicUrl || "" },
-  }
+// Demo data: there is no favorites API yet, so removing one only lasts until reload
+const DEMO_FAVORITES = {
+  artists: [
+    { id: "fav-artist-twistedpassions", label: "TwistedPassions", href: "/artists/TwistedPassions" },
+  ],
+  artListings: [
+    { id: "fav-tiedye3", label: "TwistedPassions - tiedye3", href: "/artists/TwistedPassions/listings/tiedye3" },
+    { id: "fav-tiedye2", label: "TwistedPassions - tiedye2", href: "/artists/TwistedPassions/listings/tiedye2" },
+  ],
 }
 
-function eventRow(event) {
-  const location = typeof event?.location === "string" ? event.location : event?.location?.name || event?.venue?.name || ""
-  return {
-    key: event?.id || event?.eventID || event?.path || event?.title,
-    href: event?.href || (event?.path ? `/events/${event.path}` : "/events"),
-    title: event?.name || event?.title || "Untitled event",
-    meta: location,
-    media: { kind: "date", date: event?.date || event?.startDate || event?.startsAt },
-  }
-}
-
-function RowSection({ id, title, seeAllHref, rows }) {
-  if (!rows.length) return null
-  return (
-    <section className="tag-panel__section" aria-labelledby={id}>
-      <h3 id={id} className="tag-panel__section-title">
-        {title}
-        <Link href={seeAllHref}>See all</Link>
-      </h3>
-      <ul className="tag-rows">
-        {rows.slice(0, ROWS_PER_SECTION).map(({ key, ...row }, index) => (
-          <SidebarRow key={key || index} {...row} />
-        ))}
-      </ul>
-    </section>
-  )
-}
-
-/**
- * Browse panel (left): search, category chips, the visitor's favorites, then compact rows for
- * featured listings, artists and events. Data comes from page props; when a page gives none,
- * listings are fetched the first time the panel opens.
- */
+/** Browse panel: search, category chips, favorites, and featured listings, artists and events. */
 export default function LeftSidebar(props) {
   const artists = props.artists || []
   const events = props.events || []
@@ -108,8 +53,10 @@ export default function LeftSidebar(props) {
 
   const { isLeftSidebarVisible, toggleLeftSidebar, toggleRightSidebar } = useLayout()
   const { addToCart } = useCart()
+  const { data: session } = useSession()
   const router = useRouter()
   const [listings, setListings] = useState(props.listings || [])
+  const [favorites, setFavorites] = useState(DEMO_FAVORITES)
   const [searchTerm, setSearchTerm] = useState("")
   const [activeFilter, setActiveFilter] = useState("-1")
   const searchInputRef = useRef(null)
@@ -118,7 +65,7 @@ export default function LeftSidebar(props) {
   const shouldFetchListings = (!props.contentType || props.contentType === "auto")
     && !props.listings?.length && !artists.length && !events.length
 
-  // Fetch listings on first open only (they used to be downloaded on every page load).
+  // Listings load the first time the panel opens
   useEffect(() => {
     if (!isLeftSidebarVisible || !shouldFetchListings || hasFetchedRef.current) return
     hasFetchedRef.current = true
@@ -139,7 +86,7 @@ export default function LeftSidebar(props) {
     }
   }, [api_url, isLeftSidebarVisible, shouldFetchListings])
 
-  // The header's search button opens this panel and focuses the field.
+  // The header's search button opens this panel and focuses the field
   useEffect(() => {
     const handleSidebarSearchFocus = () => {
       toggleLeftSidebar(true)
@@ -149,86 +96,265 @@ export default function LeftSidebar(props) {
     return () => window.removeEventListener("sidebarSearchFocus", handleSidebarSearchFocus)
   }, [toggleLeftSidebar])
 
-  function runSearch() {
-    router.push(`/search?term=${encodeURIComponent(searchTerm)}`)
-  }
-
   function handleAddToCart(listing) {
     addToCart({ ...listing, id: listing.listingID || listing.id, price: Number(listing.price || 0) }, 1)
     toggleRightSidebar(true)
   }
 
-  // Categories only exist on listings; artists and events are filtered by the search text alone.
-  const listingRows = filterSidebarItems(listings, { type: "listings", term: searchTerm, category: activeFilter })
-    .map((listing) => listingRow(listing, handleAddToCart))
-  const artistRows = filterSidebarItems(artists, { type: "artists", term: searchTerm, category: "-1" }).map(artistRow)
-  const eventRows = filterSidebarItems(events, { type: "events", term: searchTerm, category: "-1" }).map(eventRow)
-  const nothingFound = searchTerm && !listingRows.length && !artistRows.length && !eventRows.length
+  // Categories only exist on listings; artists and events are filtered by the search text alone
+  const search = searchTerm.toLowerCase()
+  const [listingHits, artistHits, eventHits] = [
+    [listings, "listings", activeFilter],
+    [artists, "artists", "-1"],
+    [events, "events", "-1"],
+  ].map(([items, type, category]) => (Array.isArray(items) ? items : []).filter((item) => (
+    (category === "-1" || String(item?.artCategoryID) === category)
+    && (!search || SEARCH_FIELDS[type].some((field) => String(item?.[field] ?? "").toLowerCase().includes(search)))
+  )))
+  const nothingFound = searchTerm && !listingHits.length && !artistHits.length && !eventHits.length
+
+  const sections = [
+    {
+      id: "tag-favorites-title",
+      title: "Your favorites",
+      groups: session?.user ? [
+        { key: "artists", title: "Artists", media: "avatar" },
+        { key: "artListings", title: "Art listings", media: "thumb" },
+      ].map((group) => ({
+        key: group.key,
+        title: group.title,
+        rows: favorites[group.key].map((favorite) => ({
+          key: favorite.id,
+          href: favorite.href,
+          title: favorite.label,
+          media: { kind: group.media },
+          action: (
+            <button
+              type="button"
+              className="tag-row__action"
+              onClick={() => setFavorites((current) => ({
+                ...current,
+                [group.key]: current[group.key].filter((item) => item.id !== favorite.id),
+              }))}
+              aria-label={`Unsubscribe from ${favorite.label}`}
+              title="Unsubscribe"
+            >
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+                <path d="M6 6l12 12M18 6L6 18" />
+              </svg>
+            </button>
+          ),
+        })),
+      })) : [],
+    },
+    {
+      id: "tag-browse-listings",
+      title: "Featured listings",
+      seeAllHref: "/art/",
+      groups: [{
+        key: "listings",
+        rows: listingHits.slice(0, ROWS_PER_SECTION).map((listing, index) => {
+          const artist = listing?.artist || listing?.vendor || {}
+          const price = Number(listing?.price || 0)
+          return {
+            key: listing?.id || listing?.listingID || listing?.path || listing?.title || index,
+            href: listing?.artist?.path && listing?.path ? `/artists/${listing.artist.path}/listings/${listing.path}` : "/art/",
+            title: listing?.title || "Untitled listing",
+            meta: artist?.title || artist?.name || "",
+            media: { kind: "thumb", src: listing?.profilePic?.url || listing?.defaultImageURL || listing?.image || "" },
+            explicit: hasExplicitWarning(extractContentWarnings(listing)),
+            price,
+            action: price > 0 ? (
+              <button
+                type="button"
+                className="tag-row__action"
+                aria-label={`Add ${listing?.title || "listing"} to cart`}
+                title="Add to cart"
+                onClick={() => handleAddToCart(listing)}
+              >
+                <ShoppingCart aria-hidden="true" />
+              </button>
+            ) : null,
+          }
+        }),
+      }],
+    },
+    {
+      id: "tag-browse-artists",
+      title: "Featured artists",
+      seeAllHref: "/artists",
+      groups: [{
+        key: "artists",
+        rows: artistHits.slice(0, ROWS_PER_SECTION).map((artist, index) => ({
+          key: artist?.id || artist?.artistID || artist?.path || artist?.title || index,
+          href: artist?.path ? `/artists/${artist.path}` : "/artists",
+          title: artist?.title || "Untitled artist",
+          meta: artist?.byline || artist?.locationSummary || "",
+          media: { kind: "avatar", src: artist?.profilePic?.url || artist?.profilePic?.URL || artist?.profilePicUrl || "" },
+        })),
+      }],
+    },
+    {
+      id: "tag-browse-events",
+      title: "Upcoming events",
+      seeAllHref: "/events",
+      groups: [{
+        key: "events",
+        rows: eventHits.slice(0, ROWS_PER_SECTION).map((event, index) => {
+          const rawDate = event?.date || event?.startDate || event?.startsAt
+          const date = rawDate ? new Date(rawDate) : null
+          const valid = date && !Number.isNaN(date.getTime())
+          return {
+            key: event?.id || event?.eventID || event?.path || event?.title || index,
+            href: event?.href || (event?.path ? `/events/${event.path}` : "/events"),
+            title: event?.name || event?.title || "Untitled event",
+            meta: typeof event?.location === "string" ? event.location : event?.location?.name || event?.venue?.name || "",
+            // UTC so the server and the browser render the same day (no hydration mismatch)
+            media: { kind: "date", day: valid ? date.getUTCDate() : "?", month: valid ? MONTHS[date.getUTCMonth()] : "TBA" },
+          }
+        }),
+      }],
+    },
+  ]
 
   return (
     <>
-      <EdgeTab
-        side="left"
-        label="Browse"
-        ariaLabel="Open browse panel"
-        icon={<PanelLeft aria-hidden="true" />}
-        controls={BROWSE_PANEL_ID}
-        expanded={isLeftSidebarVisible}
+      <button
+        type="button"
+        className={`tag-edge-tab tag-edge-tab--left${isLeftSidebarVisible ? " is-hidden" : ""}`}
+        aria-label="Open browse panel"
+        aria-controls={BROWSE_PANEL_ID}
+        aria-expanded={isLeftSidebarVisible}
+        tabIndex={isLeftSidebarVisible ? -1 : 0}
         onClick={() => toggleLeftSidebar(true)}
-      />
-      <SidePanel id={BROWSE_PANEL_ID} side="left" title="Browse" open={isLeftSidebarVisible} onClose={() => toggleLeftSidebar(false)}>
-        <form
-          className="tag-panel__search"
-          role="search"
-          onSubmit={(event) => {
-            event.preventDefault()
-            runSearch()
-          }}
-        >
-          <Search className="tag-panel__search-icon" aria-hidden="true" />
-          <label className="sr-only" htmlFor="tag-browse-search">Search the guild</label>
-          <input
-            id="tag-browse-search"
-            ref={searchInputRef}
-            type="search"
-            value={searchTerm}
-            onChange={(event) => setSearchTerm(event.target.value)}
-            placeholder="Search art, artists, events…"
-            autoComplete="off"
-          />
-          <button type="submit" className="tag-panel__search-go" aria-label="Search">
-            <Search aria-hidden="true" />
+      >
+        <PanelLeft aria-hidden="true" />
+        <span className="tag-edge-tab__label" aria-hidden="true">Browse</span>
+      </button>
+
+      <aside
+        id={BROWSE_PANEL_ID}
+        className={`tag-panel tag-panel--left${isLeftSidebarVisible ? " is-open" : ""}`}
+        aria-label="Browse"
+        inert={!isLeftSidebarVisible}
+      >
+        <div className="tag-panel__head">
+          <h2 className="tag-panel__title">Browse</h2>
+          <button type="button" className="tag-panel__close" aria-label="Close browse" onClick={() => toggleLeftSidebar(false)}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+              <path d="M6 6l12 12M18 6L6 18" />
+            </svg>
           </button>
-        </form>
+        </div>
 
-        {filters.length > 0 && (
-          <div className="tag-panel__chips" role="group" aria-label="Filter by category">
-            {filters.map((filter) => (
-              <button
-                key={filter.value}
-                type="button"
-                className="tag-chip"
-                aria-pressed={String(activeFilter) === String(filter.value)}
-                onClick={() => setActiveFilter(String(filter.value))}
-              >
-                {filter.label}
-              </button>
-            ))}
-          </div>
-        )}
+        <div className="tag-panel__body">
+          <form
+            className="tag-panel__search"
+            role="search"
+            onSubmit={(event) => {
+              event.preventDefault()
+              router.push(`/search?term=${encodeURIComponent(searchTerm)}`)
+            }}
+          >
+            <Search className="tag-panel__search-icon" aria-hidden="true" />
+            <label className="sr-only" htmlFor="tag-browse-search">Search the guild</label>
+            <input
+              id="tag-browse-search"
+              ref={searchInputRef}
+              type="search"
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              placeholder="Search art, artists, events…"
+              autoComplete="off"
+            />
+            <button type="submit" className="tag-panel__search-go" aria-label="Search">
+              <Search aria-hidden="true" />
+            </button>
+          </form>
 
-        <SidebarFavorites />
+          {filters.length > 0 && (
+            <div className="tag-panel__chips" role="group" aria-label="Filter by category">
+              {filters.map((filter) => (
+                <button
+                  key={filter.value}
+                  type="button"
+                  className="tag-chip"
+                  aria-pressed={String(activeFilter) === String(filter.value)}
+                  onClick={() => setActiveFilter(String(filter.value))}
+                >
+                  {filter.label}
+                </button>
+              ))}
+            </div>
+          )}
 
-        <RowSection id="tag-browse-listings" title="Featured listings" seeAllHref="/art/" rows={listingRows} />
-        <RowSection id="tag-browse-artists" title="Featured artists" seeAllHref="/artists" rows={artistRows} />
-        <RowSection id="tag-browse-events" title="Upcoming events" seeAllHref="/events" rows={eventRows} />
+          {sections.map((section) => {
+            const groups = section.groups.filter((group) => group.rows.length)
+            if (!groups.length) return null
+            return (
+              <section key={section.id} className="tag-panel__section" aria-labelledby={section.id}>
+                <h3 id={section.id} className="tag-panel__section-title">
+                  {section.title}
+                  {section.seeAllHref ? <Link href={section.seeAllHref}>See all</Link> : null}
+                </h3>
+                {groups.map((group) => {
+                  const list = (
+                    <ul className="tag-rows">
+                      {group.rows.map((row) => (
+                        <li key={row.key} className="tag-row">
+                          <Link href={row.href} className="tag-row__link">
+                            {row.explicit ? (
+                              <span className="tag-row__tile tag-row__tile--explicit" aria-label="Preview hidden: 18+ explicit">18+</span>
+                            ) : row.media.kind === "date" ? (
+                              <span className="tag-row__date" aria-hidden="true">
+                                <b>{row.media.day}</b>
+                                <small>{row.media.month}</small>
+                              </span>
+                            ) : row.media.src ? (
+                              <Image
+                                src={row.media.src}
+                                alt=""
+                                width={52}
+                                height={52}
+                                unoptimized
+                                className={row.media.kind === "avatar" ? "tag-row__avatar" : "tag-row__thumb"}
+                              />
+                            ) : (
+                              <span className={row.media.kind === "avatar" ? "tag-row__avatar tag-row__avatar--initials" : "tag-row__tile"} aria-hidden="true">
+                                {String(row.title || "?").split(/[\s_-]+/).filter(Boolean).slice(0, 2).map((word) => word[0].toUpperCase()).join("") || "?"}
+                              </span>
+                            )}
+                            <span className="tag-row__meta">
+                              <strong title={row.title}>{row.title}</strong>
+                              {row.meta ? <span title={row.meta}>{row.meta}</span> : null}
+                            </span>
+                          </Link>
+                          {row.price > 0 ? <span className="tag-price">${row.price.toFixed(2)}</span> : null}
+                          {row.action}
+                        </li>
+                      ))}
+                    </ul>
+                  )
+                  return group.title ? (
+                    <div key={group.key} className="tag-panel__group">
+                      <span className="tag-panel__group-title">{group.title}</span>
+                      {list}
+                    </div>
+                  ) : (
+                    <Fragment key={group.key}>{list}</Fragment>
+                  )
+                })}
+              </section>
+            )
+          })}
 
-        {nothingFound ? (
-          <p className="tag-panel__empty-note" role="status">
-            Nothing here matches “{searchTerm}”. Press Enter to search the whole guild.
-          </p>
-        ) : null}
-      </SidePanel>
+          {nothingFound ? (
+            <p className="tag-panel__empty-note" role="status">
+              Nothing here matches “{searchTerm}”. Press Enter to search the whole guild.
+            </p>
+          ) : null}
+        </div>
+      </aside>
     </>
   )
 }

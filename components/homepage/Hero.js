@@ -7,13 +7,13 @@
 
  This software comes with NO WARRANTY; see the license for details.
 
- Open source Â· low-profit Â· human-first*/
+ Open source · low-profit · human-first*/
 
-import BloomscrollButton from "@/components/homepage/BloomscrollButton"
 import IntroReel from "@/components/homepage/IntroReel"
 import Link from "next/link"
+import { BLOOMSCROLL_HREF } from "@/components/Header/nav-links"
 
-/** "Tired of Doomscrolling?" split: copy and Bloomscroll actions beside the TAG Intro Reel. */
+/** "Tired of Doomscrolling?" section with the TAG Intro Reel */
 const Hero = () => {
 	return (
 		<section className="tag-section tag-section--band" id="bloom">
@@ -28,7 +28,12 @@ const Hero = () => {
 						artists, and stay connected to what&apos;s happening across the Guild.
 					</p>
 					<div className="tag-cta-row">
-						<BloomscrollButton>Start Bloomscrolling</BloomscrollButton>
+						<Link href={BLOOMSCROLL_HREF} className="btn btn-primary tag-bs-btn">
+							<span className="tag-bs-mouse" aria-hidden="true">
+								<i />
+							</span>
+							Start Bloomscrolling
+						</Link>
 						<Link href="/join" className="btn btn-outline">
 							Register as a user
 						</Link>

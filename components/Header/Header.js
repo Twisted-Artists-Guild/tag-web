@@ -16,7 +16,7 @@ import { useRouter } from "next/router"
 import Link from "next/link"
 import { useSession } from "next-auth/react" // Using useSession for authentication
 import LoginProfile from "@/components/Header/LoginProfile"
-import { useLayout } from "@/components/LayoutProvider"
+import { BROWSE_PANEL_ID, CART_PANEL_ID, useLayout } from "@/components/LayoutProvider"
 import { useCart } from "@/components/cart/CartContext"
 import { Bell, MessageSquare, ChevronUp, ChevronDown, Search, PanelLeft, ShoppingCart } from "lucide-react"
 import Image from "next/image"
@@ -26,7 +26,7 @@ import BugReportControl from "@/components/forms/bug-report"
 import PalettePicker from "@/components/Header/PalettePicker"
 import MobileMenu from "@/components/Header/MobileMenu"
 import { buildHeaderNotifications } from "@/components/Header/notification-items"
-import { BLOOMSCROLL_HREF, BLOOMSCROLL_LOGO, NAV_LINKS, TAG_LOGO, isActivePath } from "@/components/Header/nav-links"
+import { BLOOMSCROLL_HREF, BLOOMSCROLL_LOGO, NAV_LINKS, TAG_LOGO } from "@/components/Header/nav-links"
 
 export default function Header() {
   const { data: session } = useSession() // Use session for user data
@@ -245,12 +245,8 @@ export default function Header() {
     setIsMenuOpen((open) => !open)
   }
 
-  function openBrowsePanel() {
-    if (!isLeftSidebarVisible) toggleLeftSidebar(true)
-  }
-
-  // The header's bottom edge, shared with the sidebars and header popups as --tag-sb-top.
-  // The notice bar scrolls away above the sticky header, so this changes while scrolling.
+  // The header's bottom edge as --tag-sb-top, for the sidebars and header popups.
+  // It changes while scrolling, because the notice bar scrolls away above the sticky header.
   useEffect(() => {
     let frame = 0
     const update = () => {
@@ -426,6 +422,13 @@ export default function Header() {
       }
     : null
 
+  // The nav link for the current page or one of its sub-pages
+  const currentPath = router.asPath.split(/[?#]/)[0].replace(/\/+$/, "").toLowerCase() || "/"
+  const activeHref = NAV_LINKS.find((link) => {
+    const target = link.href.replace(/\/+$/, "").toLowerCase()
+    return currentPath === target || currentPath.startsWith(`${target}/`)
+  })?.href
+
   return (
     <>
       {/* Collapsed header: a small pill brings it back */}
@@ -452,7 +455,7 @@ export default function Header() {
                   <Link
                     href={link.href}
                     className="tag-header__link"
-                    aria-current={isActivePath(router.asPath, link.href) ? "page" : undefined}
+                    aria-current={link.href === activeHref ? "page" : undefined}
                   >
                     {link.label}
                   </Link>
@@ -466,7 +469,7 @@ export default function Header() {
                 className="tag-icon-btn tag-header__wide-only"
                 aria-label="Search"
                 onClick={() => {
-                  openBrowsePanel()
+                  if (!isLeftSidebarVisible) toggleLeftSidebar(true)
                   window.dispatchEvent(new CustomEvent("sidebarSearchFocus"))
                 }}
               >
@@ -519,7 +522,7 @@ export default function Header() {
                 </>
               )}
 
-              {/* Account: avatar menu when signed in; "Sign In" (moves into the menu below 1060px) when signed out */}
+              {/* Account. Signed out, Sign In moves into the menu below 1060px */}
               <div className={`tag-header__account${session?.user ? "" : " tag-header__wide-only"}`}>
                 <LoginProfile
                   className=""
@@ -531,12 +534,12 @@ export default function Header() {
                 />
               </div>
 
-              {/* Below 1060px the browse and cart panels open from here instead of the edge tabs */}
+              {/* Below 1060px these open the panels instead of the edge tabs */}
               <button
                 type="button"
                 className="tag-icon-btn tag-header__narrow-only"
                 aria-label="Open browse panel"
-                aria-controls="tag-browse-panel"
+                aria-controls={BROWSE_PANEL_ID}
                 aria-expanded={isLeftSidebarVisible}
                 onClick={() => toggleLeftSidebar()}
               >
@@ -546,7 +549,7 @@ export default function Header() {
                 type="button"
                 className="tag-icon-btn tag-header__narrow-only"
                 aria-label={cartCount > 0 ? `Open cart, ${cartCount} items` : "Open cart"}
-                aria-controls="tag-cart-panel"
+                aria-controls={CART_PANEL_ID}
                 aria-expanded={isRightSidebarVisible}
                 onClick={() => toggleRightSidebar()}
               >
@@ -568,7 +571,7 @@ export default function Header() {
             </div>
           </nav>
 
-          <MobileMenu id={menuId} open={isMenuOpen} onClose={closeMenu} isSignedIn={Boolean(session?.user)} />
+          <MobileMenu id={menuId} open={isMenuOpen} onClose={closeMenu} isSignedIn={Boolean(session?.user)} activeHref={activeHref} />
         </div>
 
         {/* Collapse the header */}

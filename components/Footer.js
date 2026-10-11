@@ -9,9 +9,12 @@
 
  Open source · low-profit · human-first*/
 
+import { useId } from "react"
 import Link from "next/link"
-import TagMark from "@/components/TagMark"
 import { MISSION_STATEMENT } from "@/components/MissionStatement"
+
+// The TAG mark as one SVG path (viewBox 0 0 2144 1864), also the start shape of the landing morph mark
+export const LOGO_D = "M460 161.25 A460 460 0 0 1 920 621.25 L920 662.25 A373 373 0 0 0 1293 1035.25 L1470.5 1035.25 A197.25 197.25 0 0 0 1667.75 838 A197.25 197.25 0 0 0 1470.5 640.75 L1387 640.75 A321 321 0 1 1 1708 319.75 L1708 406.25 A194.25 194.25 0 0 0 1902.25 600.5 A240.25 240.25 0 0 1 2142.5 840.75 A240.25 240.25 0 0 1 1902.25 1081 A194.25 194.25 0 0 0 1708 1275.25 L1708 1446.25 A417.25 417.25 0 0 1 1290.75 1863.5 A417.25 417.25 0 0 1 873.5 1446.25 A365 365 0 0 0 508.5 1081.25 L460 1081.25 A460 460 0 0 1 0 621.25 A460 460 0 0 1 460 161.25 Z"
 
 const SOCIAL_LINKS = [
   {
@@ -82,18 +85,28 @@ const LEGAL_LINKS = [
 ]
 
 /**
- * Site footer: the still TAG mark (no name text or logo image), the line and mission statement,
- * social tiles, three link columns and the legal bar. 4 columns, 2 on tablets, stacked on phones.
+ * Footer component for website navigation and social media links
  * @returns {JSX.Element} Footer component
  */
 export default function Footer() {
+  const markGradientId = `tag-mark-${useId().replace(/:/g, "")}`
+
   return (
     <footer className="tag-footer">
       <div className="tag-container">
         <div className="tag-footer__grid">
           <div className="tag-footer__brand">
             <Link href="/" className="tag-footer__mark" aria-label="Twisted Artists Guild home">
-              <TagMark title="Twisted Artists Guild" />
+              <svg className="tag-mark" viewBox="0 0 2144 1864" role="img" aria-label="Twisted Artists Guild">
+                <defs>
+                  <linearGradient id={markGradientId} x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0" className="tag-mark__stop-1" />
+                    <stop offset=".45" className="tag-mark__stop-2" />
+                    <stop offset="1" className="tag-mark__stop-3" />
+                  </linearGradient>
+                </defs>
+                <path fill={`url(#${markGradientId})`} fillRule="evenodd" d={LOGO_D} />
+              </svg>
             </Link>
             <p>Empowering artists worldwide. Built by artists, for artists, so creativity can turn into sustainability.</p>
             <p className="tag-footer__mission">{MISSION_STATEMENT}</p>

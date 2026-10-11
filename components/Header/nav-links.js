@@ -9,7 +9,7 @@
 
  Open source · low-profit · human-first*/
 
-/** Main navigation, shared by the desktop header and the mobile menu. The header is the only main nav. */
+// Main navigation, shared by the header and the mobile menu
 export const NAV_LINKS = [
   { href: "/art/", label: "Browse" },
   { href: "/artists", label: "Artists" },
@@ -19,22 +19,8 @@ export const NAV_LINKS = [
   { href: "/contests/", label: "Contests" },
 ]
 
-/** The Bloomscroll logo pill in the header opens the social feed (as before the redesign). */
+// Bloomscroll, the social feed
 export const BLOOMSCROLL_HREF = "/feed"
 
 export const BLOOMSCROLL_LOGO = "/BLOOMSCROLL OFFICIAL/LOGO/BS (HORIZONTAL) V1.png"
 export const TAG_LOGO = "/TAG OFFICIAL/LOGOS/HORIZONTAL (HOLLOW WHITE).png"
-
-
-/**
- * True when `path` is the link's page or one of its sub-pages.
- * @param {string} path current router path
- * @param {string} href link target
- */
-export function isActivePath(path, href) {
-  const clean = (value) => String(value || "/").split("?")[0].split("#")[0].replace(/\/+$/, "").toLowerCase() || "/"
-  const current = clean(path)
-  const target = clean(href)
-  if (target === "/") return current === "/"
-  return current === target || current.startsWith(`${target}/`)
-}

@@ -7,10 +7,11 @@
 
  This software comes with NO WARRANTY; see the license for details.
 
- Open source Â· low-profit Â· human-first*/
+ Open source · low-profit · human-first*/
 
-import BloomscrollButton from "@/components/homepage/BloomscrollButton"
+import Link from "next/link"
 import FeatureCard from "@/components/homepage/FeatureCard"
+import { BLOOMSCROLL_HREF } from "@/components/Header/nav-links"
 
 const CardBloomscroll = ({ index = 0 }) => {
   return (
@@ -26,7 +27,12 @@ const CardBloomscroll = ({ index = 0 }) => {
       </p>
       <p>It&apos;s social, but purpose-built for artists, artisans and their fans: no ads, no influencers, no fuss.</p>
       <div className="tag-cta-row tag-feature__cta">
-        <BloomscrollButton>Open Bloomscroll</BloomscrollButton>
+        <Link href={BLOOMSCROLL_HREF} className="btn btn-primary tag-bs-btn">
+          <span className="tag-bs-mouse" aria-hidden="true">
+            <i />
+          </span>
+          Open Bloomscroll
+        </Link>
       </div>
     </FeatureCard>
   )

@@ -9,8 +9,7 @@
 
  Open source · low-profit · human-first*/
 
-/* Cards: every daisyUI .card gets a 1px hairline instead of heavy borders; .tag-card is the
- * signature gradient-edged surface (the "liquid" edge). */
+/* Cards: daisyUI .card gets a hairline border; .tag-card has the gradient edge */
 
 @layer utilities {
   @layer daisyui {

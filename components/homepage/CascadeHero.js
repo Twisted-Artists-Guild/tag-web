@@ -12,11 +12,7 @@
 import Image from "next/image"
 import MorphMark from "@/components/homepage/MorphMark"
 
-/**
- * Landing hero: the three-step cascade on the fire-performer photo (one 12-column grid,
- * equal row gaps; left edge / centred / right edge) with the TAG morph mark below.
- * Type sizes use container units, so the cascade keeps its shape with sidebars open.
- */
+/** Landing hero: the three-line cascade over the photo, with the TAG morph mark below */
 export default function CascadeHero() {
   return (
     <section className="tag-cascade" aria-label="Featured messages">

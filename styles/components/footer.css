@@ -9,10 +9,21 @@
 
  Open source · low-profit · human-first*/
 
-@layer properties, theme, base, components, utilities;
-
-/* Footer (components/Footer.js), per mockup v5 ".footer". */
+/* Footer */
 @layer components {
+  /* TAG mark gradient stops follow the palette and mode */
+  .tag-mark__stop-1 {
+    stop-color: var(--tag-mark-start);
+  }
+
+  .tag-mark__stop-2 {
+    stop-color: var(--tag-indigo-soft);
+  }
+
+  .tag-mark__stop-3 {
+    stop-color: var(--tag-acc);
+  }
+
   .tag-footer {
     position: relative;
     border-top: 1px solid var(--tag-line);

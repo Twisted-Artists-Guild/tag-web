@@ -9,7 +9,7 @@
 
  Open source · low-profit · human-first*/
 
-/* Chips (filter toggles, aria-pressed), badges and price tags. */
+/* Chips, badges and price tags */
 
 @layer utilities {
   @layer daisyui {

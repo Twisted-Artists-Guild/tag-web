@@ -15,10 +15,7 @@ import Image from "next/image"
 
 const VIMEO_SRC = "https://player.vimeo.com/video/1077782689?autoplay=1&dnt=1&title=0&byline=0"
 
-/**
- * The TAG Intro Reel: a poster with a play button; the Vimeo player loads only when asked,
- * so the landing page makes no request to Vimeo until then.
- */
+/** TAG Intro Reel: a poster until Play, so Vimeo only loads when asked */
 export default function IntroReel() {
   const [isPlaying, setIsPlaying] = useState(false)
 

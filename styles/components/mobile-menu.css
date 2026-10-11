@@ -9,9 +9,7 @@
 
  Open source · low-profit · human-first*/
 
-@layer properties, theme, base, components, utilities;
-
-/* Mobile menu (components/Header/MobileMenu.js), below 1060px. Links fade in one after another. */
+/* Mobile menu (below 1060px) */
 @layer components {
   .tag-mobile-menu {
     display: none;
@@ -68,7 +66,7 @@
     margin-top: 16px;
   }
 
-  /* Stagger: each item fades and rises in turn (--i set inline) */
+  /* Items fade in one after another (--i set inline) */
   .tag-mobile-menu.is-open .tag-mobile-menu__bloom,
   .tag-mobile-menu.is-open .tag-mobile-menu__links li {
     animation: tag-menu-in 0.32s ease both;

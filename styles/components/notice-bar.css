@@ -9,11 +9,9 @@
 
  Open source · low-profit · human-first*/
 
-@layer properties, theme, base, components, utilities;
-
-/* Early-access notice (components/NoticeBar.js): slim indigo->accent tint, no yellow, in normal flow. */
+/* Early-access notice bar */
 @layer components {
-  /* Dismissed (class set before first paint by noticeHeadScript) */
+  /* Dismissed: the head script sets this class before first paint */
   html.tag-notice-hidden .tag-notice {
     display: none;
   }

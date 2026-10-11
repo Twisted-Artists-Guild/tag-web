@@ -22,8 +22,23 @@ import Header from "@/components/Header/Header"
 import Footer from "@/components/Footer"
 import LeftSidebar from "@/components/Sidebar-left"
 import RightSidebar from "@/components/Sidebar-right"
+import localFont from "next/font/local"
+import { Sora } from "next/font/google"
 import { LayoutProvider, useLayout } from "./LayoutProvider"
-import { manrope, sora } from "@/utils/fonts"
+
+// Body: Manrope, the TAG brand font. Headings: Sora. Both are served from our own domain.
+const manrope = localFont({
+  src: "../public/TAG OFFICIAL/FONT/Manrope (Variable Font Weight).ttf",
+  weight: "200 800",
+  display: "swap",
+  fallback: ["system-ui", "sans-serif"],
+})
+
+const sora = Sora({
+  subsets: ["latin"],
+  weight: ["600", "700"],
+  display: "swap",
+})
 
 const ClientToaster = dynamic(
   () => import("react-hot-toast").then((module) => module.Toaster),
@@ -49,7 +64,7 @@ function LayoutContent(props) {
 
       <NextNProgress color={config.colors.main} options={{ showSpinner: false }} />
 
-      {/* data-*-open drive the push layout (>= 1280px) in styles/layout.css */}
+      {/* data-*-open drive the push layout from 1280px */}
       <div
         className="site-shell flex min-h-screen flex-col"
         data-left-open={isLeftSidebarVisible ? "" : undefined}
@@ -59,7 +74,7 @@ function LayoutContent(props) {
         <LeftSidebar {...(sidebarProps?.leftSidebarData || {})} />
         <RightSidebar {...(sidebarProps?.rightSidebarData || {})} />
 
-        {/* Below 1280px open panels overlay the page: the scrim dims it and closes them on click */}
+        {/* Below 1280px open panels overlay the page; the scrim closes them */}
         {isOverlay && (isLeftSidebarVisible || isRightSidebarVisible) ? (
           <button type="button" className="tag-scrim" aria-label="Close panel" tabIndex={-1} onClick={closeSidebars} />
         ) : null}

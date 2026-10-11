@@ -10,7 +10,7 @@
  Open source · low-profit · human-first*/
 import React from 'react';
 
-/** The guild's mission, shared by this card (About page) and the footer. */
+// Also shown in the footer
 export const MISSION_STATEMENT = "We aim to foster a community in which independent artists thrive through technical innovation, sustainable practices, and creative entrepreneurship.";
 
 /**

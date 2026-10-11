@@ -12,8 +12,7 @@
 import Image from "next/image"
 
 /**
- * Landing feature card: photo (with a tag chip) beside the copy, gradient-edged.
- * `flip` puts the photo on the right on wide screens; phones always show the photo first.
+ * Landing feature card: photo beside the copy. `flip` puts the photo on the right on wide screens.
  * @param {{ image: { src: string, alt: string, position?: string }, tag: string, flip?: boolean,
  *   title: string, children: React.ReactNode }} props
  */

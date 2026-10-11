@@ -17,17 +17,16 @@ import { useRouter } from "next/router"
 import { signIn } from "next-auth/react"
 import PalettePicker from "@/components/Header/PalettePicker"
 import BugReportControl from "@/components/forms/bug-report"
-import { BLOOMSCROLL_HREF, BLOOMSCROLL_LOGO, NAV_LINKS, isActivePath } from "@/components/Header/nav-links"
+import { BLOOMSCROLL_HREF, BLOOMSCROLL_LOGO, NAV_LINKS } from "@/components/Header/nav-links"
 
 /**
- * Menu shown under the header below 1060px: the same links as the desktop nav, the palette
- * picker, the bug-report button and Sign in (signed-out visitors).
- * @param {{ id: string, open: boolean, onClose: () => void, isSignedIn: boolean }} props
+ * Mobile menu under the header (below 1060px).
+ * @param {{ id: string, open: boolean, onClose: () => void, isSignedIn: boolean, activeHref?: string }} props
  */
-export default function MobileMenu({ id, open, onClose, isSignedIn }) {
+export default function MobileMenu({ id, open, onClose, isSignedIn, activeHref }) {
   const router = useRouter()
 
-  // Close on navigation and on Escape.
+  // Close on navigation and on Escape
   useEffect(() => {
     if (!open) return undefined
 
@@ -54,7 +53,7 @@ export default function MobileMenu({ id, open, onClose, isSignedIn }) {
       <ul className="tag-mobile-menu__links">
         {NAV_LINKS.map((link, index) => (
           <li key={link.href} style={{ "--i": index + 1 }}>
-            <Link href={link.href} aria-current={isActivePath(router.asPath, link.href) ? "page" : undefined}>
+            <Link href={link.href} aria-current={link.href === activeHref ? "page" : undefined}>
               {link.label}
             </Link>
           </li>

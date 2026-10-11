@@ -9,9 +9,8 @@
 
  Open source · low-profit · human-first*/
 
-/* Buttons: daisyUI's .btn family restyled site-wide (TAG 7A look).
- * daisyUI 5 emits its components in @layer utilities > daisyui, so overrides live in the same
- * nested layer: they beat daisyUI's defaults, while Tailwind utility classes still beat them. */
+/* Buttons. daisyUI 5 puts its components in @layer utilities > daisyui, so overrides live in that
+ * same nested layer: they beat daisyUI's defaults, and Tailwind utilities still beat them. */
 
 @layer utilities {
   @layer daisyui {
@@ -24,7 +23,7 @@
       transition: transform 0.2s ease, opacity 0.2s ease;
     }
 
-    /* Primary: the signature button gradient, white text (>= 4.8:1 at every stop) */
+    /* Primary: gradient fill, white text passes AA at every stop */
     .btn-primary:not(.btn-outline, .btn-ghost, .btn-link, .btn-soft, .btn-dash) {
       color: var(--tag-on-fill);
       background: var(--tag-grad-btn);
@@ -32,7 +31,7 @@
       box-shadow: 0 10px 28px -10px rgba(var(--tag-indigo-rgb), 0.85), inset 0 1px 0 var(--tag-inset-highlight);
     }
 
-    /* Hover glow: a pseudo-element that only fades (opacity), never a shadow transition */
+    /* Hover glow fades opacity only, never a shadow transition */
     .btn-primary:not(.btn-outline, .btn-ghost, .btn-link, .btn-soft, .btn-dash)::after {
       content: "";
       position: absolute;
@@ -45,7 +44,7 @@
       pointer-events: none;
     }
 
-    /* Neutral outline = TAG ghost look: hairline, translucent fill */
+    /* Outline: hairline border, translucent fill */
     .btn-outline:not(.btn-primary, .btn-secondary, .btn-accent, .btn-neutral, .btn-info, .btn-success, .btn-warning, .btn-error) {
       color: var(--tag-text);
       background: var(--tag-tint-1);

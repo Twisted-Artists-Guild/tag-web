@@ -9,10 +9,7 @@
 
  Open source · low-profit · human-first*/
 
-/* Dashboard panels shared by the Browse (left) and Cart (right) sidebars, per mockup v5:
- * panel frame, edge tabs, compact rows, section titles and the scrim.
- * From 1280px an open panel pushes the page (layout.css); below that it overlays with a scrim.
- * Edge tabs show from 1060px; below that the header icon buttons open the panels. */
+/* Side panels shared by Browse and Cart: frame, rows, edge tabs and scrim */
 @layer components {
   .tag-panel {
     position: fixed;
@@ -165,7 +162,7 @@
     font-size: 14px;
   }
 
-  /* ---------- compact rows ---------- */
+  /* Rows */
   .tag-rows {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
@@ -300,7 +297,7 @@
     height: 15px;
   }
 
-  /* ---------- edge tabs (from 1060px) ---------- */
+  /* Edge tabs (from 1060px; below that the header buttons open the panels) */
   .tag-edge-tab {
     position: fixed;
     z-index: 45;
@@ -374,7 +371,7 @@
     }
   }
 
-  /* ---------- scrim (overlay layouts only, rendered by MyLayout) ---------- */
+  /* Scrim (overlay layout only) */
   .tag-scrim {
     position: fixed;
     inset: 0;

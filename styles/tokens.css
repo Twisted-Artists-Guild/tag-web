@@ -9,13 +9,9 @@
 
  Open source · low-profit · human-first*/
 
-/* TAG design tokens: the ONLY place raw colours live.
- * Theming = two attributes on <html>, set by the head script and the palette picker:
- *   data-palette: "orig" (default, approved brand) | "7a" (Magenta)
- *   data-mode:    "dark" (default) | "light"
- * Every combination defines the same token names, so components never branch on palette or mode.
- * Brand (approved guide): Ghost White #F5F5FC, Electric Indigo #6233FF, Onyx #151318, Chartreuse #CEFF1D.
- * Values mirror docs/design/landing-7a/landing-v5.html. */
+/* TAG design tokens: the only place raw colours live.
+ * data-palette on <html>: "orig" (brand, default) | "7a" (Magenta). data-mode: "dark" (default) | "light".
+ * Brand: Ghost White #F5F5FC, Electric Indigo #6233FF, Onyx #151318, Chartreuse #CEFF1D. */
 
 :root {
   /* brand + base (dark) */
@@ -55,13 +51,13 @@
   --tag-light-rgb: 255, 255, 255; /* white glass on photos */
   --tag-mark-start: #ffffff; /* first stop of the static TAG mark gradient */
 
-  /* status (unchanged values) */
+  /* status */
   --tag-info: #8f72ff;
   --tag-success: #b9e614;
   --tag-warning: #ffd166;
   --tag-error: #ff5d73;
 
-  /* palette: Original (approved brand) is the default */
+  /* palette: Original (brand) */
   --tag-acc: #ceff1d;
   --tag-acc-rgb: 206, 255, 29;
   --tag-acc-text: #ceff1d;

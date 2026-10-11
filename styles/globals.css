@@ -9,15 +9,13 @@
 
  Open source · low-profit · human-first*/
 
-/* Global entry: framework imports, daisyUI registration and @imports only. No rules here.
- * Pages router: only pages/_app.js may import global CSS, so co-located component
- * stylesheets are loaded from here too. */
+/* Global entry: Tailwind, daisyUI and the site stylesheets. Imports only, no rules. */
 
 @import "tailwindcss";
 @import "./tokens.css";
 
-/* daisyUI: built-in themes off; two TAG themes whose colours point at the tokens
- * (so daisyUI components follow data-palette/data-mode), plus Halloween for the contest vote page. */
+/* daisyUI themes point at the tokens, so they follow data-palette/data-mode.
+   Halloween is kept for the contest vote page. */
 @plugin "daisyui" {
   themes: false;
 }
@@ -88,19 +86,18 @@
 
 @import "./base.css";
 @import "./layout.css";
-@import "../components/ui/button.css";
-@import "../components/ui/field.css";
-@import "../components/ui/card.css";
-@import "../components/ui/chip.css";
-@import "../components/ui/accordion.css";
-@import "../components/ui/side-panel.css";
-@import "../components/notice-bar.css";
-@import "../components/Header/header.css";
-@import "../components/Header/palette-picker.css";
-@import "../components/Header/mobile-menu.css";
-@import "../components/sidebar-left.css";
-@import "../components/sidebar-right.css";
-@import "../components/tag-mark.css";
-@import "../components/footer.css";
-@import "../components/homepage/homepage.css";
+@import "./components/button.css";
+@import "./components/field.css";
+@import "./components/card.css";
+@import "./components/chip.css";
+@import "./components/accordion.css";
+@import "./components/side-panel.css";
+@import "./components/notice-bar.css";
+@import "./components/header.css";
+@import "./components/palette-picker.css";
+@import "./components/mobile-menu.css";
+@import "./components/sidebar-left.css";
+@import "./components/sidebar-right.css";
+@import "./components/footer.css";
+@import "./pages/home.css";
 @import "./legacy.css";

@@ -13,49 +13,36 @@
 import { useEffect, useState } from "react"
 
 export const DEV_BANNER_DISMISS_KEY = "tag_dev_banner_dismiss_until"
-/** Class on <html> that hides the bar; set before first paint by noticeHeadScript() when dismissed. */
-const HIDDEN_CLASS = "tag-notice-hidden"
+// The head script in _document adds this class to <html> before first paint when dismissed
+export const NOTICE_HIDDEN_CLASS = "tag-notice-hidden"
 const DEV_BANNER_RESHOW_MS = 5 * 60 * 1000
 
-function readDismissUntil() {
-  try {
-    return Number(window.localStorage.getItem(DEV_BANNER_DISMISS_KEY) || "0")
-  } catch {
-    return 0
-  }
-}
-
-/** Inline <head> script: hides the bar before first paint if it was dismissed (no layout shift). */
-export function noticeHeadScript() {
-  return `(function(){try{var u=Number(localStorage.getItem(${JSON.stringify(DEV_BANNER_DISMISS_KEY)})||"0");if(u>Date.now())document.documentElement.classList.add(${JSON.stringify(HIDDEN_CLASS)});}catch(e){}})();`
-}
-
-/**
- * Early-access notice above the header. Dismissing hides it for 5 minutes on this device.
- * Always rendered on the server (so nothing shifts when the page loads); a dismissed bar is
- * hidden before first paint by noticeHeadScript() via a class on <html>.
- * Shows the build number (or dev uptime) as quiet detail for the team.
- */
+/** Early-access notice above the header. Dismissing hides it for 5 minutes on this device. */
 export default function NoticeBar() {
-  // Dev uptime only: start at 0 so the server and the first client render match.
+  // Dev uptime starts at 0 so the server and the first client render match
   const [nowMs, setNowMs] = useState(0)
 
   useEffect(() => {
     const now = Date.now()
     const timer = window.setTimeout(() => setNowMs(now), 0)
-    const dismissUntilMs = readDismissUntil()
+    let dismissUntilMs = 0
+    try {
+      dismissUntilMs = Number(window.localStorage.getItem(DEV_BANNER_DISMISS_KEY) || "0")
+    } catch {
+      // Storage blocked: treat as not dismissed
+    }
     if (!Number.isFinite(dismissUntilMs) || dismissUntilMs <= now) {
       return () => window.clearTimeout(timer)
     }
 
-    // Bring the bar back when the 5 minutes are up.
+    // Bring the bar back when the 5 minutes are up
     const restoreTimer = window.setTimeout(() => {
       try {
         window.localStorage.removeItem(DEV_BANNER_DISMISS_KEY)
       } catch {
-        // Storage blocked: nothing to clear.
+        // Storage blocked: nothing to clear
       }
-      document.documentElement.classList.remove(HIDDEN_CLASS)
+      document.documentElement.classList.remove(NOTICE_HIDDEN_CLASS)
     }, dismissUntilMs - now)
 
     return () => {
@@ -68,9 +55,9 @@ export default function NoticeBar() {
     try {
       window.localStorage.setItem(DEV_BANNER_DISMISS_KEY, String(Date.now() + DEV_BANNER_RESHOW_MS))
     } catch {
-      // Storage blocked: hide for this page view only.
+      // Storage blocked: hide for this page view only
     }
-    document.documentElement.classList.add(HIDDEN_CLASS)
+    document.documentElement.classList.add(NOTICE_HIDDEN_CLASS)
   }
 
   const buildNumber = process.env.NEXT_PUBLIC_BUILD_NUMBER || process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA || "local"
