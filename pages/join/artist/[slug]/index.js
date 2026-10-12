@@ -508,6 +508,11 @@ export default function JoinArtistIndexPage({ sessionUser, currentStep, artistId
     return `${artistMediaRoot}cover/`;
   }, [artistMediaRoot]);
 
+  const logoPrefix = useMemo(() => {
+    if (!artistMediaRoot) return "";
+    return `${artistMediaRoot}logo/`;
+  }, [artistMediaRoot]);
+
   const getMostRecentActiveFile = (files) => {
     const safeFiles = Array.isArray(files) ? files : [];
     if (!safeFiles.length) {
@@ -979,6 +984,7 @@ export default function JoinArtistIndexPage({ sessionUser, currentStep, artistId
             activeProfileFile={resolvedActiveProfileFile}
             activeCoverFile={resolvedActiveCoverFile}
             artistMediaRoot={artistMediaRoot}
+            logoPrefix={logoPrefix}
             galleryPrefix={galleryPrefix}
             profilePrefix={profilePrefix}
             coverPrefix={coverPrefix}

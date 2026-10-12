@@ -114,13 +114,6 @@ const SocialComments = ({
     // State management for comments
     const [comments, setComments] = useState(() => buildCommentsState(initialComments));
     const [isLoading] = useState(false);
-    const [currentTheme] = useState(() => {
-        if (typeof window === "undefined") {
-            return "tag-theme";
-        }
-
-        return localStorage.getItem("theme") || "tag-theme";
-    });
     
     // Sync comments when initialComments change (important for API-driven updates)
     useEffect(() => {
@@ -463,7 +456,6 @@ const SocialComments = ({
                     ${comment.isEditing 
                         ? 'bg-base-100 border border-base-300 p-3' // Editing state - brightest background
                         : `${bgClass} border-l-4 border-primary p-4`}`}
-                data-theme={currentTheme} // Apply the selected theme
                 id={`comment-${comment.id}`}
             >
                 {/* Edit Mode */}
@@ -631,7 +623,7 @@ const SocialComments = ({
     }
     
     return (
-        <div className="comments-container" data-theme={currentTheme}>
+        <div className="comments-container">
             {/* Add comment button - only shown if logged in and not read-only */}
             {currentUser && !readOnly && (
                 <div className="mb-6">

@@ -1,0 +1,71 @@
+/* This file is part of the Twisted Artists Guild project.
+
+ Copyright (C) 2025 Twisted Artists Guild
+
+ Licensed under the GNU General Public License v3.0
+ (https://www.gnu.org/licenses/gpl-3.0.en.html).
+
+ This software comes with NO WARRANTY; see the license for details.
+
+ Open source · low-profit · human-first*/
+
+/* Early-access notice bar */
+@layer components {
+  /* Dismissed: the head script sets this class before first paint */
+  html.tag-notice-hidden .tag-notice {
+    display: none;
+  }
+
+  .tag-notice {
+    position: relative;
+    z-index: 3;
+    padding: 9px 48px;
+    text-align: center;
+    background: linear-gradient(90deg, rgba(var(--tag-indigo-rgb), 0.22), rgba(var(--tag-acc-rgb), 0.14));
+    border-bottom: 1px solid var(--tag-line);
+  }
+
+  .tag-notice__text {
+    margin: 0;
+    font: 500 13px/1.4 var(--tag-font-body);
+    color: var(--tag-text-2);
+  }
+
+  .tag-notice__text strong {
+    color: var(--tag-text-strong);
+    font-weight: 700;
+  }
+
+  .tag-notice__detail {
+    color: var(--tag-muted);
+    white-space: nowrap;
+  }
+
+  .tag-notice__close {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 32px;
+    height: 32px;
+    display: grid;
+    place-items: center;
+    border: 0;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--tag-text-2);
+    cursor: pointer;
+  }
+
+  .tag-notice__close svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .tag-notice__close:hover {
+      color: var(--tag-text-strong);
+      background: var(--tag-tint-2);
+    }
+  }
+}

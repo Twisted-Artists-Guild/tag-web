@@ -66,10 +66,6 @@ const DirectMessages = ({
     const [editingMessageId, setEditingMessageId] = useState(null);
     const [editingContent, setEditingContent] = useState("");
     const [typingUsers, setTypingUsers] = useState([]); // ADD THIS
-    const [clientTheme] = useState(() => {
-        if (typeof window === 'undefined') return 'tag-theme';
-        return localStorage.getItem("theme") || "tag-theme";
-    });
     
     // Ref for auto-scrolling
     const messagesEndRefInternal = useRef(null);
@@ -562,7 +558,7 @@ const DirectMessages = ({
     // Show conversation list
     if (showConversationList || !activeConversationId) {
         return (
-            <div className={`direct-messages ${compact ? 'dm-compact' : 'dm-full'} flex flex-col h-full`} data-theme={clientTheme}>
+            <div className={`direct-messages ${compact ? 'dm-compact' : 'dm-full'} flex flex-col h-full`}>
                 {/* Conversation list header */}
                 <div className="p-3 bg-base-200 border-b border-base-300 flex items-center">
                     <h3 className="font-bold text-lg flex-1">Messages</h3>
@@ -635,7 +631,7 @@ const DirectMessages = ({
     
     // Show active conversation
     return (
-        <div className={`direct-messages ${compact ? 'dm-compact' : 'dm-full'} flex flex-col h-full`} data-theme={clientTheme}>
+        <div className={`direct-messages ${compact ? 'dm-compact' : 'dm-full'} flex flex-col h-full`}>
             {/* Conversation header */}
             <div className="p-3 bg-base-200 border-b border-base-300 flex items-center">
                 <button 

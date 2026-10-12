@@ -10,42 +10,31 @@
  Open source · low-profit · human-first*/
 
 import Link from "next/link"
-import Image from "next/image"
-import { getSeededStockPhotoByCategory } from "@/utils/stockPhotos"
+import FeatureCard from "@/components/homepage/FeatureCard"
+import { BLOOMSCROLL_HREF } from "@/components/Header/nav-links"
 
 const CardBloomscroll = ({ index = 0 }) => {
-  const isImageLeft = index % 2 === 0
-  const photoUrl = getSeededStockPhotoByCategory(`bloomscroll-${index}`, 'painting')
-
   return (
-    <div className="flex flex-col lg:flex-row min-h-[600px] bg-base-100 shadow-brand rounded-box overflow-hidden">
-      {/* Image Panel */}
-      <div className={`relative w-full lg:w-1/2 min-h-[300px] lg:min-h-auto ${isImageLeft ? 'lg:order-first' : 'lg:order-last'}`}>
-        <Image
-          src={photoUrl}
-          alt="Bloomscroll art feed"
-          fill
-          style={{ objectFit: 'cover' }}
-        />
-      </div>
-
-      {/* Content Panel */}
-      <div className={`w-full lg:w-1/2 p-8 md:p-10 flex flex-col justify-center ${isImageLeft ? 'lg:order-last' : 'lg:order-first'}`}>
-        <h2 className="text-3xl sm:text-4xl font-bold text-base-content mb-6">Bloomscroll! Instead of Doomscroll</h2>
-        <div className="space-y-4 mb-8">
-          <p className="text-lg text-base-content/90 leading-relaxed">
-            Come bloomscroll our endlessly flowing art feed to discover new work, react and comment, find favorite
-            artists to follow, and stay connected to what&apos;s happening across the Guild.
-          </p>
-          <p className="text-lg text-base-content/90 leading-relaxed">
-            It&apos;s social, but purpose built for artists and artisans and their fans; no ads, no influencers, no fuss.
-          </p>
-        </div>
-        <Link href="/art" className="btn btn-primary btn-wide text-base-100">
-          Start Scrolling
+    <FeatureCard
+      flip={index % 2 === 1}
+      tag="Bloomscroll"
+      title="Bloomscroll, instead of doomscroll."
+      image={{ src: "https://tagstatic.blob.core.windows.net/pexels/pexels-daiangan-102127-paintpallette.jpg", alt: "Paint palette with fresh colours" }}
+    >
+      <p>
+        Discover new work, react and comment, find favorite artists to follow, and stay connected to what&apos;s
+        happening across the Guild.
+      </p>
+      <p>It&apos;s social, but purpose-built for artists, artisans and their fans: no ads, no influencers, no fuss.</p>
+      <div className="tag-cta-row tag-feature__cta">
+        <Link href={BLOOMSCROLL_HREF} className="btn btn-primary tag-bs-btn">
+          <span className="tag-bs-mouse" aria-hidden="true">
+            <i />
+          </span>
+          Open Bloomscroll
         </Link>
       </div>
-    </div>
+    </FeatureCard>
   )
 }
 

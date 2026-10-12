@@ -1,0 +1,79 @@
+/* This file is part of the Twisted Artists Guild project.
+
+ Copyright (C) 2025 Twisted Artists Guild
+
+ Licensed under the GNU General Public License v3.0
+ (https://www.gnu.org/licenses/gpl-3.0.en.html).
+
+ This software comes with NO WARRANTY; see the license for details.
+
+ Open source · low-profit · human-first*/
+
+/* Browse panel: search and category chips */
+@layer components {
+  .tag-panel__search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 6px 6px 14px;
+    border-radius: 12px;
+    background: var(--tag-surface);
+    border: 1px solid var(--tag-line-2);
+  }
+
+  .tag-panel__search:focus-within {
+    border-color: rgba(var(--tag-acc-rgb), 0.6);
+    box-shadow: 0 0 0 3px rgba(var(--tag-acc-rgb), 0.14);
+  }
+
+  .tag-panel__search-icon {
+    width: 16px;
+    height: 16px;
+    color: var(--tag-muted);
+    flex: none;
+  }
+
+  .tag-panel__search input {
+    flex: 1;
+    min-width: 0;
+    font: 500 16px var(--tag-font-body);
+    color: var(--tag-text);
+    background: transparent;
+    border: 0;
+    outline: none;
+    padding: 6px 0;
+  }
+
+  .tag-panel__search input::placeholder {
+    color: var(--tag-muted);
+  }
+
+  /* the field's own ring is on the form (focus-within) */
+  .tag-panel__search input:focus-visible {
+    outline: none;
+  }
+
+  .tag-panel__search-go {
+    flex: none;
+    width: 36px;
+    height: 36px;
+    border-radius: 9px;
+    border: 0;
+    display: grid;
+    place-items: center;
+    color: var(--tag-on-fill);
+    cursor: pointer;
+    background: var(--tag-grad-btn);
+  }
+
+  .tag-panel__search-go svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .tag-panel__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}

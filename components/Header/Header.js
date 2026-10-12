@@ -16,44 +16,25 @@ import { useRouter } from "next/router"
 import Link from "next/link"
 import { useSession } from "next-auth/react" // Using useSession for authentication
 import LoginProfile from "@/components/Header/LoginProfile"
-import ThemeSwitcher from "@/components/Header/ThemeSwitcher"
-import ThemeLogo from "@/components/ThemeLogo"
-import { useLayout } from "@/components/LayoutProvider"
-import { Bell, MessageSquare, ChevronUp, ChevronDown, Search } from "lucide-react"
+import { BROWSE_PANEL_ID, CART_PANEL_ID, useLayout } from "@/components/LayoutProvider"
+import { useCart } from "@/components/cart/CartContext"
+import { Bell, MessageSquare, ChevronUp, ChevronDown, Search, PanelLeft, ShoppingCart } from "lucide-react"
 import Image from "next/image"
 import NotificationsDropdown from "@/components/Header/NotificationsDropdown" // Keep as dropdown for now
 import MessagesApplet from "@/components/Header/MessagesApplet" // The new message applet
 import BugReportControl from "@/components/forms/bug-report"
+import PalettePicker from "@/components/Header/PalettePicker"
+import MobileMenu from "@/components/Header/MobileMenu"
 import { buildHeaderNotifications } from "@/components/Header/notification-items"
-
-// Available themes
-const themes = [
-  "tag-theme",
-  "neon",
-  "light",
-  "dark",
-  "cupcake",
-  "bumblebee",
-  "emerald",
-  "corporate",
-  "synthwave",
-  "retro",
-  "valentine",
-  "halloween",
-  "garden",
-  "aqua",
-  "pastel",
-  "fantasy",
-  "black",
-  "luxury",
-  "dracula",
-]
+import { BLOOMSCROLL_HREF, BLOOMSCROLL_LOGO, NAV_LINKS, TAG_LOGO } from "@/components/Header/nav-links"
 
 export default function Header() {
   const { data: session } = useSession() // Use session for user data
-  const { isHeaderVisible, toggleHeader, isMobile, toggleLeftSidebar, isLeftSidebarVisible, theme, updateTheme } = useLayout()
+  const { isHeaderVisible, toggleHeader, toggleLeftSidebar, isLeftSidebarVisible, toggleRightSidebar, isRightSidebarVisible } = useLayout()
+  const { cartCount } = useCart()
   const router = useRouter()
-  const [active, setActive] = useState("") // State for active navigation link
+  const headerRef = useRef(null)
+  const menuId = "tag-mobile-menu"
   const [isNotificationsDropdownOpen, setIsNotificationsDropdownOpen] = useState(false)
   const [isMessageAppletOpen, setIsMessageAppletOpen] = useState(false)
   const [reactionSummary, setReactionSummary] = useState({ count: 0, latestReaction: null })
@@ -62,9 +43,9 @@ export default function Header() {
   const [lastNotificationsSeenAt, setLastNotificationsSeenAt] = useState(null)
   const [includeSelfActions, setIncludeSelfActions] = useState(true)
   const [initialConversationId, setInitialConversationId] = useState(null)
-  const [scrolled, setScrolled] = useState(false)
   const [isLoginOpen, setIsLoginOpen] = useState(false)
-  const [isThemeOpen, setIsThemeOpen] = useState(false)
+  const [isPaletteOpen, setIsPaletteOpen] = useState(false)
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [contextSnapshot, setContextSnapshot] = useState({
     activeContext: null,
     availableContexts: [],
@@ -79,19 +60,6 @@ export default function Header() {
     }
     return null
   })
-
-  const mobileNavOptions = useMemo(
-    () => [
-      { value: "/", label: "Homepage" },
-      { value: "/art/", label: "Bloomscroll" },
-      { value: "/artists", label: "Artists" },
-      { value: "/events", label: "Events" },
-      { value: "/blogs", label: "Blog" },
-      { value: "/news", label: "News" },
-      { value: "/contests/", label: "Contests" },
-    ],
-    [],
-  )
 
   const notificationsIconRef = useRef(null)
   const messagesIconRef = useRef(null)
@@ -232,15 +200,12 @@ export default function Header() {
     })
   }, [])
 
-  function handleActive(link) {
-    setActive(link)
-  }
-
   function closeAllPopups() {
     setIsNotificationsDropdownOpen(false)
     setIsMessageAppletOpen(false)
     setIsLoginOpen(false)
-    setIsThemeOpen(false)
+    setIsPaletteOpen(false)
+    setIsMenuOpen(false)
   }
 
   function toggleMessageApplet() {
@@ -261,42 +226,51 @@ export default function Header() {
     setIsLoginOpen((open) => !open)
   }
 
-  function toggleTheme() {
-    if (!isThemeOpen) closeAllPopups()
-    setIsThemeOpen((open) => !open)
-  }
-
-  function getHeaderClassName() {
-    const baseClasses = "flex justify-between items-center border-b border-base-300 w-full px-8 py-2 min-h-[88px]"
-    if (theme === "tag-theme") {
-      return `${baseClasses} header-paint-drip`
-    }
-    if (theme === "neon") {
-      return `${baseClasses} header-neon-drip`
-    }
-    return baseClasses
-  }
-
-  function getTextColorClass(isActive = false) {
-    const baseTextClass = "font-josefin-sans font-extrabold transition-all px-2 py-1 rounded-md backdrop-blur-sm"
-    if (isActive) {
-      return `${baseTextClass} text-primary enhanced-text-visibility bg-primary/10 border border-primary/20`
-    }
-    return `${baseTextClass} text-base-content enhanced-text-visibility bg-base-100/18 border border-base-content/10 hover:bg-base-100/24`
-  }
-
-  useEffect(() => {
-    // Close mobile menu when route changes
-    // setIsOpen(false) // This state is no longer used for mobile menu
-  }, [router.asPath])
-
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 10)
-    }
-    window.addEventListener("scroll", handleScroll)
-    return () => window.removeEventListener("scroll", handleScroll)
+  const togglePalette = useCallback(() => {
+    setIsPaletteOpen((open) => {
+      if (!open) {
+        setIsNotificationsDropdownOpen(false)
+        setIsMessageAppletOpen(false)
+        setIsLoginOpen(false)
+        setIsMenuOpen(false)
+      }
+      return !open
+    })
   }, [])
+
+  const closeMenu = useCallback(() => setIsMenuOpen(false), [])
+
+  function toggleMenu() {
+    if (!isMenuOpen) closeAllPopups()
+    setIsMenuOpen((open) => !open)
+  }
+
+  // The header's bottom edge as --tag-sb-top, for the sidebars and header popups.
+  // It changes while scrolling, because the notice bar scrolls away above the sticky header.
+  useEffect(() => {
+    let frame = 0
+    const update = () => {
+      frame = 0
+      const bottom = isHeaderVisible && headerRef.current
+        ? Math.max(0, Math.round(headerRef.current.getBoundingClientRect().bottom))
+        : 0
+      document.documentElement.style.setProperty("--tag-sb-top", `${bottom}px`)
+    }
+    const schedule = () => {
+      if (!frame) frame = window.requestAnimationFrame(update)
+    }
+    update()
+    window.addEventListener("scroll", schedule, { passive: true })
+    window.addEventListener("resize", schedule)
+    const observer = typeof ResizeObserver === "function" ? new ResizeObserver(schedule) : null
+    if (observer && headerRef.current) observer.observe(headerRef.current)
+    return () => {
+      window.removeEventListener("scroll", schedule)
+      window.removeEventListener("resize", schedule)
+      observer?.disconnect()
+      if (frame) window.cancelAnimationFrame(frame)
+    }
+  }, [isHeaderVisible])
 
   useEffect(() => {
     try {
@@ -415,34 +389,6 @@ export default function Header() {
     }
   }, [activeContextId, contextSnapshot])
 
-  const headerClass = getHeaderClassName()
-  const mobileNavValue = useMemo(() => {
-    const currentPath = String(router.asPath || router.pathname || "").split("?")[0].toLowerCase()
-    const match = mobileNavOptions.find((option) => {
-      const optionPath = option.value.toLowerCase()
-      return currentPath === optionPath || currentPath.startsWith(`${optionPath.replace(/\/$/, "")}/`)
-    })
-
-    return match?.value || ""
-  }, [mobileNavOptions, router.asPath, router.pathname])
-
-  // Height of the header for popup offset
-  const headerHeight = 88
-  const popupStyle = {
-    position: "fixed",
-    top: `${headerHeight}px`,
-    right: 0,
-    zIndex: 100,
-    width: "420px",
-    maxWidth: "100vw",
-    height: "calc(100vh - 88px)",
-    boxShadow: '0 0 0 4px rgba(0,0,0,0.08), 0 8px 32px rgba(0,0,0,0.18)',
-    borderLeft: "2px solid var(--color-base-300, var(--b3, #d1d5db))",
-    background: "var(--color-base-100, var(--b1, #1a1a1a))",
-    borderRadius: 0,
-    display: isNotificationsDropdownOpen || isMessageAppletOpen ? "block" : "none"
-  }
-
   const resolvedActiveContext = (contextSnapshot?.availableContexts || []).find((context) => context.id === activeContextId)
     || contextSnapshot?.activeContext
     || contextSnapshot?.availableContexts?.[0]
@@ -476,220 +422,169 @@ export default function Header() {
       }
     : null
 
+  // The nav link for the current page or one of its sub-pages
+  const currentPath = router.asPath.split(/[?#]/)[0].replace(/\/+$/, "").toLowerCase() || "/"
+  const activeHref = NAV_LINKS.find((link) => {
+    const target = link.href.replace(/\/+$/, "").toLowerCase()
+    return currentPath === target || currentPath.startsWith(`${target}/`)
+  })?.href
+
   return (
     <>
-      {/* Header Toggle Button - Top Center of Screen when closed */}
+      {/* Collapsed header: a small pill brings it back */}
       {!isHeaderVisible && (
-        <button
-          onClick={toggleHeader}
-          className="fixed top-0 left-1/2 transform -translate-x-1/2 z-50 bg-primary text-primary-content px-4 py-2 rounded-b-lg shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
-          aria-label="Show header"
-        >
-          <ChevronDown className="w-4 h-4" />
+        <button type="button" onClick={toggleHeader} className="tag-header-pill tag-header-pill--show" aria-label="Show header">
+          <ChevronDown aria-hidden="true" />
         </button>
       )}
-      <header
-        className={`w-full transition-all duration-300 ease-in-out ${
-          isHeaderVisible ? "translate-y-0" : "-translate-y-full"
-        } fixed top-0 left-0 right-0 z-40 ${scrolled ? "bg-base-100/95 backdrop-blur-md shadow-lg" : "bg-base-100"}`}
-        style={{
-          filter: 'drop-shadow(0 2px 8px rgba(21, 19, 24, 0.9)) drop-shadow(0 8px 24px color-mix(in srgb, var(--color-primary, #6233FF) 65%, transparent)) drop-shadow(0 12px 32px rgba(98, 51, 255, 0.3))'
-        }}
-      >
-        {/* Single Header Layer */}
-        <div className={headerClass}>
-          {/* Left: Logo and Brand */}
-          <div className="flex items-center space-x-2">
-            <Link
-              href="/"
-              className="flex items-center px-2 py-1 rounded-md backdrop-blur-sm bg-base-100/18 border border-base-content/10 hover:bg-base-100/24 transition-all"
-              onClick={() => setActive("")}
-            >
-              <ThemeLogo 
-                src="/TAG OFFICIAL/LOGOS/HORIZONTAL (HOLLOW WHITE).png" 
-                alt="Twisted Artists Guild" 
-                width="w-48"
-                height="h-14"
-              />
+      <header ref={headerRef} className={`tag-header${isHeaderVisible ? "" : " is-hidden"}`}>
+        <div className="tag-container">
+          <nav className="tag-header__nav" aria-label="Main">
+            <Link href="/" className="tag-header__brand" aria-label="Twisted Artists Guild home">
+              <Image src={TAG_LOGO} alt="" width={137} height={34} loading="eager" className="tag-logo" />
             </Link>
-            {isMobile && (
-              <select
-                className="select select-sm select-bordered max-w-42"
-                value={mobileNavValue}
-                aria-label="Main navigation"
-                onChange={(event) => {
-                  const nextPath = event.target.value
-                  if (nextPath && nextPath !== mobileNavValue) {
-                    router.push(nextPath)
-                  }
+
+            <ul className="tag-header__links">
+              <li>
+                <Link href={BLOOMSCROLL_HREF} className="tag-header__bloom" aria-label="Bloomscroll, the art feed">
+                  <Image src={BLOOMSCROLL_LOGO} alt="" width={97} height={18} className="tag-logo" />
+                </Link>
+              </li>
+              {NAV_LINKS.map((link) => (
+                <li key={link.href}>
+                  <Link
+                    href={link.href}
+                    className="tag-header__link"
+                    aria-current={link.href === activeHref ? "page" : undefined}
+                  >
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+
+            <div className="tag-header__actions">
+              <button
+                type="button"
+                className="tag-icon-btn tag-header__wide-only"
+                aria-label="Search"
+                onClick={() => {
+                  if (!isLeftSidebarVisible) toggleLeftSidebar(true)
+                  window.dispatchEvent(new CustomEvent("sidebarSearchFocus"))
                 }}
               >
-                <option value="" disabled>
-                  Navigate
-                </option>
-                {mobileNavOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            )}
-          </div>
+                <Search aria-hidden="true" />
+              </button>
 
-          {/* Center: Main Navigation - Desktop */}
-          <nav className="hidden lg:flex items-center space-x-6">
-            {/* Search icon - opens sidebar and focuses search */}
-            <button
-              className="btn btn-ghost btn-sm btn-circle text-base-content enhanced-text-visibility"
-              aria-label="Open search"
-              onClick={() => {
-                if (!isLeftSidebarVisible) toggleLeftSidebar()
-                window.dispatchEvent(new CustomEvent("sidebarSearchFocus"))
-              }}
-            >
-              <Search size={20} />
-            </button>
-            <Link
-              href="/feed"
-              className={`flex items-center ${getTextColorClass(active === "bloomscroll")} hover:opacity-80 transition-opacity`}
-              onClick={() => handleActive("bloomscroll")}
-              name="bloomscroll"
-              title="Bloomscroll - Social Feed"
-            >
-              <div style={{
-                filter: 'drop-shadow(0 1px 3px rgba(21, 19, 24, 0.6)) drop-shadow(0 4px 12px color-mix(in srgb, var(--color-primary, #6233FF) 85%, transparent))',
-                display: 'flex',
-                alignItems: 'center'
-              }}>
-                <Image
-                  src="/BLOOMSCROLL OFFICIAL/LOGO/BS (HORIZONTAL) V1.png"
-                  alt="Bloomscroll"
-                  width={180}
-                  height={34}
-                  style={{ height: 'auto' }}
+              <span className="tag-header__bug">
+                <BugReportControl />
+              </span>
+
+              <span className="tag-header__wide-only">
+                <PalettePicker isOpen={isPaletteOpen} onToggle={togglePalette} />
+              </span>
+
+              {/* Notifications & Messages - Only if user logged in */}
+              {session?.user && (
+                <>
+                  <button
+                    ref={messagesIconRef}
+                    type="button"
+                    onClick={toggleMessageApplet}
+                    className="tag-icon-btn"
+                    style={messagesButtonStyle}
+                    aria-label={unreadMessages > 0 ? `Messages, ${unreadMessages} unread` : "Messages"}
+                    aria-expanded={isMessageAppletOpen}
+                  >
+                    <MessageSquare aria-hidden="true" />
+                    {unreadMessages > 0 && (
+                      <span className="tag-count tag-header__count" style={{ background: activeContextColor }} aria-hidden="true">
+                        {unreadMessages}
+                      </span>
+                    )}
+                  </button>
+                  <button
+                    ref={notificationsIconRef}
+                    type="button"
+                    onClick={toggleNotificationsDropdown}
+                    className="tag-icon-btn"
+                    style={notificationButtonStyle}
+                    aria-label={notificationCount > 0 ? `Notifications, ${notificationCount} new` : "Notifications"}
+                    aria-expanded={isNotificationsDropdownOpen}
+                  >
+                    <Bell aria-hidden="true" />
+                    {notificationCount > 0 && (
+                      <span className="tag-count tag-header__count" style={{ background: activeContextColor }} aria-hidden="true">
+                        {notificationCount}
+                      </span>
+                    )}
+                  </button>
+                </>
+              )}
+
+              {/* Account. Signed out, Sign In moves into the menu below 1060px */}
+              <div className={`tag-header__account${session?.user ? "" : " tag-header__wide-only"}`}>
+                <LoginProfile
+                  className=""
+                  isOpen={isLoginOpen}
+                  onToggle={toggleLogin}
+                  activeContextId={activeContextId}
+                  onActiveContextChange={setActiveContextId}
+                  onContextSnapshotChange={handleContextSnapshotChange}
                 />
               </div>
-            </Link>
-            <Link
-              href="/art/"
-              className={`text-lg ${getTextColorClass(active === "art")}`}
-              onClick={() => handleActive("art")}
-              name="art"
-            >
-              Browse
-            </Link>
-            <Link
-              href="/artists"
-              className={`text-lg ${getTextColorClass(active === "artist")}`}
-              onClick={() => handleActive("artist")}
-              name="artist"
-            >
-              Artists
-            </Link>
-            <Link
-              href="/events"
-              className={`text-lg ${getTextColorClass(active === "events")}`}
-              onClick={() => handleActive("events")}
-              name="events"
-            >
-              Events
-            </Link>
-            <Link
-              href="/blogs"
-              className={`text-lg ${getTextColorClass(active === "blog")}`}
-              onClick={() => handleActive("blog")}
-              name="blog"
-            >
-              Blog
-            </Link>
-            <Link
-              href="/news"
-              className={`text-lg ${getTextColorClass(active === "news")}`}
-              onClick={() => handleActive("news")}
-              name="news"
-            >
-              News
-            </Link>
-            <Link
-              href="/contests/"
-              className={`text-lg ${getTextColorClass(active === "contests")}`}
-              onClick={() => handleActive("contests")}
-              name="contests"
-            >
-              Contests
-            </Link>
+
+              {/* Below 1060px these open the panels instead of the edge tabs */}
+              <button
+                type="button"
+                className="tag-icon-btn tag-header__narrow-only"
+                aria-label="Open browse panel"
+                aria-controls={BROWSE_PANEL_ID}
+                aria-expanded={isLeftSidebarVisible}
+                onClick={() => toggleLeftSidebar()}
+              >
+                <PanelLeft aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                className="tag-icon-btn tag-header__narrow-only"
+                aria-label={cartCount > 0 ? `Open cart, ${cartCount} items` : "Open cart"}
+                aria-controls={CART_PANEL_ID}
+                aria-expanded={isRightSidebarVisible}
+                onClick={() => toggleRightSidebar()}
+              >
+                <ShoppingCart aria-hidden="true" />
+                {cartCount > 0 && <span className="tag-count tag-header__count" aria-hidden="true">{cartCount}</span>}
+              </button>
+              <button
+                type="button"
+                className="tag-icon-btn tag-header__narrow-only tag-hamburger"
+                aria-label={isMenuOpen ? "Close menu" : "Open menu"}
+                aria-expanded={isMenuOpen}
+                aria-controls={menuId}
+                onClick={toggleMenu}
+              >
+                <span aria-hidden="true" />
+                <span aria-hidden="true" />
+                <span aria-hidden="true" />
+              </button>
+            </div>
           </nav>
 
-          {/* Right: User Controls */}
-          <div className="flex items-center space-x-2">
-            <BugReportControl />
-
-            {/* Theme Switcher */}
-            <ThemeSwitcher themes={themes} currentTheme={theme} onThemeChange={updateTheme} onToggle={toggleTheme} isOpen={isThemeOpen} />
-
-            {/* Notifications & Messages - Only if user logged in */}
-            {session?.user && ( // Use session.user for logged-in check
-              <>
-                <button
-                  ref={messagesIconRef}
-                  onClick={toggleMessageApplet}
-                  className={`btn btn-ghost btn-sm btn-circle relative${isMessageAppletOpen ? " bg-primary text-primary-content ring-2 ring-primary/60 border border-primary/35" : " text-base-content enhanced-text-visibility bg-base-100/18 border border-base-content/10 hover:bg-base-100/24"}`}
-                  style={messagesButtonStyle}
-                  aria-label="Messages"
-                >
-                  <MessageSquare size={18} />
-                  {unreadMessages > 0 && (
-                    <span className="absolute -top-1 -right-1 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center" style={{ backgroundColor: activeContextColor }}>
-                      {unreadMessages}
-                    </span>
-                  )}
-                </button>
-                <button
-                  ref={notificationsIconRef}
-                  onClick={toggleNotificationsDropdown}
-                  className={`btn btn-ghost btn-sm btn-circle relative${isNotificationsDropdownOpen ? " bg-primary text-primary-content ring-2 ring-primary/60 border border-primary/35" : " text-base-content enhanced-text-visibility bg-base-100/18 border border-base-content/10 hover:bg-base-100/24"}`}
-                  style={notificationButtonStyle}
-                  aria-label="Notifications"
-                >
-                  <Bell size={18} />
-                  {notificationCount > 0 && (
-                    <span className="absolute -top-1 -right-1 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center" style={{ backgroundColor: activeContextColor }}>
-                      {notificationCount}
-                    </span>
-                  )}
-                </button>
-              </>
-            )}
-
-            {/* Login Profile */}
-            <LoginProfile
-              className="text-base-content enhanced-text-visibility bg-base-100/18 border border-base-content/10 hover:bg-base-100/24"
-              isOpen={isLoginOpen}
-              onToggle={toggleLogin}
-              activeContextId={activeContextId}
-              onActiveContextChange={setActiveContextId}
-              onContextSnapshotChange={handleContextSnapshotChange}
-            />
-          </div>
-          {/* tag-theme visual treatment is handled with CSS pseudo-elements */}
+          <MobileMenu id={menuId} open={isMenuOpen} onClose={closeMenu} isSignedIn={Boolean(session?.user)} activeHref={activeHref} />
         </div>
 
-        {/* Header Close Button - Bottom Center when open */}
+        {/* Collapse the header */}
         {isHeaderVisible && (
-          <button
-            onClick={toggleHeader}
-            className="absolute -bottom-3 left-1/2 transform -translate-x-1/2 bg-base-200 text-base-content hover:bg-base-300 px-3 py-1 rounded-b-lg border border-base-300 shadow-md transition-all duration-300 hover:scale-105"
-            aria-label="Hide header"
-          >
-            <ChevronUp className="w-4 h-4" />
+          <button type="button" onClick={toggleHeader} className="tag-header-pill" aria-label="Hide header">
+            <ChevronUp aria-hidden="true" />
           </button>
         )}
       </header>
-      {/* Header Spacer - Adjusted to match new header height */}
-      {isHeaderVisible && <div className="h-28 w-full" />} {/* Adjusted from h-22 to h-28 */}
-      {/* Messages Applet (fixed panel) */}
-      {isMessageAppletOpen && !isNotificationsDropdownOpen && !isLoginOpen && !isThemeOpen && (
-        <div style={popupStyle}>
+
+      {/* Messages Applet (fixed panel under the header) */}
+      {isMessageAppletOpen && !isNotificationsDropdownOpen && !isLoginOpen && (
+        <div className="tag-header-popup">
           <MessagesApplet
             key={`messages-${initialConversationId || "default"}`}
             isOpen={isMessageAppletOpen}
@@ -710,9 +605,9 @@ export default function Header() {
           />
         </div>
       )}
-      {/* Notifications Dropdown (simple dropdown) */}
-      {isNotificationsDropdownOpen && !isMessageAppletOpen && !isLoginOpen && !isThemeOpen && (
-        <div style={popupStyle}>
+      {/* Notifications Dropdown (fixed panel under the header) */}
+      {isNotificationsDropdownOpen && !isMessageAppletOpen && !isLoginOpen && (
+        <div className="tag-header-popup">
           <NotificationsDropdown
             activeContextColor={activeContextColor}
             notifications={notifications}
@@ -722,19 +617,6 @@ export default function Header() {
           />
         </div>
       )}
-      {/* Login Popup */}
-      {isLoginOpen && !isThemeOpen && (
-        <div style={popupStyle}>
-          {/* Replace below with your actual login form or modal */}
-          <div className="flex flex-col items-center justify-center h-full p-8">
-            <h2 className="text-2xl font-bold mb-4">Sign In</h2>
-            {/* Example login form placeholder */}
-            <button className="btn btn-primary w-full" onClick={toggleLogin}>Sign in with Provider</button>
-            <button className="btn btn-ghost mt-4" onClick={toggleLogin}>Cancel</button>
-          </div>
-        </div>
-      )}
     </>
   )
 }
-

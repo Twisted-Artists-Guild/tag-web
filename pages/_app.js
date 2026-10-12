@@ -16,15 +16,14 @@ import "@/styles/globals.css"
 import EnhancedLayout from "@/components/MyLayout"
 import { AppWrapper } from "@/components/Context"
 import TagSEO from "@/components/TagSEO"
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import { ApplicationInsights } from "@microsoft/applicationinsights-web"
 import { MessagingRealtimeProvider } from '@/components/messaging/MessagingRealtimeProvider'
 import { CartProvider } from "@/components/cart/CartContext"
+import NoticeBar from "@/components/NoticeBar"
 
 // Flag to prevent multiple initializations across hot reloads
 let appInsightsInitialized = false
-const DEV_BANNER_DISMISS_KEY = "tag_dev_banner_dismiss_until"
-const DEV_BANNER_RESHOW_MS = 5 * 60 * 1000
 const SCROLL_ROOT_SELECTORS = [".site-main", "main", "#__next"]
 
 const appInsights = new ApplicationInsights({
@@ -37,10 +36,6 @@ const appInsights = new ApplicationInsights({
  * Enhanced App Component - keeps your original structure but adds collapsible layout
  */
 export default function App({ Component, pageProps: { session, sidebarProps, ...pageProps } }) {
-  const [showDevBanner, setShowDevBanner] = useState(true)
-  const [bannerReady, setBannerReady] = useState(false)
-  // Keep initial render deterministic across server/client to avoid hydration mismatch.
-  const [nowMs, setNowMs] = useState(0)
   const router = useRouter()
 
   // Allow pages to override the default layout if needed
@@ -144,122 +139,6 @@ export default function App({ Component, pageProps: { session, sidebarProps, ...
     }
   }, [router])
 
-  useEffect(() => {
-    if (process.env.NODE_ENV !== "development") return
-    // Capture a single timestamp for banner diagnostics without forcing global periodic re-renders.
-    setNowMs(Date.now())
-  }, [])
-
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return
-    }
-
-    const now = Date.now()
-    const dismissUntilMs = Number(window.localStorage.getItem(DEV_BANNER_DISMISS_KEY) || "0")
-    const shouldShowBanner = !Number.isFinite(dismissUntilMs) || dismissUntilMs <= now
-
-    const initTimer = window.setTimeout(() => {
-      setShowDevBanner(shouldShowBanner)
-      setBannerReady(true)
-    }, 0)
-
-    if (shouldShowBanner) {
-      return () => window.clearTimeout(initTimer)
-    }
-
-    const waitMs = Math.max(0, dismissUntilMs - now)
-    const restoreTimer = window.setTimeout(() => {
-      window.localStorage.removeItem(DEV_BANNER_DISMISS_KEY)
-      setShowDevBanner(true)
-    }, waitMs)
-
-    return () => {
-      window.clearTimeout(initTimer)
-      window.clearTimeout(restoreTimer)
-    }
-  }, [])
-
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return
-    }
-
-    const now = Date.now()
-    const dismissUntilMs = Number(window.localStorage.getItem(DEV_BANNER_DISMISS_KEY) || "0")
-    const shouldShowBanner = !Number.isFinite(dismissUntilMs) || dismissUntilMs <= now
-
-    const initTimer = window.setTimeout(() => {
-      setShowDevBanner(shouldShowBanner)
-      setBannerReady(true)
-    }, 0)
-
-    if (shouldShowBanner) {
-      return () => window.clearTimeout(initTimer)
-    }
-
-    const waitMs = Math.max(0, dismissUntilMs - now)
-    const restoreTimer = window.setTimeout(() => {
-      window.localStorage.removeItem(DEV_BANNER_DISMISS_KEY)
-      setShowDevBanner(true)
-    }, waitMs)
-
-    return () => {
-      window.clearTimeout(initTimer)
-      window.clearTimeout(restoreTimer)
-    }
-  }, [])
-
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return
-    }
-
-    const now = Date.now()
-    const dismissUntilMs = Number(window.localStorage.getItem(DEV_BANNER_DISMISS_KEY) || "0")
-    const shouldShowBanner = !Number.isFinite(dismissUntilMs) || dismissUntilMs <= now
-
-    const initTimer = window.setTimeout(() => {
-      setShowDevBanner(shouldShowBanner)
-      setBannerReady(true)
-    }, 0)
-
-    if (shouldShowBanner) {
-      return () => window.clearTimeout(initTimer)
-    }
-
-    const waitMs = Math.max(0, dismissUntilMs - now)
-    const restoreTimer = window.setTimeout(() => {
-      window.localStorage.removeItem(DEV_BANNER_DISMISS_KEY)
-      setShowDevBanner(true)
-    }, waitMs)
-
-    return () => {
-      window.clearTimeout(initTimer)
-      window.clearTimeout(restoreTimer)
-    }
-  }, [])
-
-  const closeBanner = () => {
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem(DEV_BANNER_DISMISS_KEY, String(Date.now() + DEV_BANNER_RESHOW_MS))
-    }
-    setShowDevBanner(false)
-  }
-
-  const buildNumber = process.env.NEXT_PUBLIC_BUILD_NUMBER || process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA || "local"
-  const localDevStartedAt = process.env.NODE_ENV === "development" ? process.env.NEXT_PUBLIC_LOCAL_DEV_STARTED_AT : ""
-  const localDevStartedMs = localDevStartedAt ? Date.parse(localDevStartedAt) : NaN
-  const localUptimeMs = Number.isFinite(localDevStartedMs) ? Math.max(0, nowMs - localDevStartedMs) : 0
-  const uptimeHours = Math.floor(localUptimeMs / 3600000)
-  const uptimeMinutes = Math.floor((localUptimeMs % 3600000) / 60000)
-  const uptimeSeconds = Math.floor((localUptimeMs % 60000) / 1000)
-  const localUptime = `${String(uptimeHours).padStart(2, "0")}:${String(uptimeMinutes).padStart(2, "0")}:${String(uptimeSeconds).padStart(2, "0")}`
-  const environmentDetail = process.env.NODE_ENV === "development"
-    ? `Dev uptime ${localUptime}`
-    : `Build ${String(buildNumber || "local").slice(0, 12)}`
-  const bannerMessage = `Early access notice: this platform is actively being refined and some features may change without notice. ${environmentDetail}.`
-
   const canonicalSlug = (router.asPath || "/").split("?")[0].split("#")[0].replace(/^\//, "")
   const fallbackTitle = canonicalSlug
     ? `${canonicalSlug.replace(/[-_/]/g, " ")} | Twisted Artists Guild`
@@ -278,22 +157,7 @@ export default function App({ Component, pageProps: { session, sidebarProps, ...
     <SessionProvider session={session}>
       <CartProvider>
         <MessagingRealtimeProvider>
-          {/* Your original development banner */}
-          {bannerReady && showDevBanner && (
-            <div className="bg-warning text-warning-content text-center py-1 text-xs font-bold sticky top-0 z-50 flex justify-center items-center">
-              <div className="grow">
-                {bannerMessage}
-              </div>
-              <button
-                onClick={closeBanner}
-                className="px-2 hover:bg-warning-content hover:bg-opacity-20 rounded transition-colors"
-                title="Close this notification (returns in 5 minutes)"
-                aria-label="Close development environment notification"
-              >
-                ✕
-              </button>
-            </div>
-          )}
+          <NoticeBar />
 
           {/* Enhanced Layout with your original structure */}
           {getLayout(

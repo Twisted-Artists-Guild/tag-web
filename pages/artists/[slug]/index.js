@@ -250,6 +250,7 @@ const Artist = (props) => {
                   artist={{
                     ...artistForHtmlRender,
                     profilePic: props.profilePic,
+                    logoPic: props.logoPic || props.LogoPic || props.artist?.logoPic || props.artist?.LogoPic,
                     images: props.profilePic?.url ? [props.profilePic.url] : [],
                     path: props.slug,
                     since: artistForHtmlRender?.applied,
@@ -510,6 +511,7 @@ console.log("Fetched artist data:", artistData);
     artist: artistData.artist,
     slug,
     profilePic: artistData.profilePic,
+    logoPic: artistData.logoPic || artistData.LogoPic || artistData.artist?.logoPic || artistData.artist?.LogoPic,
     coverPic: artistData.coverPic,
     listings: artistData.listings,
     links: artistData.links,

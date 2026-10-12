@@ -49,6 +49,13 @@ Use `showComments={false}` to hide the comment action. `UnifiedCard` also accept
 `impressionTargetId`, `impressionTargetType`, `commentTargetId`, `commentTargetType`,
 `reportTargetId`, `reportTargetType`, and `reportTargetURL` for custom content types.
 
+Pass `logoImage` to render an already-resolved entity logo next to the title, or pass
+`logoEntityType` and `logoEntityId` to resolve an active logo from the entity's
+`logo/` storage folder. Supported entity types are `artist`, `vendor`, `venue`, and
+`event`. Logo uploads use the existing image manager's single-active-image workflow;
+the active association and history are read from `/api/Logo/{entityType}/{entityId}`.
+Mutation and history requests use the existing authenticated same-origin API proxy.
+
 ## Listing identity cards
 
 Listing cards on `/art` use `UnifiedCard` for the embedded identity block. The

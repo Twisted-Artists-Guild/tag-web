@@ -1,0 +1,100 @@
+/* This file is part of the Twisted Artists Guild project.
+
+ Copyright (C) 2025 Twisted Artists Guild
+
+ Licensed under the GNU General Public License v3.0
+ (https://www.gnu.org/licenses/gpl-3.0.en.html).
+
+ This software comes with NO WARRANTY; see the license for details.
+
+ Open source · low-profit · human-first*/
+
+/* Site shell layout */
+
+.site-shell {
+  position: relative;
+  background:
+    radial-gradient(ellipse 640px 420px at top left, rgba(var(--tag-indigo-rgb), 0.18), transparent 70%),
+    radial-gradient(ellipse 560px 380px at top right, rgba(var(--tag-acc-rgb), 0.1), transparent 70%),
+    var(--tag-bg);
+}
+
+.site-main {
+  position: relative;
+  z-index: 1;
+}
+
+.site-main-inner {
+  width: min(100%, 1280px);
+  margin: 0 auto;
+}
+
+/* Page rhythm */
+@layer components {
+  .tag-container {
+    width: 100%;
+    max-width: var(--tag-container);
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  .tag-section {
+    position: relative;
+    padding: 96px 0;
+  }
+
+  /* Faint alternating band instead of divider lines */
+  .tag-section--band {
+    background: linear-gradient(180deg, transparent, var(--tag-band) 12%, var(--tag-band) 88%, transparent);
+  }
+
+  .tag-section-head {
+    max-width: 680px;
+    margin: 0 auto 56px;
+    text-align: center;
+  }
+
+  .tag-section-head .tag-accent-bar {
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .tag-section-head h2 {
+    font-size: clamp(30px, 4vw, 46px);
+    margin: 0 0 14px;
+  }
+
+  .tag-section-head p {
+    color: var(--tag-text-2);
+    margin: 0;
+    font-size: 17px;
+  }
+
+  @media (max-width: 640px) {
+    .tag-container {
+      padding: 0 16px;
+    }
+
+    .tag-section {
+      padding: 72px 0;
+    }
+  }
+}
+/* Open panels push the page from 1280px; below that they overlay it */
+@media (min-width: 1280px) {
+  .site-shell[data-left-open] > :is(.site-main, footer) {
+    margin-left: var(--tag-sb-w);
+  }
+
+  .site-shell[data-right-open] > :is(.site-main, footer) {
+    margin-right: var(--tag-sb-w);
+  }
+}
+/* Full-bleed pages (the landing). Unlayered so it beats the shell's p-4 utility. */
+.site-main:has(> .site-main-inner > .tag-landing) {
+  padding: 0;
+}
+
+.site-main-inner:has(> .tag-landing) {
+  width: 100%;
+}
