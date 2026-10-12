@@ -12,8 +12,36 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from "react"
 import Image from "next/image"
 import ContentTags, { WARNING_DEFINITIONS } from "@/components/social/ContentTags"
+import { invalidateEntityLogoCache } from "@/components/cards/useEntityLogo"
 
 const defaultFieldClass = "input input-bordered w-full"
+const LOGO_API_ENTITY_TYPES = {
+  artist: "Artist",
+  vendor: "Vendor",
+  venue: "Venue",
+  event: "Event",
+}
+const IMAGE_CONTENT_TYPES_BY_EXTENSION = {
+  avif: "image/avif",
+  bmp: "image/bmp",
+  gif: "image/gif",
+  jfif: "image/jpeg",
+  jpeg: "image/jpeg",
+  jpg: "image/jpeg",
+  png: "image/png",
+  svg: "image/svg+xml",
+  tif: "image/tiff",
+  tiff: "image/tiff",
+  webp: "image/webp",
+}
+
+function resolveImageContentType(file) {
+  const reportedType = String(file?.contentType || file?.type || "").trim().toLowerCase()
+  if (reportedType.startsWith("image/") && reportedType !== "image/jpg") return reportedType
+
+  const extension = String(file?.name || "").split(".").pop()?.toLowerCase()
+  return IMAGE_CONTENT_TYPES_BY_EXTENSION[extension] || (reportedType === "image/jpg" ? "image/jpeg" : "")
+}
 
 const fallbackRoleOptions = [
   { creditRoleID: 1, label: "Copyright Owner" },
@@ -562,7 +590,7 @@ function CreditsAdder({ credits, onChange, artists, users, onSave, saving, roleO
   )
 }
 
-export default function GalleryManager({ entityType, entityId, entityLabel, currentUser, basePrefix, lockedRootPrefix, folderKind = "gallery", title = "Gallery Manager", allowVideo, singleImageMode = false, onFilesChanged }) {
+export default function GalleryManager({ entityType, entityId, entityLabel, currentUser, basePrefix, lockedRootPrefix, folderKind = "gallery", title = "Gallery Manager", allowVideo, singleImageMode = false, allowDeleteSingleImage = false, onFilesChanged }) {
   const normalizedFolderKind = String(folderKind || "gallery").trim().toLowerCase()
   const galleryPrefix = basePrefix || getManagedPrefix(entityType, entityId, normalizedFolderKind)
   const startPrefix = lockedRootPrefix || galleryPrefix
@@ -627,6 +655,10 @@ export default function GalleryManager({ entityType, entityId, entityLabel, curr
   const [savingWarnings, setSavingWarnings] = useState(false)
   const [editorTab, setEditorTab] = useState("metadata")
   const [settingAsActive, setSettingAsActive] = useState(false)
+  const [activeLogo, setActiveLogo] = useState(null)
+  const [logoHistory, setLogoHistory] = useState([])
+  const [logoHistoryLoading, setLogoHistoryLoading] = useState(false)
+  const [logoActionLoading, setLogoActionLoading] = useState(false)
 
   const warningOptions = useMemo(
     () => Object.keys(WARNING_DEFINITIONS).map((key) => ({ key, label: warningKeyToLabel(key) })),
@@ -672,6 +704,99 @@ export default function GalleryManager({ entityType, entityId, entityLabel, curr
   const showError = (msg) => {
     setError(msg)
     setMessage("")
+  }
+
+  const getLogoApiError = async (response, fallback) => {
+    const body = await response.json().catch(() => ({}))
+    if (response.status === 401) return body?.message || "Please sign in to manage this logo."
+    if (response.status === 403) return body?.message || "You are not authorized to manage this logo."
+    if (response.status === 404) return body?.message || "The entity, picture, or logo version was not found."
+    if (response.status === 400) return body?.message || body?.error || "The logo request was not valid."
+    return body?.message || body?.error || fallback
+  }
+
+  const loadLogoState = useCallback(async () => {
+    if (normalizedFolderKind !== "logo" || !entityType || !entityId) return
+
+    setLogoHistoryLoading(true)
+    try {
+      const logoApiEntityType = LOGO_API_ENTITY_TYPES[String(entityType).toLowerCase()] || entityType
+      const baseUrl = `/api/Logo/${encodeURIComponent(logoApiEntityType)}/${encodeURIComponent(entityId)}`
+      const [activeResponse, historyResponse] = await Promise.all([
+        fetch(baseUrl, { credentials: "include" }),
+        fetch(`${baseUrl}/history`, { credentials: "include" }),
+      ])
+
+      const activePayload = activeResponse.ok ? await activeResponse.json().catch(() => null) : null
+      const historyPayload = historyResponse.ok ? await historyResponse.json().catch(() => []) : []
+      const active = activePayload?.logoPic || activePayload?.LogoPic || activePayload?.activeLogo || activePayload?.ActiveLogo || activePayload?.logo || activePayload?.data || activePayload
+      const history = Array.isArray(historyPayload)
+        ? historyPayload
+        : historyPayload?.history || historyPayload?.History || historyPayload?.items || historyPayload?.Items || historyPayload?.versions || historyPayload?.Versions || historyPayload?.logoHistory || historyPayload?.LogoHistory || historyPayload?.data?.history || []
+
+      setActiveLogo(active && (active.url || active.URL || active.normalizedURL || active.NormalizedURL || active.pictureID || active.PictureID) ? active : null)
+      setLogoHistory(Array.isArray(history) ? history : [])
+
+      if (!activeResponse.ok && activeResponse.status !== 404) {
+        throw new Error(await getLogoApiError(activeResponse, "Unable to load the active logo."))
+      }
+      if (!historyResponse.ok) {
+        throw new Error(await getLogoApiError(historyResponse, "Unable to load logo history."))
+      }
+    } catch (err) {
+      showError(err.message || "Unable to load logo details.")
+    } finally {
+      setLogoHistoryLoading(false)
+    }
+  }, [entityId, entityType, normalizedFolderKind])
+
+  useEffect(() => {
+    if (normalizedFolderKind === "logo") loadLogoState()
+  }, [loadLogoState, normalizedFolderKind])
+
+  const restoreLogoVersion = async (historyId) => {
+    if (!historyId) return
+    setLogoActionLoading(true)
+    try {
+      const logoApiEntityType = LOGO_API_ENTITY_TYPES[String(entityType).toLowerCase()] || entityType
+      const response = await fetch(`/api/Logo/${encodeURIComponent(logoApiEntityType)}/${encodeURIComponent(entityId)}/restore/${encodeURIComponent(historyId)}`, {
+        method: "POST",
+        credentials: "include",
+      })
+      if (!response.ok) throw new Error(await getLogoApiError(response, "Unable to restore this logo version."))
+      invalidateEntityLogoCache(entityType, entityId)
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("entity-logo-updated", { detail: { entityType, entityId } }))
+      }
+      showMessage("Logo version restored.")
+      await Promise.all([loadLogoState(), loadFiles()])
+    } catch (err) {
+      showError(err.message || "Unable to restore this logo version.")
+    } finally {
+      setLogoActionLoading(false)
+    }
+  }
+
+  const removeActiveLogo = async () => {
+    setLogoActionLoading(true)
+    try {
+      const logoApiEntityType = LOGO_API_ENTITY_TYPES[String(entityType).toLowerCase()] || entityType
+      const response = await fetch(`/api/Logo/${encodeURIComponent(logoApiEntityType)}/${encodeURIComponent(entityId)}`, {
+        method: "DELETE",
+        credentials: "include",
+      })
+      if (!response.ok) throw new Error(await getLogoApiError(response, "Unable to remove the active logo."))
+      invalidateEntityLogoCache(entityType, entityId)
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("entity-logo-updated", { detail: { entityType, entityId } }))
+      }
+      showMessage("Active logo removed and archived.")
+      await Promise.all([loadLogoState(), loadFiles()])
+    } catch (err) {
+      showError(err.message || "Unable to remove the active logo.")
+    } finally {
+      setLogoActionLoading(false)
+    }
   }
 
   const displayFileName = (name) => {
@@ -1003,6 +1128,8 @@ export default function GalleryManager({ entityType, entityId, entityLabel, curr
       name: blobName,
       url: data.url,
       persistedPictureId: data?.persistedPictureId || null,
+      contentType: file.type || data?.contentType || null,
+      contentLength: file.size || 0,
     }
   }
 
@@ -1051,7 +1178,7 @@ export default function GalleryManager({ entityType, entityId, entityLabel, curr
     const errors = []
     const uploaded = []
 
-    if (isSingleImageMode && isContextFolderView) {
+    if (isSingleImageMode && normalizedFolderKind !== "logo" && isContextFolderView) {
       const existingRootFiles = files.filter((file) => !file?.isVideoPreview)
       for (const existingFile of existingRootFiles) {
         const timestampFolder = new Date().toISOString().replace(/[:.]/g, "-")
@@ -1402,10 +1529,12 @@ export default function GalleryManager({ entityType, entityId, entityLabel, curr
     try {
       let promotedUrl = String(selectedFile?.url || "").trim()
 
+      if (normalizedFolderKind !== "logo") {
       const existingRootFiles = files.filter((file) => {
         if (file?.isVideoPreview) return false
         const blobName = String(file?.name || "").trim()
-        return blobName.startsWith(galleryPrefix)
+        if (!blobName.startsWith(galleryPrefix)) return false
+        return !blobName.slice(galleryPrefix.length).includes("/")
       })
 
       for (const file of existingRootFiles) {
@@ -1453,6 +1582,7 @@ export default function GalleryManager({ entityType, entityId, entityLabel, curr
           promotedUrl = String(promoteData.newUrl).trim()
         }
       }
+      }
 
       const normalizedUrl = normalizeUrl(promotedUrl)
       let pictureId = toNumber(
@@ -1496,6 +1626,31 @@ export default function GalleryManager({ entityType, entityId, entityLabel, curr
 
       if ((normalizedFolderKind === "profile" || normalizedFolderKind === "cover") && !pictureId) {
         throw new Error(`Unable to resolve PictureID for active ${normalizedFolderKind} image`)
+      }
+
+      if (normalizedFolderKind === "logo") {
+        if (!pictureId) throw new Error("Unable to resolve a PictureID for this logo.")
+        const contentType = resolveImageContentType(selectedFile)
+        if (!contentType) throw new Error("Unable to determine the logo image type. Please upload a supported image file.")
+        const logoApiEntityType = LOGO_API_ENTITY_TYPES[String(entityType).toLowerCase()] || entityType
+        const logoResponse = await fetch(`/api/Logo/${encodeURIComponent(logoApiEntityType)}/${encodeURIComponent(entityId)}`, {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            pictureID: pictureId,
+            contentType,
+            fileSizeBytes: Number(selectedFile.contentLength || selectedFile.size || 0),
+          }),
+        })
+        if (!logoResponse.ok) {
+          throw new Error(await getLogoApiError(logoResponse, "Unable to set this logo as active."))
+        }
+        invalidateEntityLogoCache(entityType, entityId)
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("entity-logo-updated", { detail: { entityType, entityId } }))
+        }
+        await loadLogoState()
       }
 
       if (entityType === "artist" && entityId && pictureId) {
@@ -1770,6 +1925,8 @@ export default function GalleryManager({ entityType, entityId, entityLabel, curr
     setCurrentPrefix(startPrefix)
   }
 
+  const activeLogoUrl = activeLogo?.url || activeLogo?.URL || activeLogo?.normalizedURL || activeLogo?.NormalizedURL || activeLogo?.picture?.url || activeLogo?.Picture?.URL || ""
+
   return (
     <div className="card bg-base-100 shadow-md border border-base-300">
       <div className="card-body gap-4">
@@ -1780,6 +1937,69 @@ export default function GalleryManager({ entityType, entityId, entityLabel, curr
 
         {error ? <div className="alert alert-error text-sm">{error}</div> : null}
         {message ? <div className="alert alert-success text-sm">{message}</div> : null}
+
+        {normalizedFolderKind === "logo" ? (
+          <section className="rounded-md border border-base-300 bg-base-200/40 p-3 space-y-3" aria-label="Logo history">
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="font-semibold">Active Logo &amp; History</h3>
+              {activeLogoUrl ? (
+                <button
+                  type="button"
+                  className="btn btn-xs btn-outline btn-error"
+                  onClick={() => {
+                    if (window.confirm("Remove the active logo? It will be archived and can be restored later.")) removeActiveLogo()
+                  }}
+                  disabled={logoActionLoading}
+                >
+                  Remove Active Logo
+                </button>
+              ) : null}
+            </div>
+            {activeLogoUrl ? (
+              <div className="flex items-center gap-3">
+                <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-md border border-base-300 bg-base-100">
+                  <Image src={activeLogoUrl} alt={`${entityLabel || entityType} active logo`} fill sizes="64px" className="object-contain p-1" />
+                </div>
+                <p className="break-all text-xs text-base-content/70">{activeLogoUrl}</p>
+              </div>
+            ) : (
+              <p className="text-sm text-base-content/60">No active logo is set.</p>
+            )}
+            {logoHistoryLoading ? <p className="text-xs text-base-content/60">Loading logo history...</p> : null}
+            {logoHistory.length > 0 ? (
+              <div className="divide-y divide-base-300 rounded border border-base-300 bg-base-100">
+                {logoHistory.map((version, index) => {
+                  const historyId = version?.historyId || version?.HistoryID || version?.logoHistoryID || version?.LogoHistoryID || version?.id
+                  const picture = version?.logoPic || version?.picture || version?.Picture || version
+                  const versionUrl = picture?.url || picture?.URL || picture?.normalizedURL || picture?.NormalizedURL || ""
+                  const createdAt = version?.archivedAt || version?.ArchivedAt || version?.createdAt || version?.CreatedAt || version?.changedAt || version?.ChangedAt
+                  return (
+                    <div key={historyId || versionUrl || index} className="flex items-center justify-between gap-3 p-2">
+                      <div className="flex min-w-0 items-center gap-2">
+                        {versionUrl ? (
+                          <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded border border-base-300 bg-base-100">
+                            <Image src={versionUrl} alt="Archived logo" fill sizes="40px" className="object-contain p-0.5" />
+                          </div>
+                        ) : null}
+                        <div className="min-w-0">
+                          <p className="truncate text-xs font-medium">{createdAt ? new Date(createdAt).toLocaleString() : `Archived logo ${index + 1}`}</p>
+                          {versionUrl ? <p className="truncate text-[10px] text-base-content/60">{versionUrl}</p> : null}
+                        </div>
+                      </div>
+                      {historyId ? (
+                        <button type="button" className="btn btn-xs btn-outline" onClick={() => restoreLogoVersion(historyId)} disabled={logoActionLoading}>
+                          {logoActionLoading ? "Working..." : "Restore"}
+                        </button>
+                      ) : null}
+                    </div>
+                  )
+                })}
+              </div>
+            ) : !logoHistoryLoading ? (
+              <p className="text-xs text-base-content/60">No previous logo versions.</p>
+            ) : null}
+          </section>
+        ) : null}
 
         <div className="space-y-3">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -1830,10 +2050,10 @@ export default function GalleryManager({ entityType, entityId, entityLabel, curr
           {uploadMessage ? <div className="alert alert-success text-sm break-all">{uploadMessage}</div> : null}
 
           <div className="rounded-md border border-base-300 bg-base-200 p-3 space-y-2">
-            <div className="text-xs font-semibold text-base-content/80">Browse Artist Media Folders</div>
+            <div className="text-xs font-semibold text-base-content/80">Browse {entityLabel || `${entityType} #${entityId}`} Media Folders</div>
             <div className="flex flex-wrap gap-2">
               <button type="button" className="btn btn-xs btn-outline" onClick={goToRoot} disabled={currentPrefix === startPrefix}>
-                Artist Root
+                {entityLabel || `${entityType} #${entityId}`} Root
               </button>
               <button type="button" className="btn btn-xs btn-outline" onClick={goUpOneLevel} disabled={currentPrefix === startPrefix}>
                 Up
@@ -1929,28 +2149,32 @@ export default function GalleryManager({ entityType, entityId, entityLabel, curr
                             {file?.isInGallery !== false ? "-" : "+"}
                           </button>
                         </>
-                      ) : !isSingleImageMode ? (
+                      ) : (
                         <>
-                          <button
-                            type="button"
-                            className="absolute top-1 right-8 btn btn-xs btn-warning opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={() => handleArchive(file)}
-                            title="Archive image"
-                          >
-                            A
-                          </button>
+                          {!isSingleImageMode ? (
+                            <button
+                              type="button"
+                              className="absolute top-1 right-8 btn btn-xs btn-warning opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={() => handleArchive(file)}
+                              title="Archive image"
+                            >
+                              A
+                            </button>
+                          ) : null}
 
-                          <button
-                            type="button"
-                            className="absolute top-1 right-1 btn btn-xs btn-error opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={() => handleDelete(file)}
-                            disabled={!file?.isVideoPreview && deletingUrl === file.url}
-                            title="Delete image"
-                          >
-                            {!file?.isVideoPreview && deletingUrl === file.url ? "..." : "X"}
-                          </button>
+                          {(!isSingleImageMode || allowDeleteSingleImage) && normalizedFolderKind !== "logo" ? (
+                            <button
+                              type="button"
+                              className="absolute top-1 right-1 btn btn-xs btn-error opacity-0 group-hover:opacity-100 transition-opacity"
+                              onClick={() => handleDelete(file)}
+                              disabled={!file?.isVideoPreview && deletingUrl === file.url}
+                              title="Delete image"
+                            >
+                              {!file?.isVideoPreview && deletingUrl === file.url ? "..." : "X"}
+                            </button>
+                          ) : null}
                         </>
-                      ) : null}
+                      )}
 
                       <div className="text-[10px] truncate px-1 pb-0.5 text-base-content/70 select-none">{displayFileName(file.name)}</div>
                       {canManageOrder && isContextFolderView && file?.isInGallery === false ? (

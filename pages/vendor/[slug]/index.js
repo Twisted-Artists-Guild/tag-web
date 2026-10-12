@@ -2,6 +2,7 @@ import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
 import { sanitizeCardHtml, sanitizeDefaultHtml, stripHtmlText } from "@/components/security/sanitize"
 import serverFetch from "@/libs/serverFetch"
+import useEntityLogo from "@/components/cards/useEntityLogo"
 
 function normalizeSlug(value) {
   return String(value || "").trim().toLowerCase()
@@ -41,6 +42,11 @@ export default function VendorProfilePage({ vendor }) {
   const vendorNameRichtext = pickField(vendor, "companyNameRichtext", "CompanyNameRichtext") || vendorName
   const vendorNotesRichtext = pickField(vendor, "notesOnVendorsRichtext", "NotesOnVendorsRichtext") || vendorNotes
   const contractNotesRichtext = pickField(vendor, "notesOnContractsRichtext", "NotesOnContractsRichtext") || contractNotes
+  const activeLogoUrl = useEntityLogo({
+    logoImage: vendor?.logoPic?.url || vendor?.logoPic?.URL || vendor?.logoPic?.normalizedURL || vendor?.logoPic?.NormalizedURL || vendor?.LogoPic?.url || vendor?.LogoPic?.URL || vendor?.LogoPic?.normalizedURL || vendor?.LogoPic?.NormalizedURL || "",
+    entityType: "Vendor",
+    entityId: vendorId,
+  })
   const mediaPrefix = useMemo(() => (
     vendorId > 0 ? `platformpics/vendorcontent/${vendorId}/` : ""
   ), [vendorId])
@@ -56,19 +62,16 @@ export default function VendorProfilePage({ vendor }) {
       setGalleryState({ loading: true, error: "", files: [] })
 
       try {
-        const query = new URLSearchParams({
-          container: "tagpictures",
-          startPrefix: mediaPrefix,
-          prefix: mediaPrefix,
-        })
-
-        const response = await fetch(`/api/image/list?${query.toString()}`)
-        if (!response.ok) {
-          throw new Error(`Unable to load media (${response.status}).`)
-        }
-
-        const data = await response.json()
-        const files = Array.isArray(data?.files) ? data.files : []
+        const folders = [""]
+        const results = await Promise.all(folders.map(async (folder) => {
+          const prefix = `${mediaPrefix}${folder}`
+          const query = new URLSearchParams({ container: "tagpictures", startPrefix: mediaPrefix, prefix })
+          const response = await fetch(`/api/image/list?${query.toString()}`)
+          if (!response.ok) throw new Error(`Unable to load media (${response.status}).`)
+          const data = await response.json()
+          return Array.isArray(data?.files) ? data.files : []
+        }))
+        const files = results.flat()
 
         if (!ignore) {
           setGalleryState({ loading: false, error: "", files })
@@ -92,10 +95,13 @@ export default function VendorProfilePage({ vendor }) {
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 md:py-12 space-y-6">
       <div className="flex items-center justify-between gap-2 flex-wrap">
-        <h1
-          className="text-3xl font-bold"
-          dangerouslySetInnerHTML={{ __html: sanitizeCardHtml(vendorNameRichtext) }}
-        />
+        <div className="flex min-w-0 items-center gap-3">
+          {activeLogoUrl ? <img src={activeLogoUrl} alt={`${vendorName} logo`} className="h-14 w-14 rounded-box border border-base-300 bg-base-100 object-contain p-1" /> : null}
+          <h1
+            className="text-3xl font-bold"
+            dangerouslySetInnerHTML={{ __html: sanitizeCardHtml(vendorNameRichtext) }}
+          />
+        </div>
         <Link href="/search" className="btn btn-sm btn-outline">Back to Search</Link>
       </div>
 

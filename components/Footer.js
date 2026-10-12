@@ -9,108 +9,141 @@
 
  Open source · low-profit · human-first*/
 
-
-
+import { useId } from "react"
 import Link from "next/link"
-import ThemeLogo from "@/components/ThemeLogo"
-import MissionStatement from "@/components/MissionStatement"
+import { MISSION_STATEMENT } from "@/components/MissionStatement"
+
+// The TAG mark as one SVG path (viewBox 0 0 2144 1864), also the start shape of the landing morph mark
+export const LOGO_D = "M460 161.25 A460 460 0 0 1 920 621.25 L920 662.25 A373 373 0 0 0 1293 1035.25 L1470.5 1035.25 A197.25 197.25 0 0 0 1667.75 838 A197.25 197.25 0 0 0 1470.5 640.75 L1387 640.75 A321 321 0 1 1 1708 319.75 L1708 406.25 A194.25 194.25 0 0 0 1902.25 600.5 A240.25 240.25 0 0 1 2142.5 840.75 A240.25 240.25 0 0 1 1902.25 1081 A194.25 194.25 0 0 0 1708 1275.25 L1708 1446.25 A417.25 417.25 0 0 1 1290.75 1863.5 A417.25 417.25 0 0 1 873.5 1446.25 A365 365 0 0 0 508.5 1081.25 L460 1081.25 A460 460 0 0 1 0 621.25 A460 460 0 0 1 460 161.25 Z"
+
+const SOCIAL_LINKS = [
+  {
+    label: "Facebook",
+    href: "https://www.facebook.com/twistedartistsguild/",
+    icon: <path d="M14 8h3V4h-3c-2.8 0-4 1.8-4 4.3V10H7v4h3v8h4v-8h3l1-4h-4V8.6c0-.4.3-.6.6-.6z" fill="currentColor" />,
+  },
+  {
+    label: "Instagram",
+    href: "https://www.instagram.com/twistedartistsguild/",
+    icon: (
+      <g fill="none" stroke="currentColor" strokeWidth="2">
+        <rect x="3" y="3" width="18" height="18" rx="5" />
+        <circle cx="12" cy="12" r="4" />
+        <circle cx="17.5" cy="6.5" r="1" fill="currentColor" />
+      </g>
+    ),
+  },
+  {
+    label: "TikTok",
+    href: "https://www.tiktok.com/@twistedartistsguild?lang=en",
+    icon: <path d="M16 3c.4 2.3 1.9 3.8 4 4v3.2c-1.5 0-2.9-.4-4-1.2v6.3A6.3 6.3 0 1 1 9.7 9v3.3a3 3 0 1 0 3 3V3z" fill="currentColor" />,
+  },
+  {
+    label: "YouTube",
+    href: "https://www.youtube.com/@twistedartistsguild",
+    icon: <path d="M22 8.2a3 3 0 0 0-2.1-2.1C18 5.6 12 5.6 12 5.6s-6 0-7.9.5A3 3 0 0 0 2 8.2 31 31 0 0 0 1.6 12a31 31 0 0 0 .4 3.8 3 3 0 0 0 2.1 2.1c1.9.5 7.9.5 7.9.5s6 0 7.9-.5a3 3 0 0 0 2.1-2.1c.3-1.3.4-2.5.4-3.8s-.1-2.5-.4-3.8zM10 15V9l5.2 3z" fill="currentColor" />,
+  },
+  {
+    label: "LinkedIn",
+    href: "https://www.linkedin.com/company/twistedartistsguild",
+    icon: <path d="M4.5 3.5a2 2 0 1 1 0 4 2 2 0 0 1 0-4zM3 9h3v12H3zm6 0h3v1.7c.5-.9 1.7-2 3.6-2 3.4 0 4.4 2.2 4.4 5.2V21h-3v-6.3c0-1.6-.3-3-2.1-3s-2.4 1.3-2.4 3V21H9z" fill="currentColor" />,
+  },
+]
+
+const LINK_COLUMNS = [
+  {
+    title: "About",
+    links: [
+      { href: "/about", label: "About" },
+      { href: "/about/pricing", label: "Pricing" },
+      { href: "/about/vendor", label: "Vendor" },
+      { href: "/about/development", label: "Development" },
+    ],
+  },
+  {
+    title: "Policies",
+    links: [
+      { href: "/about/termsofservice", label: "Terms of Service" },
+      { href: "/about/policies", label: "Guild Policies" },
+      { href: "/about/codeofconduct", label: "Code of Conduct" },
+    ],
+  },
+  {
+    title: "Resources",
+    links: [
+      { href: "/contact", label: "Contact" },
+      { href: "/careers", label: "Careers" },
+      { href: "/portal", label: "Portals" },
+    ],
+  },
+]
+
+const LEGAL_LINKS = [
+  { href: "/about/termsofservice", label: "Terms" },
+  { href: "/about/policies/privacy-policy", label: "Privacy" },
+  { href: "/about/codeofconduct", label: "Code of Conduct" },
+]
+
 /**
  * Footer component for website navigation and social media links
  * @returns {JSX.Element} Footer component
  */
-export default function Footer({ className }) {
-  // Accept className prop
-  // Remove unused context
+export default function Footer() {
+  const markGradientId = `tag-mark-${useId().replace(/:/g, "")}`
 
   return (
-    <footer className={`themed-footer bg-base-200 ${className}`}>
-      {/* Theme-reactive top accent */}
-      <div className="footer-brand-bar" />
-      <div className="container mx-auto px-4 py-6">
-        <div className="flex flex-wrap lg:items-start">
-          <div className="w-64 shrink-0 text-left">
-            <Link href="/#" aria-current="page" className="flex gap-2 justify-start items-center">
-              <ThemeLogo 
-                src="/TAG OFFICIAL/LOGOS/TAG (HOLLOW).png" 
-                alt="TAG Logo" 
-                width="w-12"
-                height="h-6"
-              />
-              <strong className="font-bold text-lg">Twisted Artists Guild</strong>
+    <footer className="tag-footer">
+      <div className="tag-container">
+        <div className="tag-footer__grid">
+          <div className="tag-footer__brand">
+            <Link href="/" className="tag-footer__mark" aria-label="Twisted Artists Guild home">
+              <svg className="tag-mark" viewBox="0 0 2144 1864" role="img" aria-label="Twisted Artists Guild">
+                <defs>
+                  <linearGradient id={markGradientId} x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0" className="tag-mark__stop-1" />
+                    <stop offset=".45" className="tag-mark__stop-2" />
+                    <stop offset="1" className="tag-mark__stop-3" />
+                  </linearGradient>
+                </defs>
+                <path fill={`url(#${markGradientId})`} fillRule="evenodd" d={LOGO_D} />
+              </svg>
             </Link>
-            <p className="mt-2 text-sm text-base-content/80">Empowering Artists Worldwide</p>
-            {/* Social Media Links */}
-            <div className="flex flex-wrap gap-2 mt-4 justify-start">
-              {/* Facebook */}
-              <a href="https://www.facebook.com/twistedartistsguild/" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="transition-transform hover:scale-110">
-                <span className="[&>svg]:h-7 [&>svg]:w-7 [&>svg]:fill-[#1877f2]">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><path d="M80 299.3V512H196V299.3h86.5l18-97.8H196V166.9c0-51.7 20.3-71.5 72.7-71.5c16.3 0 29.4 .4 37 1.2V7.9C291.4 4 256.4 0 236.2 0C129.3 0 80 50.5 80 159.4v42.1H14v97.8H80z" /></svg>
-                </span>
-              </a>
-              {/* Instagram */}
-              <a href="https://www.instagram.com/twistedartistsguild/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" className="transition-transform hover:scale-110">
-                <span className="[&>svg]:h-7 [&>svg]:w-7 [&>svg]:fill-[#c13584]">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M224.1 141c-63.6 0-114.9 51.3-114.9 114.9s51.3 114.9 114.9 114.9S339 319.5 339 255.9 287.7 141 224.1 141zm0 189.6c-41.1 0-74.7-33.5-74.7-74.7s33.5-74.7 74.7-74.7 74.7 33.5 74.7 74.7-33.6 74.7-74.7 74.7zm146.4-194.3c0 14.9-12 26.8-26.8 26.8-14.9 0-26.8-12-26.8-26.8s12-26.8 26.8-26.8 26.8 12 26.8 26.8zm76.1 27.2c-1.7-35.9-9.9-67.7-36.2-93.9-26.2-26.2-58-34.4-93.9-36.2-37-2.1-147.9-2.1-184.9 0-35.8 1.7-67.6 9.9-93.9 36.1s-34.4 58-36.2 93.9c-2.1 37-2.1 147.9 0 184.9 1.7 35.9 9.9 67.7 36.2 93.9s58 34.4 93.9 36.2c37 2.1 147.9 2.1 184.9 0 35.9-1.7 67.7-9.9 93.9-36.2 26.2-26.2 34.4-58 36.2-93.9 2.1-37 2.1-147.8 0-184.8zM398.8 388c-7.8 19.6-22.9 34.7-42.6 42.6-29.5 11.7-99.5 9-132.1 9s-102.7 2.6-132.1-9c-19.6-7.8-34.7-22.9-42.6-42.6-11.7-29.5-9-99.5-9-132.1s-2.6-102.7 9-132.1c7.8-19.6 22.9-34.7 42.6-42.6 29.5-11.7 99.5-9 132.1-9s102.7-2.6 132.1 9c19.6 7.8 34.7 22.9 42.6 42.6 11.7 29.5 9 99.5 9 132.1s2.7 102.7-9 132.1z" /></svg>
-                </span>
-              </a>
-              {/* TikTok */}
-              <a href="https://www.tiktok.com/@twistedartistsguild?lang=en" target="_blank" rel="noopener noreferrer" aria-label="TikTok" className="transition-transform hover:scale-110">
-                <span className="[&>svg]:h-7 [&>svg]:w-7 [&>svg]:fill-[#6a76ac]">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M448 209.9a210.1 210.1 0 0 1 -122.8-39.3V349.4A162.6 162.6 0 1 1 185 188.3V278.2a74.6 74.6 0 1 0 52.2 71.2V0l88 0a121.2 121.2 0 0 0 1.9 22.2h0A122.2 122.2 0 0 0 381 102.4a121.4 121.4 0 0 0 67 20.1z" /></svg>
-                </span>
-              </a>
-              {/* YouTube */}
-              <a href="https://www.youtube.com/@twistedartistsguild" target="_blank" rel="noopener noreferrer" aria-label="YouTube" className="transition-transform hover:scale-110">
-                <span className="[&>svg]:h-7 [&>svg]:w-7 [&>svg]:fill-[#ff0000]">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><path d="M549.7 124.1c-6.3-23.7-24.8-42.3-48.3-48.6C458.8 64 288 64 288 64S117.2 64 74.6 75.5c-23.5 6.3-42 24.9-48.3 48.6-11.4 42.9-11.4 132.3-11.4 132.3s0 89.4 11.4 132.3c6.3 23.7 24.8 41.5 48.3 47.8C117.2 448 288 448 288 448s170.8 0 213.4-11.5c23.5-6.3 42-24.2 48.3-47.8 11.4-42.9 11.4-132.3 11.4-132.3s0-89.4-11.4-132.3zm-317.5 213.5V175.2l142.7 81.2-142.7 81.2z" /></svg>
-                </span>
-              </a>
-              {/* LinkedIn */}
-              <a href="https://www.linkedin.com/company/twistedartistsguild" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn" className="transition-transform hover:scale-110">
-                <span className="[&>svg]:h-7 [&>svg]:w-7 [&>svg]:fill-[#0077b5]">
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M100.3 448H7.4V148.9h92.9zM53.8 108.1C24.1 108.1 0 83.5 0 53.8a53.8 53.8 0 0 1 107.6 0c0 29.7-24.1 54.3-53.8 54.3zM447.9 448h-92.7V302.4c0-34.7-.7-79.2-48.3-79.2-48.3 0-55.7 37.7-55.7 76.7V448h-92.8V148.9h89.1v40.8h1.3c12.4-23.5 42.7-48.3 87.9-48.3 94 0 111.3 61.9 111.3 142.3V448z" /></svg>
-                </span>
-              </a>
-            </div>
-            <p className="mt-4 text-sm text-base-content/60">Copyright © {new Date().getFullYear()} - All rights reserved</p>
+            <p>Empowering artists worldwide. Built by artists, for artists, so creativity can turn into sustainability.</p>
+            <p className="tag-footer__mission">{MISSION_STATEMENT}</p>
+            <ul className="tag-footer__socials">
+              {SOCIAL_LINKS.map((social) => (
+                <li key={social.label}>
+                  <a href={social.href} target="_blank" rel="noopener noreferrer" aria-label={social.label}>
+                    <svg viewBox="0 0 24 24" aria-hidden="true">{social.icon}</svg>
+                  </a>
+                </li>
+              ))}
+            </ul>
           </div>
 
-          <div className="grow flex flex-wrap justify-start mt-6 md:mt-0 text-left">
-            <div className="lg:w-1/3 md:w-1/2 w-full px-2">
-              <div className="font-semibold text-base-content tracking-widest text-sm mb-2 underline">ABOUT</div>
-              <div className="flex flex-col items-start gap-1 mb-6 text-sm">
-                <Link href="/about" className="link link-hover">About</Link>
-                <Link href="/about/pricing" className="link link-hover">Pricing</Link>
-                <Link href="/about/vendor" className="link link-hover">Vendor</Link>
-                <Link href="/about/development" className="link link-hover">Development</Link>
-                {/* <Link href="/about/investing" className="link link-hover">Investing</Link> */}
-              </div>
-            </div>
-            <div className="lg:w-1/3 md:w-1/2 w-full px-2">
-              <div className="font-semibold text-base-content tracking-widest text-sm mb-2 underline">POLICIES</div>
-              <div className="flex flex-col items-start gap-1 mb-6 text-sm">
-                <Link href="/about/termsofservice" className="link link-hover">Terms of Service</Link>
-                <Link href="/about/policies" className="link link-hover">Guild Policies</Link>
-                <Link href="/about/codeofconduct" className="link link-hover">Code of Conduct</Link>
-              </div>
-            </div>
-            <div className="lg:w-1/3 md:w-1/2 w-full px-2">
-              <div className="font-semibold text-base-content tracking-widest text-sm mb-2 underline">RESOURCES</div>
-              <div className="flex flex-col items-start gap-1 mb-6 text-sm">
-                <Link href="/contact" className="link link-hover">Contact</Link>
-                <Link href="/careers" className="link link-hover">Careers</Link>
-                <Link href="/portal" className="link link-hover">Portals</Link>
-              </div>
-            </div>
-          </div>
+          {LINK_COLUMNS.map((column) => (
+            <nav key={column.title} className="tag-footer__col" aria-label={column.title}>
+              <h2>{column.title}</h2>
+              <ul>
+                {column.links.map((link) => (
+                  <li key={link.href}>
+                    <Link href={link.href}>{link.label}</Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          ))}
         </div>
 
-        {/* Mission Statement */}
-        <div className="mt-1">
-          <MissionStatement />
+        <div className="tag-footer__bottom">
+          <span>&copy; {new Date().getFullYear()} Twisted Artists Guild. All rights reserved.</span>
+          <nav aria-label="Legal">
+            {LEGAL_LINKS.map((link) => (
+              <Link key={link.label} href={link.href}>{link.label}</Link>
+            ))}
+          </nav>
         </div>
       </div>
     </footer>
   )
 }
-

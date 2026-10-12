@@ -14,7 +14,6 @@
 
 import "react-tooltip/dist/react-tooltip.css"
 import dynamic from "next/dynamic"
-import { Inter } from "next/font/google"
 import NextNProgress from "nextjs-progressbar"
 import { Tooltip } from "react-tooltip"
 import ErrorBoundary from "./ErrorBoundary"
@@ -23,9 +22,24 @@ import Header from "@/components/Header/Header"
 import Footer from "@/components/Footer"
 import LeftSidebar from "@/components/Sidebar-left"
 import RightSidebar from "@/components/Sidebar-right"
+import localFont from "next/font/local"
+import { Sora } from "next/font/google"
 import { LayoutProvider, useLayout } from "./LayoutProvider"
 
-const font = Inter({ subsets: ["latin"] })
+// Body: Manrope, the TAG brand font. Headings: Sora. Both are served from our own domain.
+const manrope = localFont({
+  src: "../public/TAG OFFICIAL/FONT/Manrope (Variable Font Weight).ttf",
+  weight: "200 800",
+  display: "swap",
+  fallback: ["system-ui", "sans-serif"],
+})
+
+const sora = Sora({
+  subsets: ["latin"],
+  weight: ["600", "700"],
+  display: "swap",
+})
+
 const ClientToaster = dynamic(
   () => import("react-hot-toast").then((module) => module.Toaster),
   { ssr: false }
@@ -35,36 +49,41 @@ const ClientToaster = dynamic(
  * Layout Content Component - The actual layout implementation
  */
 function LayoutContent(props) {
-  const { isHeaderVisible, isLeftSidebarVisible, isRightSidebarVisible, isMobile, theme } = useLayout()
+  const { isLeftSidebarVisible, isRightSidebarVisible, isOverlay, closeSidebars } = useLayout()
   const { sidebarProps = {} } = props
   const { pageSections = [] } = sidebarProps || {}
-
-  // Adjusted topMargin to match the new header height
-  const topMargin = isHeaderVisible ? "mt-2" : "mt-0" // Changed from mt-20 to mt-16
-  const leftMargin = !isMobile && isLeftSidebarVisible ? "lg:ml-80" : ""
-  const rightMargin = !isMobile && isRightSidebarVisible ? "lg:mr-80" : ""
-  const themeShellClass = theme === "tag-theme" ? " theme-tag" : theme === "neon" ? " theme-neon" : ""
 
   return (
     <ErrorBoundary>
       <style jsx global>{`
-        html {
-          font-family: ${font.style.fontFamily};
+        :root {
+          --tag-font-body: ${manrope.style.fontFamily};
+          --tag-font-heading: ${sora.style.fontFamily};
         }
       `}</style>
 
       <NextNProgress color={config.colors.main} options={{ showSpinner: false }} />
 
-      <div className={`site-shell${themeShellClass} flex min-h-screen flex-col`}>
+      {/* data-*-open drive the push layout from 1280px */}
+      <div
+        className="site-shell flex min-h-screen flex-col"
+        data-left-open={isLeftSidebarVisible ? "" : undefined}
+        data-right-open={isRightSidebarVisible ? "" : undefined}
+      >
         <Header pageSections={pageSections} />
         <LeftSidebar {...(sidebarProps?.leftSidebarData || {})} />
         <RightSidebar {...(sidebarProps?.rightSidebarData || {})} />
 
-        <main className={`site-main flex-1 p-4 transition-all duration-300 ${topMargin} ${leftMargin} ${rightMargin}`}>
+        {/* Below 1280px open panels overlay the page; the scrim closes them */}
+        {isOverlay && (isLeftSidebarVisible || isRightSidebarVisible) ? (
+          <button type="button" className="tag-scrim" aria-label="Close panel" tabIndex={-1} onClick={closeSidebars} />
+        ) : null}
+
+        <main className="site-main flex-1 p-4">
           <div className="site-main-inner">{props.children}</div>
         </main>
 
-        <Footer className={`${leftMargin} ${rightMargin}`} />
+        <Footer />
       </div>
 
       <ClientToaster

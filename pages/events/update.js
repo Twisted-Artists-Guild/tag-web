@@ -14,6 +14,7 @@
 import DynaFormDB from "@/components/widgets/DynaFormDB"
 import TagSEO from "@/components/TagSEO"
 import serverFetch from "@/libs/serverFetch"
+import GalleryManager from "@/components/gallery/GalleryManager"
 
 //broken but don't care!!!!
 /**
@@ -43,6 +44,18 @@ export default function UpdateEventForm1(props) {
                 canonicalSlug="events/update"
             />
             <DynaFormDB request="update" metadataProp={props.metadataProp} formData={props.eventdata} />
+            {(props.eventdata?.eventID || props.eventdata?.EventID || props.eventdata?.eventnum) ? (
+                <GalleryManager
+                    entityType="event"
+                    entityId={props.eventdata.eventID || props.eventdata.EventID || props.eventdata.eventnum}
+                    entityLabel={props.eventdata.title || props.eventdata.name || "Event"}
+                    folderKind="logo"
+                    title="Event Logo Manager"
+                    allowVideo={false}
+                    singleImageMode
+                    allowDeleteSingleImage
+                />
+            ) : null}
         </div>
     );
 }
@@ -61,7 +74,11 @@ UpdateEventForm1.getInitialProps = async function (context) {
     let data = {};
     let metadata = {};
     try {
-        const res1 = await serverFetch(`/event/${slug}`);
+        const eventId = Number(slug);
+        const eventPath = Number.isInteger(eventId) && eventId > 0
+            ? `/event/byID/${eventId}`
+            : `/event/${encodeURIComponent(slug)}`;
+        const res1 = await serverFetch(eventPath);
         data = await res1.json();
         const res2 = await serverFetch(`/forms_metadata/EventForm1`);
         metadata = await res2.json();

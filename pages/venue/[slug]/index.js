@@ -2,6 +2,7 @@ import Link from "next/link"
 import { useEffect, useMemo, useState } from "react"
 import { sanitizeCardHtml, stripHtmlText } from "@/components/security/sanitize"
 import serverFetch from "@/libs/serverFetch"
+import useEntityLogo from "@/components/cards/useEntityLogo"
 
 function normalizeSlug(value) {
   return String(value || "").trim().toLowerCase()
@@ -37,6 +38,11 @@ export default function VenueProfilePage({ venue }) {
   const venueId = Number(venue?.venueID || venue?.VenueID || 0)
   const venueName = String(venue?.name || venue?.Name || "Venue")
   const venueNameRichtext = pickField(venue, "nameRichtext", "NameRichtext") || venueName
+  const activeLogoUrl = useEntityLogo({
+    logoImage: venue?.logoPic?.url || venue?.logoPic?.URL || venue?.logoPic?.normalizedURL || venue?.logoPic?.NormalizedURL || venue?.LogoPic?.url || venue?.LogoPic?.URL || venue?.LogoPic?.normalizedURL || venue?.LogoPic?.NormalizedURL || "",
+    entityType: "Venue",
+    entityId: venueId,
+  })
   const mediaPrefix = useMemo(() => (
     venueId > 0 ? `platformpics/venuecontent/${venueId}/` : ""
   ), [venueId])
@@ -52,19 +58,16 @@ export default function VenueProfilePage({ venue }) {
       setGalleryState({ loading: true, error: "", files: [] })
 
       try {
-        const query = new URLSearchParams({
-          container: "tagpictures",
-          startPrefix: mediaPrefix,
-          prefix: mediaPrefix,
-        })
-
-        const response = await fetch(`/api/image/list?${query.toString()}`)
-        if (!response.ok) {
-          throw new Error(`Unable to load media (${response.status}).`)
-        }
-
-        const data = await response.json()
-        const files = Array.isArray(data?.files) ? data.files : []
+        const folders = [""]
+        const results = await Promise.all(folders.map(async (folder) => {
+          const prefix = `${mediaPrefix}${folder}`
+          const query = new URLSearchParams({ container: "tagpictures", startPrefix: mediaPrefix, prefix })
+          const response = await fetch(`/api/image/list?${query.toString()}`)
+          if (!response.ok) throw new Error(`Unable to load media (${response.status}).`)
+          const data = await response.json()
+          return Array.isArray(data?.files) ? data.files : []
+        }))
+        const files = results.flat()
 
         if (!ignore) {
           setGalleryState({ loading: false, error: "", files })
@@ -88,10 +91,13 @@ export default function VenueProfilePage({ venue }) {
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 md:py-12 space-y-6">
       <div className="flex items-center justify-between gap-2 flex-wrap">
-        <h1
-          className="text-3xl font-bold"
-          dangerouslySetInnerHTML={{ __html: sanitizeCardHtml(venueNameRichtext) }}
-        />
+        <div className="flex min-w-0 items-center gap-3">
+          {activeLogoUrl ? <img src={activeLogoUrl} alt={`${venueName} logo`} className="h-14 w-14 rounded-box border border-base-300 bg-base-100 object-contain p-1" /> : null}
+          <h1
+            className="text-3xl font-bold"
+            dangerouslySetInnerHTML={{ __html: sanitizeCardHtml(venueNameRichtext) }}
+          />
+        </div>
         <Link href="/search" className="btn btn-sm btn-outline">Back to Search</Link>
       </div>
 

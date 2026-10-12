@@ -12,6 +12,7 @@ export default function OrganizationMediaStep({
   galleryPrefix,
   setProfileFiles,
   setCoverFiles,
+  setLogoFiles,
   setGalleryFiles,
   backHref,
   backLabel = "Back to Primary Contacts",
@@ -20,6 +21,9 @@ export default function OrganizationMediaStep({
 }) {
   const entityLabel = `${context}: ${entitySlug || entityId}`
   const titlePrefix = `${context.charAt(0).toUpperCase()}${context.slice(1)}`
+  const logoPrefix = profilePrefix
+    ? profilePrefix.replace(/profile\/?$/i, "logo/")
+    : `platformpics/${context}content/${entityId}/logo/`
 
   return (
     <OnboardingStepCard
@@ -51,6 +55,20 @@ export default function OrganizationMediaStep({
           onFilesChanged={setCoverFiles}
         />
       </div>
+
+      <GalleryManager
+        entityType={context}
+        entityId={entityId}
+        entityLabel={entityLabel}
+        currentUser={sessionUser}
+        folderKind="logo"
+        title={`${titlePrefix} Logo`}
+        allowVideo={false}
+        basePrefix={logoPrefix}
+        singleImageMode
+        allowDeleteSingleImage
+        onFilesChanged={setLogoFiles}
+      />
 
       <GalleryManager
         entityType={context}

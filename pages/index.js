@@ -13,10 +13,10 @@
 
 "use client"
 
-import React from "react"
+import { useEffect, useRef } from "react"
 
-import styles from "@/styles/pages/index.module.css"
 import TagSEO from "@/components/TagSEO"
+import CascadeHero from "@/components/homepage/CascadeHero"
 import Hero from "@/components/homepage/Hero"
 import CardTools from "@/components/homepage/Card_Tools"
 import CardMembershipBenefits from "@/components/homepage/Card_membership_benefits"
@@ -24,16 +24,38 @@ import CardContests from "@/components/homepage/Card_Contests"
 import CardPricing from "@/components/homepage/Card_Pricing"
 import CardBloomscroll from "@/components/homepage/Card_Bloomscroll"
 import FAQ from "@/components/homepage/FAQ"
-import CTA from "@/components/homepage/CTA"
+import JoinPanel from "@/components/homepage/JoinPanel"
 
 /**
  * Home/index page component
  * Serves as the landing page for the site
- * Uses flex layout to ensure proper content flow and footer positioning
  *
- * @returns {JSX.Element} Home page component with hero, parallax sections, FAQ, and CTA
+ * @returns {JSX.Element} Home page component with hero, feature cards, FAQ, and join panel
  */
 export default function Home() {
+  const pageRef = useRef(null)
+
+  // Fade [data-reveal] sections in once as they scroll into view. Without JS the CSS never hides them.
+  useEffect(() => {
+    const elements = Array.from(pageRef.current?.querySelectorAll("[data-reveal]") || [])
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches || !("IntersectionObserver" in window)) {
+      elements.forEach((element) => element.classList.add("is-in"))
+      return undefined
+    }
+
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add("is-in")
+          observer.unobserve(entry.target)
+        }
+      })
+    }, { rootMargin: "0px 0px -8% 0px" })
+
+    elements.forEach((element) => observer.observe(element))
+    return () => observer.disconnect()
+  }, [])
+
   const pageMetaData = {
     title: "Discover Artists, Events, and Creative Tools",
     description: "Browse artist portfolios, discover original work, and grow your creative business with creator-first tools for payments, POS, pricing, budgeting, payroll, accounting, project workflows, event management, CRM, and marketing.",
@@ -48,96 +70,34 @@ export default function Home() {
   }
 
   return (
-    <div className="flex flex-col w-full">
+    <div ref={pageRef} className="tag-landing tag-reveal-scope">
       <TagSEO metadataProp={pageMetaData} canonicalSlug="" />
 
-      <div className={`${styles.container} bg-base-100 text-base-content w-full`}>
-        <div className="space-y-10 w-full">
-          {/* Parallax Banner Section */}
-          <section className={`${styles.parallax} flex flex-col`} aria-label="Featured Messages">
-            <div className={`${styles.bgColor} bg-primary`}>
-              <div className={`${styles.gradient} p-10`}>
-                <span className={`${styles.leftTextContent} text-2xl font-bold`}>A platform made for artists, by artists.</span>
-              </div>
-            </div>
-            <div className={`${styles.bgColor} bg-secondary`}>
-              <div className={`${styles.gradient} p-10`}>
-                <span className={`${styles.centerTextContent} text-2xl font-bold`}>Building business solutions is our art.</span>
-              </div>
-            </div>
-            <div className={`${styles.bgColor} bg-accent`}>
-              <div className={`${styles.gradient} p-10`}>
-                <span className={`${styles.rightTextContent} text-2xl font-bold`}>Enabling artists to create more.</span>
-              </div>
-            </div>
-          </section>
+      <CascadeHero />
+      <Hero />
 
-          {/* Divider */}
-          <div className="flex items-center justify-center py-8">
-            <div className="w-full max-w-md h-1 bg-gradient-to-r from-transparent via-secondary to-transparent"></div>
+      <section className="tag-section" aria-labelledby="tag-features-title">
+        <div className="tag-container">
+          <div className="tag-section-head" data-reveal>
+            <div className="tag-accent-bar" />
+            <h2 id="tag-features-title">Everything an artist needs, in one guild</h2>
+            <p>Tools, membership, visibility and fair pricing, built around artists rather than advertisers.</p>
           </div>
-
-          {/* Main Content Sections */}
-          <Hero />
-
-          {/* Divider */}
-          <div className="flex items-center justify-center py-8">
-            <div className="w-full max-w-md h-1 bg-gradient-to-r from-transparent via-secondary to-transparent"></div>
+          <div className="tag-features">
+            <CardTools index={0} />
+            <CardMembershipBenefits index={1} />
+            <CardContests index={2} />
+            <CardPricing index={3} />
+            <CardBloomscroll index={4} />
           </div>
-
-          <section className="bg-base-200">
-            <div className="max-w-7xl mx-auto px-8 py-20 space-y-16">
-              <CardTools index={0} />
-              
-              {/* Divider */}
-              <div className="flex items-center justify-center py-8">
-                <div className="w-full max-w-md h-1 bg-gradient-to-r from-transparent via-secondary to-transparent"></div>
-              </div>
-              
-              <CardMembershipBenefits index={1} />
-              
-              {/* Divider */}
-              <div className="flex items-center justify-center py-8">
-                <div className="w-full max-w-md h-1 bg-gradient-to-r from-transparent via-secondary to-transparent"></div>
-              </div>
-              
-              <CardContests index={2} />
-              
-              {/* Divider */}
-              <div className="flex items-center justify-center py-8">
-                <div className="w-full max-w-md h-1 bg-gradient-to-r from-transparent via-secondary to-transparent"></div>
-              </div>
-              
-              <CardPricing index={3} />
-
-              {/* Divider */}
-              <div className="flex items-center justify-center py-8">
-                <div className="w-full max-w-md h-1 bg-gradient-to-r from-transparent via-secondary to-transparent"></div>
-              </div>
-
-              <CardBloomscroll index={4} />
-            </div>
-          </section>
-
-          {/* Divider */}
-          <div className="flex items-center justify-center py-8">
-            <div className="w-full max-w-md h-1 bg-gradient-to-r from-transparent via-secondary to-transparent"></div>
-          </div>
-
-          <FAQ />
-
-          {/* Divider */}
-          <div className="flex items-center justify-center py-8">
-            <div className="w-full max-w-md h-1 bg-gradient-to-r from-transparent via-secondary to-transparent"></div>
-          </div>
-
-          <CTA />
         </div>
-      </div>
+      </section>
+
+      <FAQ />
+      <JoinPanel />
     </div>
   )
 }
-
 // Use getInitialProps to pass sidebar data like other pages
 Home.getInitialProps = async () => {
   // Sample data for left sidebar (navigation/filtering)

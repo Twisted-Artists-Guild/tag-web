@@ -10,6 +10,7 @@ export default function MediaUploadForm({
   activeProfileFile,
   activeCoverFile,
   artistMediaRoot,
+  logoPrefix,
   galleryPrefix,
   profilePrefix,
   coverPrefix,
@@ -39,6 +40,24 @@ export default function MediaUploadForm({
         </div>
 
         <div className="space-y-4">
+          <div className="rounded-box border border-base-300 bg-base-200/40 p-4 space-y-3">
+            <h3 className="font-semibold text-base-content">Business Logo</h3>
+            <p className="text-sm text-base-content/70">Upload a brand logo separately from the owner profile photo. Replacing the active logo archives the previous version.</p>
+            <GalleryManager
+              entityType="artist"
+              entityId={artistID}
+              entityLabel={artistLabel}
+              currentUser={sessionUser}
+              folderKind="logo"
+              title="Artist Logo Manager"
+              allowVideo={false}
+              basePrefix={logoPrefix}
+              lockedRootPrefix={artistMediaRoot}
+              singleImageMode
+              allowDeleteSingleImage
+            />
+          </div>
+
           <div className="rounded-box border border-base-300 bg-base-200/40 p-4 space-y-3">
             <h3 className="font-semibold text-base-content">Active Profile Photo</h3>
             {activeProfileFile ? (
