@@ -13,7 +13,7 @@
 import Link from "next/link"
 import TagSEO from "@/components/TagSEO"
 import shortDateOptions from "@/utils/shortdateoptions"
-import PhotoGallery from "@/components/cards/card_photoGallery"
+import UnifiedCard from "@/components/cards/UnifiedCard"
 import serverFetch from "@/libs/serverFetch"
 
 /**
@@ -46,33 +46,26 @@ const Events = (props) => {
 			</div>
 			<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 				{props.events.map((event) => (
-					<div key={event.eventnum} className="card bg-base-100 text-base-content border border-base-300 shadow-lg">
-						<div className="card-body">
-							<Link href={`/events/${event.path}`}>
-								<a className="card-title text-primary">{event.title}</a>
-							</Link>
-							<p className="text-sm text-base-content/70">{event.byline}</p>
-							<p className="text-sm">
-								{new Date(event.applied).toLocaleDateString("en-US", options)}
-							</p>
-							<div className="mt-2">
-								<PhotoGallery
-									images={["/blank_image.png"]}
-									mode="standalone"
-									navigationMode="manual"
-									imageEffect="landscape"
-									showThumbnails={false}
-									showContentWarnings={false}
-								/>
-							</div>
-							<div className="text-xs text-base-content/60">Gallery placeholder deployed for this event.</div>
-							<div className="mt-2">
-								<Link href="/portal/event/create">
-									<a className="btn btn-xs btn-outline">Event Gallery Management (Portal placeholder)</a>
-								</Link>
-							</div>
-						</div>
-					</div>
+					<UnifiedCard
+						key={event.eventnum || event.eventID || event.EventID}
+						title={event.title || "Untitled event"}
+						summary={event.byline || event.description || "Event details"}
+						image={event.logoPic?.url || event.logoPic?.URL || event.logoPic?.normalizedURL || event.logoPic?.NormalizedURL || event.logo?.url || event.logo?.URL || "/blank_image.png"}
+						imageAlt={event.title || "Event image"}
+						logoImage={event.logoPic?.url || event.logoPic?.URL || event.logoPic?.normalizedURL || event.logoPic?.NormalizedURL || event.logo?.url || event.logo?.URL || ""}
+						logoEntityType="event"
+						logoEntityId={event.eventID || event.EventID || event.eventnum || ""}
+						href={`/events/${event.path}`}
+						badge="Event"
+						date={event.applied}
+						size="md"
+						showImpressions={false}
+						showComments={false}
+						showReport={false}
+						footer={(
+							<Link href="/portal/event/create" className="btn btn-xs btn-outline">Event Gallery Management</Link>
+						)}
+					/>
 				))}
 			</div>
 		</div>

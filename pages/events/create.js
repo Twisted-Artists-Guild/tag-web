@@ -20,6 +20,17 @@ export default function CreateEventForm1(props) {
     props.metadataProp.FromURL = "/events/create.js";
     props.metadataProp.redirectURL = "/events/";
     props.metadataProp.APIURL = `/api/${props.metadataProp.apiurlpostfix}`;
+
+    const continueToEventMedia = (responseData) => {
+        const event = responseData?.event || responseData?.data || responseData;
+        const eventSlug = event?.path || event?.slug || event?.eventPath || event?.EventPath;
+        const eventId = event?.eventID || event?.EventID || event?.eventnum || event?.id;
+        const eventKey = eventSlug || eventId;
+        if (eventKey) {
+            props.metadataProp.redirectURL = `/events/update?slug=${encodeURIComponent(String(eventKey))}`;
+        }
+    };
+
     return (
         <div className="p-4">
             <TagSEO
@@ -35,7 +46,7 @@ export default function CreateEventForm1(props) {
                 }}
                 canonicalSlug="events/create"
             />
-            <DynaFormDB request="add" metadataProp={props.metadataProp} />
+            <DynaFormDB request="add" metadataProp={props.metadataProp} onPostSubmit={continueToEventMedia} />
         </div>
     );
 }

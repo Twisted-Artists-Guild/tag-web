@@ -35,6 +35,9 @@ const getListingIdentity = (listing) => {
     image,
     role: isVendor ? "Vendor" : "Artist",
     href: entityPath ? `/${isVendor ? "vendors" : "artists"}/${entityPath}` : "",
+    logoEntityType: isVendor ? "vendor" : "artist",
+    logoEntityId: entity?.vendorID || entity?.VendorID || entity?.artistID || entity?.artistid || "",
+    logoImage: entity?.logoPic?.url || entity?.logoPic?.URL || entity?.logoPic?.normalizedURL || entity?.logoPic?.NormalizedURL || entity?.logo?.url || entity?.logo?.URL || entity?.logoUrl || entity?.logoURL || "",
   }
 }
 
@@ -81,6 +84,9 @@ const ListingCardSmall = ({ listing, artist, textRenderMode = "strip" }) => {
       authorRole={identity.role}
       authorHref={identity.href}
       enableAuthorLink
+      logoImage={identity.logoImage}
+      logoEntityType={identity.logoEntityType}
+      logoEntityId={identity.logoEntityId}
       tags={tags}
       size="xs"
       orientation="vertical"

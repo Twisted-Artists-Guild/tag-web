@@ -568,14 +568,28 @@ export default function PortalArtistEditPage({ artistId, artistData }) {
         {currentStep === 4 && (
           <div className="card bg-base-100 shadow border border-base-300">
             <div className="card-body gap-4">
-              <h2 className="text-2xl font-semibold">Profile & Cover Media</h2>
-              <p className="text-sm text-base-content/70">Upload profile picture, cover image, and gallery items.</p>
+              <h2 className="text-2xl font-semibold">Profile, Cover, Logo & Gallery</h2>
+              <p className="text-sm text-base-content/70">Manage owner profile, business logo, cover image, and gallery items separately.</p>
               {artistId && (
-                <GalleryManager
-                  artistID={artistId}
-                  storagePrefix={`platformpics/artistcontent/${artistId}/`}
-                  allowMultipleGalleryItems
-                />
+                <div className="space-y-4">
+                  <GalleryManager
+                    artistID={artistId}
+                    storagePrefix={`platformpics/artistcontent/${artistId}/`}
+                    allowMultipleGalleryItems
+                  />
+                  <GalleryManager
+                    entityType="artist"
+                    entityId={artistId}
+                    entityLabel={`Artist: ${artistId}`}
+                    folderKind="logo"
+                    title="Artist Logo Manager"
+                    allowVideo={false}
+                    basePrefix={`platformpics/artists/${artistId}/logo/`}
+                    lockedRootPrefix={`platformpics/artists/${artistId}/`}
+                    singleImageMode
+                    allowDeleteSingleImage
+                  />
+                </div>
               )}
               <div className="flex gap-2">
                 <button onClick={() => setCurrentStep(3)} className="btn btn-ghost">

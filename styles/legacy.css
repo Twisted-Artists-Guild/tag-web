@@ -1,0 +1,65 @@
+/* This file is part of the Twisted Artists Guild project.
+
+ Copyright (C) 2025 Twisted Artists Guild
+
+ Licensed under the GNU General Public License v3.0
+ (https://www.gnu.org/licenses/gpl-3.0.en.html).
+
+ This software comes with NO WARRANTY; see the license for details.
+
+ Open source · low-profit · human-first*/
+
+/* Legacy helper classes still in use (unlayered). Remove each one when nothing uses it. */
+
+.btn-gradient {
+  background-image: linear-gradient(60deg, #f79533, #f37055, #ef4e7b, #a166ab, #5073b8, #1098ad, #07b39b, #6fba82);
+  background-size: 300% 300%;
+  border: 0;
+  border-color: transparent;
+  color: #ffffff;
+  box-shadow: var(--tw-shadow, 0 1px 2px 0 rgb(0 0 0 / 0.05));
+  transition-duration: 100ms;
+  animation: shimmer 3s ease-out infinite alternate;
+}
+
+.btn-gradient:hover {
+  filter: saturate(1.2);
+}
+
+.btn-gradient:disabled {
+  background-image: none;
+  background-color: rgb(107 114 128 / 0.3);
+}
+
+/* Animation for gradient buttons */
+@keyframes shimmer {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Enhanced text visibility (bug-report button) */
+.enhanced-text-visibility {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  filter: brightness(1.2);
+}
+
+/* Footer top accent — overrides the default muted border (also used by the poster pages) */
+footer.themed-footer {
+  border-top: none;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}

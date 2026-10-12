@@ -95,6 +95,7 @@ export default function JoinVenueSlugPage({ currentStep, venueData, routeSlug, v
 
   const [profileFiles, setProfileFiles] = useState([])
   const [coverFiles, setCoverFiles] = useState([])
+  const [logoFiles, setLogoFiles] = useState([])
   const [galleryFiles, setGalleryFiles] = useState([])
 
   const resolvedVenueId = Number(venueId || venueForm.venueID || 0)
@@ -115,7 +116,7 @@ export default function JoinVenueSlugPage({ currentStep, venueData, routeSlug, v
   const totalBusinessContacts = businessAddressContacts.length + businessEmailContacts.length + businessPhoneContacts.length + businessUrlContacts.length
   const totalPublicContacts = publicAddressContacts.length + publicEmailContacts.length + publicPhoneContacts.length + publicSocialContacts.length + publicUrlContacts.length
   const hasRequiredContactTypes = businessAddressContacts.length > 0 && businessEmailContacts.length > 0 && businessPhoneContacts.length > 0
-  const hasMedia = profileFiles.length > 0 || coverFiles.length > 0 || galleryFiles.length > 0
+  const hasMedia = profileFiles.length > 0 || coverFiles.length > 0 || logoFiles.length > 0 || galleryFiles.length > 0
 
   const stepCompletionMap = useMemo(() => ({
     3: Boolean(venueForm.name),
@@ -350,6 +351,7 @@ export default function JoinVenueSlugPage({ currentStep, venueData, routeSlug, v
           galleryPrefix={venueGalleryPrefix}
           setProfileFiles={setProfileFiles}
           setCoverFiles={setCoverFiles}
+          setLogoFiles={setLogoFiles}
           setGalleryFiles={setGalleryFiles}
           backHref={buildVenueJoinHref(3, resolvedSlug, resolvedVenueId)}
           backLabel="Back to Venue Profile"

@@ -60,11 +60,7 @@ export default function TestIndex() {
 <Link href="/test/treasury_stripe" className="link link-primary">
   /test/treasury_stripe
 </Link>
-</div><div className="mt-2">
-				<Link href="/test/themeSampler" className="link link-primary">
-				  /test/themeSampler
-				</Link>
-			</div>
+</div>
 			<div className="mt-2">
 				<Link href="/test/costCalculator" className="link link-primary">
 				  /test/costCalculator

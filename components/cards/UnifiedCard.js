@@ -11,6 +11,7 @@
 
 import Image from "next/image"
 import Link from "next/link"
+import { useState } from "react"
 import { useSession } from "next-auth/react"
 import { MessageCircleIcon } from "lucide-react"
 import {
@@ -25,6 +26,7 @@ import { useCommentCount } from "@/hooks/useCommentCount"
 import ImpressionReactions from "@/components/social/ImpressionReactions"
 import ReportButton from "@/components/moderation/ReportButton"
 import PhotoGallery from "@/components/cards/card_photoGallery"
+import useEntityLogo from "@/components/cards/useEntityLogo"
 
 const formatDisplayDate = (dateValue) => {
   if (!dateValue) return ""
@@ -42,7 +44,6 @@ const formatDisplayDate = (dateValue) => {
 }
 
 const safeText = (value) => String(value || "").trim()
-
 export default function UnifiedCard({
   title = "Untitled",
   summary = "",
@@ -61,6 +62,9 @@ export default function UnifiedCard({
   showAuthor = true,
   authorHref = "",
   enableAuthorLink = false,
+  logoImage = "",
+  logoEntityType = "",
+  logoEntityId = "",
   tags = [],
   maxTags = 3,
   size = "md",
@@ -84,6 +88,7 @@ export default function UnifiedCard({
   footer = null,
 }) {
   const { data: session } = useSession()
+  const resolvedLogoImage = useEntityLogo({ logoImage, entityType: logoEntityType, entityId: logoEntityId })
   const normalizedSize = CARD_SIZE_CLASSES[size] ? size : "md"
   const orientationClass = CARD_ORIENTATION_CLASSES[orientation] || CARD_ORIENTATION_CLASSES.vertical
   const mediaClass = CARD_MEDIA_SIZE_CLASSES[normalizedSize] || CARD_MEDIA_SIZE_CLASSES.md
@@ -198,7 +203,14 @@ export default function UnifiedCard({
           )}
 
           <div className="space-y-2">
-            {titleNode}
+            <div className="flex min-w-0 items-start gap-2">
+              {resolvedLogoImage ? (
+                <div className="relative mt-0.5 h-9 w-9 shrink-0 overflow-hidden rounded-md border border-base-300 bg-base-100">
+                  <Image src={resolvedLogoImage} alt={`${headline} logo`} fill sizes="36px" className="object-contain p-0.5" />
+                </div>
+              ) : null}
+              <div className="min-w-0 flex-1">{titleNode}</div>
+            </div>
             {summary ? (
               <div
                 className={`${compact ? "text-xs" : "text-sm"} leading-relaxed text-base-content/80 ${compact ? "line-clamp-2" : "line-clamp-3"}`}

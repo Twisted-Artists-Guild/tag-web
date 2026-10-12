@@ -1,0 +1,59 @@
+/* This file is part of the Twisted Artists Guild project.
+
+ Copyright (C) 2025 Twisted Artists Guild
+
+ Licensed under the GNU General Public License v3.0
+ (https://www.gnu.org/licenses/gpl-3.0.en.html).
+
+ This software comes with NO WARRANTY; see the license for details.
+
+ Open source · low-profit · human-first*/
+
+/* Chips, badges and price tags */
+
+@layer utilities {
+  @layer daisyui {
+    .badge {
+      font-family: var(--tag-font-body);
+      font-weight: 600;
+      padding-inline: 0.75rem;
+    }
+  }
+}
+
+@layer components {
+  .tag-chip {
+    font: 600 13px/1 var(--tag-font-body);
+    color: var(--tag-text-2);
+    padding: 9px 13px;
+    border-radius: var(--tag-r-pill);
+    background: var(--tag-tint-1);
+    border: 1px solid var(--tag-line);
+    cursor: pointer;
+  }
+
+  .tag-chip[aria-pressed="true"] {
+    color: var(--tag-text-strong);
+    border-color: transparent;
+    background:
+      linear-gradient(var(--tag-surface-2), var(--tag-surface-2)) padding-box,
+      linear-gradient(135deg, rgba(var(--tag-indigo-rgb), 1), rgba(var(--tag-acc-rgb), 0.8)) border-box;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .tag-chip:hover {
+      color: var(--tag-text-strong);
+    }
+  }
+
+  /* Price tag: accent text on a faint accent tint */
+  .tag-price {
+    flex: none;
+    font: 700 13px/1 var(--tag-font-body);
+    color: var(--tag-acc-text);
+    padding: 6px 9px;
+    border-radius: var(--tag-r-pill);
+    background: rgba(var(--tag-acc-rgb), 0.1);
+    font-variant-numeric: tabular-nums;
+  }
+}

@@ -49,6 +49,9 @@ const getNewsIdentity = (data, fallbackImage) => {
     image,
     role,
     href: path ? `/${isArtist ? "artists" : "user"}/${path}` : "",
+    logoEntityType: isArtist ? "artist" : "",
+    logoEntityId: entity.artistID || entity.ArtistID || entity.artistid || "",
+    logoImage: entity.logoPic?.url || entity.logoPic?.URL || entity.logoPic?.normalizedURL || entity.logoPic?.NormalizedURL || entity.logo?.url || entity.logo?.URL || entity.logoUrl || entity.logoURL || "",
   }
 }
 
@@ -84,6 +87,9 @@ export default function NewsCard({
       authorName={identity.name}
       authorImage={identity.image}
       authorRole={identity.role}
+      logoImage={identity.logoImage}
+      logoEntityType={identity.logoEntityType}
+      logoEntityId={identity.logoEntityId}
       tags={tags}
       size={size}
       orientation={orientation}

@@ -1,0 +1,93 @@
+/* This file is part of the Twisted Artists Guild project.
+
+ Copyright (C) 2025 Twisted Artists Guild
+
+ Licensed under the GNU General Public License v3.0
+ (https://www.gnu.org/licenses/gpl-3.0.en.html).
+
+ This software comes with NO WARRANTY; see the license for details.
+
+ Open source · low-profit · human-first*/
+
+/* Buttons. daisyUI 5 puts its components in @layer utilities > daisyui, so overrides live in that
+ * same nested layer: they beat daisyUI's defaults, and Tailwind utilities still beat them. */
+
+@layer utilities {
+  @layer daisyui {
+    .btn {
+      position: relative;
+      isolation: isolate;
+      font-family: var(--tag-font-body);
+      font-weight: 700;
+      letter-spacing: 0;
+      transition: transform 0.2s ease, opacity 0.2s ease;
+    }
+
+    /* Primary: gradient fill, white text passes AA at every stop */
+    .btn-primary:not(.btn-outline, .btn-ghost, .btn-link, .btn-soft, .btn-dash) {
+      color: var(--tag-on-fill);
+      background: var(--tag-grad-btn);
+      border-color: transparent;
+      box-shadow: 0 10px 28px -10px rgba(var(--tag-indigo-rgb), 0.85), inset 0 1px 0 var(--tag-inset-highlight);
+    }
+
+    /* Hover glow fades opacity only, never a shadow transition */
+    .btn-primary:not(.btn-outline, .btn-ghost, .btn-link, .btn-soft, .btn-dash)::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      border-radius: inherit;
+      box-shadow: 0 14px 34px -10px rgba(var(--tag-indigo-rgb), 1), 0 0 0 1px rgba(var(--tag-acc-rgb), 0.35);
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      pointer-events: none;
+    }
+
+    /* Outline: hairline border, translucent fill */
+    .btn-outline:not(.btn-primary, .btn-secondary, .btn-accent, .btn-neutral, .btn-info, .btn-success, .btn-warning, .btn-error) {
+      color: var(--tag-text);
+      background: var(--tag-tint-1);
+      border-color: var(--tag-line-2);
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+      .btn:not(:disabled, [disabled], .btn-disabled, .btn-link):hover {
+        transform: translateY(-1px);
+      }
+
+      .btn-primary:not(.btn-outline, .btn-ghost, .btn-link, .btn-soft, .btn-dash):hover::after {
+        opacity: 1;
+      }
+
+      .btn-outline:not(.btn-primary, .btn-secondary, .btn-accent, .btn-neutral, .btn-info, .btn-success, .btn-warning, .btn-error):hover,
+      .btn-ghost:hover {
+        border-color: rgba(var(--tag-acc-rgb), 0.55);
+        background: rgba(var(--tag-acc-rgb), 0.06);
+      }
+    }
+
+    .btn:not(:disabled, [disabled], .btn-disabled):active {
+      transform: translateY(1px);
+    }
+
+    /* Touch: default-size buttons are at least 44px tall */
+    @media (pointer: coarse) {
+      .btn:not(.btn-xs, .btn-sm, .btn-circle, .btn-square) {
+        min-height: 44px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .btn,
+      .btn::after {
+        transition: none;
+      }
+
+      .btn:hover,
+      .btn:active {
+        transform: none;
+      }
+    }
+  }
+}

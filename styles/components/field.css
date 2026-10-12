@@ -1,0 +1,59 @@
+/* This file is part of the Twisted Artists Guild project.
+
+ Copyright (C) 2025 Twisted Artists Guild
+
+ Licensed under the GNU General Public License v3.0
+ (https://www.gnu.org/licenses/gpl-3.0.en.html).
+
+ This software comes with NO WARRANTY; see the license for details.
+
+ Open source · low-profit · human-first*/
+
+/* Fields: inputs, select and textarea. In daisyUI's nested layer so utilities still win. */
+
+@layer utilities {
+  @layer daisyui {
+    .input,
+    .select,
+    .textarea {
+      font-family: var(--tag-font-body);
+      color: var(--tag-text);
+      background-color: var(--tag-surface);
+      border: 1px solid var(--tag-line-2);
+      box-shadow: none;
+    }
+
+    .input::placeholder,
+    .textarea::placeholder,
+    .input input::placeholder {
+      color: var(--tag-muted);
+    }
+
+    .input:focus,
+    .input:focus-within,
+    .select:focus,
+    .select:focus-within,
+    .textarea:focus {
+      border-color: rgba(var(--tag-acc-rgb), 0.6);
+      box-shadow: 0 0 0 3px rgba(var(--tag-acc-rgb), 0.15);
+      outline: none;
+    }
+
+    /* Keyboard users still get the visible ring */
+    .input:focus-visible,
+    .select:focus-visible,
+    .textarea:focus-visible {
+      outline: 2px solid var(--tag-acc);
+      outline-offset: 2px;
+    }
+
+    /* Phones: 16px text so iOS never zooms into a field */
+    @media (max-width: 640px) {
+      .input,
+      .select,
+      .textarea {
+        font-size: 16px;
+      }
+    }
+  }
+}

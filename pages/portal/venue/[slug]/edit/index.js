@@ -96,6 +96,7 @@ export default function PortalVenueEditPage({ currentStep, venueData, routeSlug,
 
   const [profileFiles, setProfileFiles] = useState([])
   const [coverFiles, setCoverFiles] = useState([])
+  const [logoFiles, setLogoFiles] = useState([])
   const [galleryFiles, setGalleryFiles] = useState([])
 
   const resolvedVenueId = Number(venueId || venueForm.venueID || 0)
@@ -113,7 +114,7 @@ export default function PortalVenueEditPage({ currentStep, venueData, routeSlug,
     venueRootPrefix ? `${venueRootPrefix}gallery/` : ""
   ), [venueRootPrefix])
 
-  const hasMedia = profileFiles.length > 0 || coverFiles.length > 0 || galleryFiles.length > 0
+  const hasMedia = profileFiles.length > 0 || coverFiles.length > 0 || logoFiles.length > 0 || galleryFiles.length > 0
   const stepCompletionMap = useMemo(() => ({
     1: Boolean(resolvedSlug),
     2: Boolean(venueForm.name),
@@ -369,6 +370,7 @@ export default function PortalVenueEditPage({ currentStep, venueData, routeSlug,
           galleryPrefix={venueGalleryPrefix}
           setProfileFiles={setProfileFiles}
           setCoverFiles={setCoverFiles}
+          setLogoFiles={setLogoFiles}
           setGalleryFiles={setGalleryFiles}
           backHref={buildVenuePortalHref(2, resolvedSlug, resolvedVenueId)}
           backLabel="Back to Venue Profile"
