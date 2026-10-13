@@ -170,7 +170,7 @@ export default function JoinUserSlugPage({
   const resolvedUserId = Number(userId || userForm.userID || 0);
   const resolvedUsername = String(routeUsername || userForm.username || "").trim().toLowerCase();
   const userContentPrefix = useMemo(() => (
-    resolvedUserId > 0 ? `platformpics/usercontent/${resolvedUserId}/` : ""
+    resolvedUserId > 0 ? `platformpics/user/${resolvedUserId}/` : ""
   ), [resolvedUserId]);
   const userProfilePrefix = useMemo(() => (
     userContentPrefix ? `${userContentPrefix}profile/` : ""

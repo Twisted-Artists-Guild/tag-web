@@ -44,7 +44,7 @@ export default function VenueProfilePage({ venue }) {
     entityId: venueId,
   })
   const mediaPrefix = useMemo(() => (
-    venueId > 0 ? `platformpics/venuecontent/${venueId}/` : ""
+    venueId > 0 ? `platformpics/venue/${venueId}/` : ""
   ), [venueId])
 
   useEffect(() => {
