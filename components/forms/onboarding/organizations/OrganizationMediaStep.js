@@ -23,12 +23,12 @@ export default function OrganizationMediaStep({
   const titlePrefix = `${context.charAt(0).toUpperCase()}${context.slice(1)}`
   const logoPrefix = profilePrefix
     ? profilePrefix.replace(/profile\/?$/i, "logo/")
-    : `platformpics/${context}content/${entityId}/logo/`
+    : `platformpics/${context}/${entityId}/logo/`
 
   return (
     <OnboardingStepCard
       title="Step 5: Media and Gallery"
-      description={`Uploader/content manager parity with artist, rooted at /platformpics/${context}content/{ID}.`}
+      description={`Manage ${context} media under platformpics/${context}/{ID}.`}
     >
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
         <GalleryManager

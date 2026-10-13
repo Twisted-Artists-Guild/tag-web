@@ -134,7 +134,7 @@ export default function PortalVendorEditPage({ currentStep, vendorData, routeSlu
   const resolvedVendorId = Number(vendorId || vendorForm.vendorID || 0)
   const resolvedSlug = String(routeSlug || "").trim().toLowerCase()
   const vendorRootPrefix = useMemo(() => (
-    resolvedVendorId > 0 ? `platformpics/vendorcontent/${resolvedVendorId}/` : ""
+    resolvedVendorId > 0 ? `platformpics/vendor/${resolvedVendorId}/` : ""
   ), [resolvedVendorId])
   const vendorProfilePrefix = useMemo(() => (
     vendorRootPrefix ? `${vendorRootPrefix}profile/` : ""

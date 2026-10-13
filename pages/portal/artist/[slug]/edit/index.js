@@ -573,9 +573,13 @@ export default function PortalArtistEditPage({ artistId, artistData }) {
               {artistId && (
                 <div className="space-y-4">
                   <GalleryManager
-                    artistID={artistId}
-                    storagePrefix={`platformpics/artistcontent/${artistId}/`}
-                    allowMultipleGalleryItems
+                    entityType="artist"
+                    entityId={artistId}
+                    entityLabel={`Artist: ${artistId}`}
+                    folderKind="gallery"
+                    title="Artist Gallery Manager"
+                    basePrefix={`platformpics/artist/${artistId}/gallery/`}
+                    lockedRootPrefix={`platformpics/artist/${artistId}/`}
                   />
                   <GalleryManager
                     entityType="artist"
@@ -584,8 +588,8 @@ export default function PortalArtistEditPage({ artistId, artistData }) {
                     folderKind="logo"
                     title="Artist Logo Manager"
                     allowVideo={false}
-                    basePrefix={`platformpics/artists/${artistId}/logo/`}
-                    lockedRootPrefix={`platformpics/artists/${artistId}/`}
+                    basePrefix={`platformpics/artist/${artistId}/logo/`}
+                    lockedRootPrefix={`platformpics/artist/${artistId}/`}
                     singleImageMode
                     allowDeleteSingleImage
                   />
