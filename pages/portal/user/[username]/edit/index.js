@@ -339,8 +339,8 @@ export default function UserEditPage({ currentStep, userId, userData, sessionUse
             <UserProfileMediaStep
               sessionUser={sessionUser}
               userId={userId}
-              userProfilePrefix={`platformpics/usercontent/${userId}/profile/`}
-              userCoverPrefix={`platformpics/usercontent/${userId}/cover/`}
+              userProfilePrefix={`platformpics/user/${userId}/profile/`}
+              userCoverPrefix={`platformpics/user/${userId}/cover/`}
               backHref={buildUserPortalHref(2, normalizedUsername, userId)}
               continueHref={buildUserPortalHref(4, normalizedUsername, userId)}
             />

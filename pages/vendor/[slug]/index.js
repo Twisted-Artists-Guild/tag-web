@@ -48,7 +48,7 @@ export default function VendorProfilePage({ vendor }) {
     entityId: vendorId,
   })
   const mediaPrefix = useMemo(() => (
-    vendorId > 0 ? `platformpics/vendorcontent/${vendorId}/` : ""
+    vendorId > 0 ? `platformpics/vendor/${vendorId}/` : ""
   ), [vendorId])
 
   useEffect(() => {

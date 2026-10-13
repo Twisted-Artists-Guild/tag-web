@@ -220,12 +220,13 @@ Artists.getInitialProps = async () => {
 
     // Fetch the artist data
     const res = await serverFetch("/artist/")
+    
     status = res.status
     if (!res.ok) {
       throw new Error(`HTTP error! status: ${status}`)
     }
     data = await res.json()
-
+console.log("Fetched artist data:", data);
     const listingImagesByArtistPath = (Array.isArray(listings) ? listings : []).reduce((map, listing) => {
       const artistPath = normalizeArtistKey(listing?.artist?.path)
       const listingImageUrl = toImageUrl(listing?.profilePic)

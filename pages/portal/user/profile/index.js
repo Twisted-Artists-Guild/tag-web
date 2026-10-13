@@ -330,8 +330,8 @@ export default function UserProfilePage({ currentStep, userId, userData, session
             <UserProfileMediaStep
               sessionUser={sessionUser}
               userId={userId}
-              userProfilePrefix={`platformpics/usercontent/${userId}/profile/`}
-              userCoverPrefix={`platformpics/usercontent/${userId}/cover/`}
+              userProfilePrefix={`platformpics/user/${userId}/profile/`}
+              userCoverPrefix={`platformpics/user/${userId}/cover/`}
               backHref={buildProfileTabHref(2)}
               continueHref={buildProfileTabHref(4)}
             />
