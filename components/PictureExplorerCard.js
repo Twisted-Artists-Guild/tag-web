@@ -16,9 +16,9 @@ import { defaultFieldClass } from "@/utils/formSettings"
 
 const CONTAINER_CONFIGS = {
 	// This will get depreciated - the intent was to pass in the starting location and ensure the user can't drift into unathorized areas.
-	"personal-blog": { container: "tagpictures", startPrefix: "platformpics/personalblogs/", label: "Personal Blog Media" },
-	"artist-blog": { container: "tagpictures", startPrefix: "platformpics/usercontent/", label: "Artist Business Media" },
-	listing: { container: "tagpictures", startPrefix: "platformpics/listings/", label: "Listing Media" },
+	"personal-blog": { container: "tagpictures", startPrefix: "platformpics/blog/", label: "Blog Media" },
+	"artist-blog": { container: "tagpictures", startPrefix: "platformpics/user/", label: "Artist Business Media" },
+	listing: { container: "tagpictures", startPrefix: "platformpics/listing/", label: "Listing Media" },
 	article: { container: "platformpics", startPrefix: "news/", label: "News Articles" },
 	"staff-portal": { container: "tagpictures", startPrefix: "", label: "Staff Portal Media" },
 }

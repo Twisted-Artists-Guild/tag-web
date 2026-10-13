@@ -160,11 +160,11 @@ function getManagedPrefix(entityType, entityId, folderKind = "gallery") {
   const normalizedFolderKind = String(folderKind || "gallery").trim().toLowerCase()
 
   if (normalizedEntityType === "artist") {
-    return `platformpics/artists/${entityId}/${normalizedFolderKind}/`
+		return `platformpics/artist/${entityId}/${normalizedFolderKind}/`
   }
 
   if (normalizedEntityType === "user") {
-    return `platformpics/users/${entityId}/${normalizedFolderKind}/`
+		return `platformpics/user/${entityId}/${normalizedFolderKind}/`
   }
 
   return `platformpics/${normalizedEntityType}/${entityId}/${normalizedFolderKind}/`
@@ -590,7 +590,7 @@ function CreditsAdder({ credits, onChange, artists, users, onSave, saving, roleO
   )
 }
 
-export default function GalleryManager({ entityType, entityId, entityLabel, currentUser, basePrefix, lockedRootPrefix, folderKind = "gallery", title = "Gallery Manager", allowVideo, singleImageMode = false, allowDeleteSingleImage = false, onFilesChanged }) {
+export default function GalleryManager({ entityType, entityId, entityLabel, currentUser, basePrefix, lockedRootPrefix, folderKind = "gallery", title = "Gallery Manager", allowVideo, singleImageMode = false, allowDeleteSingleImage = false, showFolderBrowser = false, onFilesChanged }) {
   const normalizedFolderKind = String(folderKind || "gallery").trim().toLowerCase()
   const galleryPrefix = basePrefix || getManagedPrefix(entityType, entityId, normalizedFolderKind)
   const startPrefix = lockedRootPrefix || galleryPrefix
@@ -814,8 +814,15 @@ export default function GalleryManager({ entityType, entityId, entityLabel, curr
 
   const upsertVirtualFile = useCallback((nextVirtualFile) => {
     setFiles((prev) => {
-      const withoutSameVirtual = prev.filter((f) => !(f.isVideoPreview && f.virtualKey === nextVirtualFile.virtualKey))
-      return [nextVirtualFile, ...withoutSameVirtual]
+      const existingIndex = prev.findIndex((file) => file?.isVideoPreview && file.virtualKey === nextVirtualFile.virtualKey)
+      const withoutSameVirtual = prev.filter((file) => !(file?.isVideoPreview && file.virtualKey === nextVirtualFile.virtualKey))
+      const firstUnsortedIndex = withoutSameVirtual.findIndex((file) => file?.isInGallery === false)
+      const insertionIndex = existingIndex >= 0
+        ? Math.min(existingIndex, withoutSameVirtual.length)
+        : firstUnsortedIndex >= 0 ? firstUnsortedIndex : withoutSameVirtual.length
+      const nextFiles = [...withoutSameVirtual]
+      nextFiles.splice(insertionIndex, 0, { ...nextVirtualFile, isInGallery: true })
+      return nextFiles
     })
   }, [])
 
@@ -1086,12 +1093,74 @@ export default function GalleryManager({ entityType, entityId, entityLabel, curr
     }
   }
 
-  const selectImage = (file) => {
+  const ensurePictureRecord = useCallback(async (file) => {
+    if (!file || file?.isVideoPreview) return null
+
+    const normalized = normalizeUrl(file?.url)
+    const existing = pictureByUrl[normalized]
+    const existingId = toNumber(file?.persistedPictureId || existing?.pictureID || existing?.PictureID)
+    if (existingId) return existingId
+
+    const nowIso = new Date().toISOString()
+    const payload = {
+      URL: file.url,
+      NormalizedURL: normalized,
+      Path: currentPrefix,
+      Title: displayFileName(file.name) || null,
+      Context: entityType || null,
+      Created: nowIso,
+      Updated: nowIso,
+    }
+
+    const response = await fetch("/api/picture", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}))
+      throw new Error(errorData?.message || errorData?.error || "Failed to create picture record")
+    }
+
+    const created = await response.json().catch(() => null)
+    const createdId = toNumber(created?.pictureID || created?.PictureID)
+    if (!createdId) throw new Error("Picture record created but PictureID was not returned")
+
+    setPictureByUrl((previous) => ({
+      ...previous,
+      [normalized]: {
+        ...(previous[normalized] || {}),
+        ...payload,
+        pictureID: createdId,
+      },
+    }))
+
+    return createdId
+  }, [currentPrefix, entityType, pictureByUrl])
+
+  const selectImage = async (file) => {
     setSelectedFile(file)
     if (file?.isVideoPreview) {
       setVideoPreviewUrl(file.embedUrl || "")
+      applySelectedFileData(file)
+      return
     }
-    applySelectedFileData(file)
+
+    try {
+      const pictureId = await ensurePictureRecord(file)
+      const selectedWithPictureId = pictureId ? { ...file, persistedPictureId: pictureId } : file
+      setSelectedFile(selectedWithPictureId)
+      setFiles((currentFiles) => currentFiles.map((currentFile) => (
+        normalizeUrl(currentFile?.url) === normalizeUrl(file?.url)
+          ? { ...currentFile, persistedPictureId: pictureId || currentFile?.persistedPictureId }
+          : currentFile
+      )))
+      applySelectedFileData(selectedWithPictureId)
+    } catch (err) {
+      applySelectedFileData(file)
+      showError(err.message || "Failed to create a Picture record for this image.")
+    }
   }
 
   useEffect(() => {
@@ -1229,56 +1298,6 @@ export default function GalleryManager({ entityType, entityId, entityLabel, curr
       loadPictureMetadata()
     }
   }
-
-  const ensurePictureRecord = useCallback(async (file) => {
-    if (!file || file?.isVideoPreview) return null
-
-    const normalized = normalizeUrl(file?.url)
-    const existing = pictureByUrl[normalized]
-    const existingId = toNumber(file?.persistedPictureId || existing?.pictureID || existing?.PictureID)
-    if (existingId) {
-      return existingId
-    }
-
-    const nowIso = new Date().toISOString()
-    const payload = {
-      URL: file.url,
-      NormalizedURL: normalized,
-      Path: currentPrefix,
-      Title: displayFileName(file.name) || null,
-      Context: entityType || null,
-      Created: nowIso,
-      Updated: nowIso,
-    }
-
-    const res = await fetch(`/api/picture`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    })
-
-    if (!res.ok) {
-      const errorData = await res.json().catch(() => ({}))
-      throw new Error(errorData?.message || errorData?.error || "Failed to create picture record")
-    }
-
-    const created = await res.json().catch(() => null)
-    const createdId = toNumber(created?.pictureID || created?.PictureID)
-    if (!createdId) {
-      throw new Error("Picture record created but PictureID was not returned")
-    }
-
-    setPictureByUrl((prev) => ({
-      ...prev,
-      [normalized]: {
-        ...(prev[normalized] || {}),
-        ...payload,
-        pictureID: createdId,
-      },
-    }))
-
-    return createdId
-  }, [currentPrefix, entityType, pictureByUrl])
 
   const persistGalleryItems = useCallback(async (items) => {
     if (!entityId || !canManageOrder) return
@@ -1508,7 +1527,7 @@ export default function GalleryManager({ entityType, entityId, entityLabel, curr
     setSavingOrder(true)
     try {
       await persistGalleryItems(files)
-
+      await loadFiles()
       setOrderDirty(false)
       showMessage("Gallery order saved.")
     } catch (err) {
@@ -1692,7 +1711,7 @@ export default function GalleryManager({ entityType, entityId, entityLabel, curr
     try {
       const key = normalizeUrl(selectedFile.url)
       const existing = pictureByUrl[key]
-      const existingId = existing?.pictureID || existing?.PictureID || 0
+      const existingId = toNumber(selectedFile?.persistedPictureId || existing?.pictureID || existing?.PictureID)
 
       const payload = {
         ...(existing || {}),
@@ -1726,7 +1745,17 @@ export default function GalleryManager({ entityType, entityId, entityLabel, curr
         })
         if (!res.ok) throw new Error("Failed to create picture metadata")
         const created = await res.json()
-        setPictureByUrl((prev) => ({ ...prev, [key]: created }))
+        const createdId = toNumber(created?.pictureID || created?.PictureID)
+        const savedPicture = { ...created, pictureID: createdId || created?.pictureID }
+        setPictureByUrl((prev) => ({ ...prev, [key]: savedPicture }))
+        if (createdId) {
+          setSelectedFile((current) => current?.url === selectedFile.url
+            ? { ...current, persistedPictureId: createdId }
+            : current)
+          setFiles((currentFiles) => currentFiles.map((file) => normalizeUrl(file?.url) === key
+            ? { ...file, persistedPictureId: createdId }
+            : file))
+        }
       }
 
       setPicMetaDirty(false)
@@ -1841,6 +1870,8 @@ export default function GalleryManager({ entityType, entityId, entityLabel, curr
                 sourceVideoUrl: saved.url || item.sourceVideoUrl,
                 persistedVideoId: saved.videoID,
                 persistedGalleryItemId: saved.galleryItemID,
+                sortOrder: Number(saved.sortOrder ?? saved.SortOrder ?? item.sortOrder) || null,
+                isInGallery: true,
               }
             }))
             showMessage("Video added to gallery.")
@@ -2049,6 +2080,7 @@ export default function GalleryManager({ entityType, entityId, entityLabel, curr
           {uploadError ? <div className="alert alert-error text-sm">{uploadError}</div> : null}
           {uploadMessage ? <div className="alert alert-success text-sm break-all">{uploadMessage}</div> : null}
 
+          {showFolderBrowser ? (
           <div className="rounded-md border border-base-300 bg-base-200 p-3 space-y-2">
             <div className="text-xs font-semibold text-base-content/80">Browse {entityLabel || `${entityType} #${entityId}`} Media Folders</div>
             <div className="flex flex-wrap gap-2">
@@ -2086,6 +2118,7 @@ export default function GalleryManager({ entityType, entityId, entityLabel, curr
               <div className="text-xs text-base-content/60">No subfolders in this level.</div>
             )}
           </div>
+          ) : null}
 
           <div className="border border-base-300 rounded-md">
             <div className="px-3 py-2 border-b border-base-300 text-sm font-semibold flex justify-between items-center">

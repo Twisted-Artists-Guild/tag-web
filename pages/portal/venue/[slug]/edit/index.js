@@ -102,7 +102,7 @@ export default function PortalVenueEditPage({ currentStep, venueData, routeSlug,
   const resolvedVenueId = Number(venueId || venueForm.venueID || 0)
   const resolvedSlug = String(routeSlug || "").trim().toLowerCase()
   const venueRootPrefix = useMemo(() => (
-    resolvedVenueId > 0 ? `platformpics/venuecontent/${resolvedVenueId}/` : ""
+    resolvedVenueId > 0 ? `platformpics/venue/${resolvedVenueId}/` : ""
   ), [resolvedVenueId])
   const venueProfilePrefix = useMemo(() => (
     venueRootPrefix ? `${venueRootPrefix}profile/` : ""
