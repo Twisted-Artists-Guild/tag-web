@@ -50,6 +50,28 @@ function getDefaultContextColor(type) {
   return DEFAULT_CONTEXT_COLOR_SCHEMA[normalizedType] || "#3B82F6"
 }
 
+async function loadActiveEntityProfileImage(entityType, entityId) {
+  if (!entityType || !entityId) return ""
+
+  const profilePrefix = `platformpics/${entityType}/${entityId}/profile/`
+  const query = new URLSearchParams({
+    container: "tagpictures",
+    startPrefix: profilePrefix,
+    prefix: profilePrefix,
+  })
+
+  try {
+    const response = await fetch(`/api/image/list?${query.toString()}`)
+    if (!response.ok) return ""
+    const data = await response.json()
+    const files = Array.isArray(data?.files) ? data.files : []
+    const activeFile = files.sort((left, right) => new Date(right.lastModified || 0) - new Date(left.lastModified || 0))[0]
+    return activeFile?.url || ""
+  } catch {
+    return ""
+  }
+}
+
 function mapLinkedArtistToContext(artist) {
   const rawId = artist?.artistID ?? artist?.ArtistID ?? artist?.path ?? artist?.Path ?? "unknown"
   const path = String(artist?.path ?? artist?.Path ?? "").trim().toLowerCase()
@@ -144,7 +166,7 @@ function resolveFullName(sessionUser, userProfile) {
   return sessionUser?.name || sessionUser?.email || "User"
 }
 
-function buildBaseUserContext(sessionUser, userProfile) {
+function buildBaseUserContext(sessionUser, userProfile, activeProfileImage) {
   const fullName = resolveFullName(sessionUser, userProfile)
   const email = sessionUser?.email || ""
 
@@ -153,7 +175,14 @@ function buildBaseUserContext(sessionUser, userProfile) {
     label: fullName,
     subtitle: email,
     type: "user",
-    avatarUrl: sessionUser?.image || "",
+    avatarUrl:
+      activeProfileImage ||
+      userProfile?.profilePic?.url ||
+      userProfile?.profilePic?.URL ||
+      userProfile?.profilePicture?.url ||
+      userProfile?.profilePicture?.URL ||
+      sessionUser?.image ||
+      "",
     color: getDefaultContextColor("user"),
     unreadCount: 0,
     needsAttention: false,
@@ -221,6 +250,7 @@ export default function LoginProfile({
   const [vendorContexts, setVendorContexts] = useState([])
   const [venueContexts, setVenueContexts] = useState([])
   const [userProfile, setUserProfile] = useState(null)
+  const [activeUserProfileImage, setActiveUserProfileImage] = useState("")
   const [pendingOnboardingItems, setPendingOnboardingItems] = useState([])
   const [isLoadingEntities, setIsLoadingEntities] = useState(true)
   const [internalActiveContextId, setInternalActiveContextId] = useState(() => {
@@ -267,13 +297,13 @@ export default function LoginProfile({
     }
 
     return [
-      buildBaseUserContext(session.user, userProfile),
+      buildBaseUserContext(session.user, userProfile, activeUserProfileImage),
       ...artistContexts,
       ...vendorContexts,
       ...venueContexts,
       ...roleContexts,
     ]
-  }, [artistContexts, vendorContexts, venueContexts, roleContexts, session, userProfile])
+  }, [activeUserProfileImage, artistContexts, vendorContexts, venueContexts, roleContexts, session, userProfile])
 
   const availableContexts = useMemo(() => {
     return baseContexts.map((context, index) => {
@@ -319,6 +349,67 @@ export default function LoginProfile({
 
     return "/blank_image.png"
   }, [activeContext, session?.user?.image])
+
+  useEffect(() => {
+    const userId = session?.user?.id
+    if (!userId) {
+      setActiveUserProfileImage("")
+      return undefined
+    }
+
+    let cancelled = false
+    const profilePrefix = `platformpics/user/${userId}/profile/`
+    const refreshProfileImage = async () => {
+      try {
+        const query = new URLSearchParams({
+          container: "tagpictures",
+          startPrefix: profilePrefix,
+          prefix: profilePrefix,
+        })
+        const response = await fetch(`/api/image/list?${query.toString()}`)
+        if (!response.ok) return
+        const data = await response.json()
+        const files = Array.isArray(data?.files) ? data.files : []
+        const activeFile = files.sort((left, right) => new Date(right.lastModified || 0) - new Date(left.lastModified || 0))[0]
+        if (!cancelled) setActiveUserProfileImage(activeFile?.url || "")
+      } catch {
+        if (!cancelled) setActiveUserProfileImage("")
+      }
+    }
+
+    const handleProfilePictureUpdated = (event) => {
+      const { entityId, entityType, imageUrl } = event.detail || {}
+      if (entityType === "user" && String(entityId) === String(userId)) {
+        if (imageUrl) setActiveUserProfileImage(imageUrl)
+        refreshProfileImage()
+        return
+      }
+
+      if (entityType === "artist" && imageUrl) {
+        setArtistContexts((contexts) => contexts.map((context) => (
+          String(context.rawId) === String(entityId)
+            ? { ...context, avatarUrl: imageUrl }
+            : context
+        )))
+        loadActiveEntityProfileImage("artist", entityId).then((storedImage) => {
+          if (!cancelled && storedImage) {
+            setArtistContexts((contexts) => contexts.map((context) => (
+              String(context.rawId) === String(entityId)
+                ? { ...context, avatarUrl: storedImage }
+                : context
+            )))
+          }
+        })
+      }
+    }
+
+    refreshProfileImage()
+    window.addEventListener("entity-profile-picture-updated", handleProfilePictureUpdated)
+    return () => {
+      cancelled = true
+      window.removeEventListener("entity-profile-picture-updated", handleProfilePictureUpdated)
+    }
+  }, [session?.user?.id])
 
   useEffect(() => {
     if (typeof window === "undefined" || !activeContext?.id) {
@@ -551,7 +642,12 @@ export default function LoginProfile({
                 }
               } catch {}
             }
-            return mapLinkedArtistToContext(enriched)
+            const artistContext = mapLinkedArtistToContext(enriched)
+            const storedProfileImage = await loadActiveEntityProfileImage("artist", artistContext.rawId)
+            return {
+              ...artistContext,
+              avatarUrl: storedProfileImage || artistContext.avatarUrl,
+            }
           })
         )
 
