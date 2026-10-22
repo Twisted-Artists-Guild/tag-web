@@ -1293,7 +1293,7 @@ export default function GalleryManager({ entityType, entityId, entityLabel, curr
 
     if (uploaded.length) {
       setUploadMessage(`Uploaded ${uploaded.length} file${uploaded.length > 1 ? "s" : ""}`)
-      if (entityType === "user" && normalizedFolderKind === "profile" && typeof window !== "undefined") {
+      if ((entityType === "user" || entityType === "artist") && normalizedFolderKind === "profile" && typeof window !== "undefined") {
         window.dispatchEvent(new CustomEvent("entity-profile-picture-updated", {
           detail: { entityType, entityId, imageUrl: uploaded[uploaded.length - 1].url },
         }))
