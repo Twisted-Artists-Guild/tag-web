@@ -568,10 +568,38 @@ export default function PortalArtistEditPage({ artistId, artistData }) {
         {currentStep === 4 && (
           <div className="card bg-base-100 shadow border border-base-300">
             <div className="card-body gap-4">
-              <h2 className="text-2xl font-semibold">Profile, Cover, Logo & Gallery</h2>
-              <p className="text-sm text-base-content/70">Manage owner profile, business logo, cover image, and gallery items separately.</p>
+              <div>
+                <h2 className="text-2xl font-semibold">Profile Media Editor</h2>
+                <p className="text-sm text-base-content/70">Choose profile and cover pictures, manage your business logo, and organize gallery images.</p>
+              </div>
               {artistId && (
                 <div className="space-y-4">
+                  <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                    <GalleryManager
+                      entityType="artist"
+                      entityId={artistId}
+                      entityLabel={`Artist: ${artistId}`}
+                      folderKind="profile"
+                      title="Profile Picture Uploader"
+                      allowVideo={false}
+                      basePrefix={`platformpics/artist/${artistId}/profile/`}
+                      lockedRootPrefix={`platformpics/artist/${artistId}/`}
+                      singleImageMode
+                      onFilesChanged={setProfileFiles}
+                    />
+                    <GalleryManager
+                      entityType="artist"
+                      entityId={artistId}
+                      entityLabel={`Artist: ${artistId}`}
+                      folderKind="cover"
+                      title="Cover Picture Uploader"
+                      allowVideo={false}
+                      basePrefix={`platformpics/artist/${artistId}/cover/`}
+                      lockedRootPrefix={`platformpics/artist/${artistId}/`}
+                      singleImageMode
+                      onFilesChanged={setCoverFiles}
+                    />
+                  </div>
                   <GalleryManager
                     entityType="artist"
                     entityId={artistId}
