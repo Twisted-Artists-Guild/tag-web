@@ -25,6 +25,7 @@ export default function UserProfileMediaStep({
           title="Profile Picture Uploader"
           allowVideo={false}
           basePrefix={userProfilePrefix}
+          singleImageMode
         />
 
         <GalleryManager
@@ -36,6 +37,7 @@ export default function UserProfileMediaStep({
           title="Cover Picture Uploader"
           allowVideo={false}
           basePrefix={userCoverPrefix}
+          singleImageMode
         />
       </div>
 

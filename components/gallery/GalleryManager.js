@@ -1293,6 +1293,11 @@ export default function GalleryManager({ entityType, entityId, entityLabel, curr
 
     if (uploaded.length) {
       setUploadMessage(`Uploaded ${uploaded.length} file${uploaded.length > 1 ? "s" : ""}`)
+      if (entityType === "user" && normalizedFolderKind === "profile" && typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("entity-profile-picture-updated", {
+          detail: { entityType, entityId, imageUrl: uploaded[uploaded.length - 1].url },
+        }))
+      }
       selectImage(uploaded[uploaded.length - 1])
       loadFiles()
       loadPictureMetadata()
@@ -1693,6 +1698,18 @@ export default function GalleryManager({ entityType, entityId, entityLabel, curr
         if (!updateRes.ok) {
           throw new Error("Failed to update artist active picture fields")
         }
+      }
+
+      if (entityType === "user" && normalizedFolderKind === "profile" && typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("entity-profile-picture-updated", {
+          detail: { entityType, entityId, imageUrl: promotedUrl },
+        }))
+      }
+
+      if (entityType === "artist" && normalizedFolderKind === "profile" && typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("entity-profile-picture-updated", {
+          detail: { entityType, entityId, imageUrl: promotedUrl },
+        }))
       }
 
       showMessage(`${folderDisplayName} image set as active.`)
