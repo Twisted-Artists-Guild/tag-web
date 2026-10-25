@@ -9,6 +9,12 @@ The Bloomscroll page (`/feed`) opens with an animated festival scene: the visito
   - `source/index.html` and `source/assets/`: the same page with separate images.
 - In this document, "the reference" means `source/index.html`.
 
+**One festival on every screen (owner decision, 2026-10-25).** The reference only shows the concert (DJ, neon crowd and its bounce, turning wheel, code fire, concert lights) on phones; desktop and tablet still show the earlier wide festival. That gap is not accepted for the real build. Desktop and tablet get the same concert festival as phones. They keep their own wide far painting and near frame, which differ only in shape.
+- **Pending:** the owner is making a wide concert painting (wheel and flames removed, stage recast as the concert). Inputs and prompts are in `../docs/design/bloomscroll/wide-concert-input-2026-10-25/`.
+- Until it arrives, desktop and tablet show the old wide festival. That state is not final and must not be signed off.
+- The concert effects run behind one switch in the component. When the art lands, the switch is turned on for wide screens, with the positions of the lights, hoops, flames, wheel and crowd measured from the new painting.
+- The comparison then checks desktop and tablet against the phone's concert behaviour, with the same timings and colours.
+
 ## How fidelity is guaranteed
 
 1. **Port, don't reinterpret.** The scene component renders the reference's layer markup and runs the reference's layout and frame code (`layout`, `layoutPhone`, `frame`, the drawing functions) with the same constants. Only these changes are allowed:
@@ -49,9 +55,9 @@ The Bloomscroll page (`/feed`) opens with an animated festival scene: the visito
 | Lights | on `smoothstep(1500, 1950 ms)`, fire `smoothstep(1700, 2150 ms)`, flicker `0.86 + 0.08 sin(t/90) + 0.06 sin(t/37 + 1.3)`, shimmer `0.94 + 0.06 sin(t/700)` |
 | Fireflies | 18 far + 12 mid + 10 near (sizes 6, 11, 26 px); lags 0.55, 0.3, −0.45; phone: all in the scene, 2 faint in the air (30–50 % height, 40 % alpha), the rest at 58–92 % height, moving with the ground, front layer off; appear `smoothstep(1700, 2500 ms)` |
 | Festival life | appears `smoothstep(1500, 2100 ms)`; string-light twinkle; fire tongues and embers; fire-hoop sparks; cloud drift `sin(t/9000)·10 px` |
-| Turning wheel (phone) | centre (0.816, 0.493), radius 0.094 W, one turn per `9000·2π` ms, 12 gondolas, 24 rim bulbs, behind the tents |
+| Turning wheel (phone now, wide when its art lands) | centre (0.816, 0.493), radius 0.094 W, one turn per `9000·2π` ms, 12 gondolas, 24 rim bulbs, behind the tents |
 | Phone festival | portrait concert painting, split at **55.5 %**; left group set down **8 %**, right group **4 %** of the scene height |
-| Concert | **124 bpm**; colours teal (98, 168, 172), chartreuse (206, 255, 29), magenta (255, 79, 216), violet (138, 92, 255), warm white (255, 238, 205), changing every 8 beats; beams, LED strip, LED panel pulse, light-hoop sparks, strobe every 16 beats; crowd bounce in columns, left 0.7 %, right 0.4 % of the scene height |
+| Concert (every screen; wide pending its art) | **124 bpm**; colours teal (98, 168, 172), chartreuse (206, 255, 29), magenta (255, 79, 216), violet (138, 92, 255), warm white (255, 238, 205), changing every 8 beats; beams, LED strip, LED panel pulse, light-hoop sparks, strobe every 16 beats; crowd bounce in columns, left 0.7 %, right 0.4 % of the scene height |
 | Bottom fade | desktop and tablet 14 % of the scene height; phone 30 % |
 | Reduced motion | everything still: moon up, lights on, no unfold, no bounce |
 
