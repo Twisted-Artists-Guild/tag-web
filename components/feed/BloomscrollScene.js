@@ -14,7 +14,10 @@
 import { useEffect, useRef } from "react"
 
 // The approved design (docs/bloomscroll-scene.md). Numbers here are the signed-off values: change them only with a new approval.
+// Every scene image is named here (list: docs/bloomscroll-assets.md). Layers are sized by each painting's shape, never its pixel size,
+// so a sharper file of the same shape replaces one with no other change.
 const IMG = "/images/bloomscroll/"
+const MOON = "moon.webp"
 const WIDE_ART = {
   sky: "sky.webp", far: "far-cut.webp", soft: "far-cut-blur.webp", clouds: "clouds.webp",
   fest: "festival-concert.webp", lights: "glow-lights-concert.webp", crowd: "crowd-concert.webp",
@@ -700,7 +703,7 @@ export default function BloomscrollScene({ subtitle, children }) {
         <section className="tag-bs" data-part="scene">
           <div className="tag-bs__book" data-part="book" aria-hidden="true">
             <img className="tag-bs__layer tag-bs__sky" data-part="sky" alt="" width={1584} height={672} />
-            <div className="tag-bs__moon" data-part="moon"><img src={IMG + "moon.webp"} alt="" width={320} height={320} /></div>
+            <div className="tag-bs__moon" data-part="moon"><img src={IMG + MOON} alt="" width={320} height={320} /></div>
             <div className="tag-bs__layer tag-bs__fit tag-bs__clouds" data-part="clouds"><img alt="" /></div>
             <div className="tag-bs__ground" data-part="ground" />
             <div className="tag-bs__layer tag-bs__fit tag-bs__backdrop" data-part="backdrop">
