@@ -10,10 +10,9 @@ The Bloomscroll page (`/feed`) opens with an animated festival scene: the visito
 - In this document, "the reference" means `source/index.html`.
 
 **One festival on every screen (owner decision, 2026-10-25).** The reference only shows the concert (DJ, neon crowd and its bounce, turning wheel, code fire, concert lights) on phones; desktop and tablet still show the earlier wide festival. That gap is not accepted for the real build. Desktop and tablet get the same concert festival as phones. They keep their own wide far painting and near frame, which differ only in shape.
-- **Pending:** the owner is making a wide concert painting (wheel and flames removed, stage recast as the concert). Inputs and prompts are in `../docs/design/bloomscroll/wide-concert-input-2026-10-25/`.
-- Until it arrives, desktop and tablet show the old wide festival. That state is not final and must not be signed off.
-- The concert effects run behind one switch in the component. When the art lands, the switch is turned on for wide screens, with the positions of the lights, hoops, flames, wheel and crowd measured from the new painting.
-- The comparison then checks desktop and tablet against the phone's concert behaviour, with the same timings and colours.
+- **Done:** the owner's wide concert painting (wheel and flames removed, stage recast as the concert) is in `festival-concert.webp`. The inputs, the cut script and the checks are in `../docs/design/bloomscroll/wide-concert-input-2026-10-25/`.
+- Every concert effect runs on every screen. The positions of the lights, hoops, flames and crowd are measured from each painting. The wheel stands where the original wide festival painted it.
+- **Tablet (portrait, 768 px and wider):** each festival group slides **6 %** of the painting's width toward the path. The approved value was 12 %, but the new left group is wider, so 6 % stops the groups overlapping (owner decision, 2026-10-25).
 
 ## How fidelity is guaranteed
 

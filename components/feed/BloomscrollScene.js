@@ -281,8 +281,8 @@ export default function BloomscrollScene({ subtitle, children }) {
         el.style.width = bw + "px"
         el.style.height = bh + "px"
       }
-      // Portrait: each festival group slides toward the path; desktop keeps them where they are
-      const dx = wide ? 0 : bw * 0.12
+      // Portrait: each festival group slides toward the path, stopping short of the other (left group ends at 0.445, right starts at 0.577); desktop keeps them where they are
+      const dx = wide ? 0 : bw * 0.06
       lifeShift = { lx: dx / bw, ly: 0, rx: -dx / bw, ry: 0 }
       festImgs.forEach((img) => {
         const right = img.dataset.side === "right"
