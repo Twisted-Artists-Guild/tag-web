@@ -150,7 +150,7 @@ export default function BloomscrollFeed() {
     }
 
     return (
-        <BloomscrollScene subtitle="Scroll with purpose.">
+        <BloomscrollScene>
             <TagSEO metadataProp={{ title: "Bloomscroll", description: "Your creative social feed on TAG" }} canonicalSlug="feed" />
             <div className="container mx-auto px-4 pb-8 max-w-2xl">
                 <div className="flex justify-end gap-1 mb-6">

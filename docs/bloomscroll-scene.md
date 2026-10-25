@@ -49,9 +49,9 @@ The Bloomscroll page (`/feed`) opens with an animated festival scene: the visito
 | Near frame (desktop) | full painting 1.06 W wide, growth `1 + p·0.45·1.2` |
 | Near frame (tablet, portrait) | tall trees 0.18 W, growth `1 + p·0.45·0.3`; flowers 1.1 W, growth `1 + p·0.45·0.6` |
 | Flowers (phone) | wide painting 1.16 W, −8 % per side, growth `1 + p·0.45·0.6`; driven by `--approach` (0–1) |
-| Title | lag 0.45, opacity `1 − p·1.6` |
+| Ending (owner decision, 2026-10-25: the title and subtitle are gone) | the navbar's Bloomscroll mark (`BLOOMSCROLL_LOGO`, flower and wordmark) rises into the middle of the scene as the walk-in ends: `smoothstep(0.82, 1, walk)` (phones: walk = 3·p), up from +12 % of the scene height, scale 0.6 → 1, then floats ±0.6 % and glows; centred at 50 %, 38 %, width `clamp(220px, 44%, 560px)`, lag 0.45 on scroll-away. Reduced motion: already there. A hidden h1 keeps the page heading. The painted light-spinner will throw it there (plan Task 4). |
 | Haze | opacity `0.7 + p·0.6` |
-| Unfold (spring `from·e^(−6.5t)·cos(8.5t)`) | back 0 ms / 34°, flaps 380 ms / 80°, flowers 540 ms / 86°, title 700 ms / 70° |
+| Unfold (spring `from·e^(−6.5t)·cos(8.5t)`) | back 0 ms / 34°, flaps 380 ms / 80°, flowers 540 ms / 86° |
 | Lights | on `smoothstep(1500, 1950 ms)`, fire `smoothstep(1700, 2150 ms)`, flicker `0.86 + 0.08 sin(t/90) + 0.06 sin(t/37 + 1.3)`, shimmer `0.94 + 0.06 sin(t/700)` |
 | Fireflies | 18 far + 12 mid + 10 near (sizes 6, 11, 26 px); lags 0.55, 0.3, −0.45; phone: all in the scene, 2 faint in the air (30–50 % height, 40 % alpha), the rest at 58–92 % height, moving with the ground, front layer off; appear `smoothstep(1700, 2500 ms)` |
 | Festival life | appears `smoothstep(1500, 2100 ms)`; string-light twinkle; fire tongues and embers; fire-hoop sparks (the right-hand fire dancers); cloud drift `sin(t/9000)·10 px` |

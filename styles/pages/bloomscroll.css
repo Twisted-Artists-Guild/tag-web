@@ -242,34 +242,32 @@
     background: radial-gradient(120% 90% at 50% 45%, transparent 60%, rgba(var(--bs-night-rgb), 0.55) 100%);
   }
 
-  .tag-bs__title {
+  /* The ending: the navbar's Bloomscroll mark, risen into the middle of the scene (the script moves it and sets --glow) */
+  .tag-bs__mark {
     position: absolute;
-    inset: 0 0 auto;
+    left: 50%;
+    top: 38%;
     z-index: 10;
-    padding-top: clamp(20px, 4vw, 48px);
-    padding-left: max(16px, env(safe-area-inset-left, 0px));
-    padding-right: max(16px, env(safe-area-inset-right, 0px));
-    text-align: center;
-    font-size: 15px;
-    line-height: 1.55;
-    transform-origin: 50% 100%;
+    width: clamp(220px, 44%, 560px);
+    opacity: 0;
+    pointer-events: none;
+    will-change: transform, opacity;
   }
 
-  .tag-bs__title h1 {
-    margin: 0;
-    font-family: var(--tag-font-heading);
-    font-size: clamp(28px, 5vw, 56px);
-    font-weight: 700;
-    line-height: 1.55;
-    letter-spacing: -0.01em;
-    text-wrap: balance;
-    text-shadow: 0 2px 18px rgba(var(--bs-night-rgb), 0.7);
+  .tag-bs__mark::before {
+    content: "";
+    position: absolute;
+    inset: -60% -12%;
+    opacity: var(--glow, 0);
+    background: radial-gradient(closest-side, rgba(var(--bs-ghost-rgb), 0.3), rgba(var(--bs-teal-rgb), 0.16) 55%, transparent);
   }
 
-  .tag-bs__title p {
-    margin: 6px 0 0;
-    opacity: 0.8;
-    text-shadow: 0 1px 10px rgba(var(--bs-night-rgb), 0.8);
+  .tag-bs__mark img {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: auto;
+    filter: drop-shadow(0 2px 14px rgba(var(--bs-night-rgb), 0.7));
   }
 
   /* The scene melts into the page below */

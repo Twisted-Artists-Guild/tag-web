@@ -11,7 +11,9 @@
 "use client"
 /* eslint-disable @next/next/no-img-element -- the scene script picks each layer's image once it knows the screen size */
 
+import NextImage from "next/image"
 import { useEffect, useRef } from "react"
+import { BLOOMSCROLL_LOGO } from "@/components/Header/nav-links"
 
 // The approved design (docs/bloomscroll-scene.md). Numbers here are the signed-off values: change them only with a new approval.
 // Every scene image is named here (list: docs/bloomscroll-assets.md). Layers are sized by each painting's shape, never its pixel size,
@@ -118,9 +120,10 @@ function drawFlame(c, x, y, R, t, seed, appear) {
  * The Bloomscroll festival scene: a pop-up book the visitor walks into as they scroll, with the feed below.
  * Phones (under 768px) get the portrait art, tablets and desktops the wide art: the same concert on both.
  * The flower layer exposes the walk-in as --approach (0 to 1) for the blooming roses.
- * @param {{ subtitle: string, children: React.ReactNode }} props the feed goes in children
+ * The walk-in ends on the navbar's Bloomscroll mark, risen into the middle of the scene.
+ * @param {{ children: React.ReactNode }} props the feed goes in children
  */
-export default function BloomscrollScene({ subtitle, children }) {
+export default function BloomscrollScene({ children }) {
   const rootRef = useRef(null)
 
   useEffect(() => {
@@ -129,7 +132,7 @@ export default function BloomscrollScene({ subtitle, children }) {
     const wrap = part("wrap"), scene = part("scene"), feed = part("feed"), book = part("book")
     const sky = part("sky"), moon = part("moon"), clouds = part("clouds"), ground = part("ground")
     const backdrop = part("backdrop"), farImg = part("far"), farSoft = part("farSoft")
-    const glowLights = part("glowLights"), haze = part("haze"), title = part("title")
+    const glowLights = part("glowLights"), haze = part("haze"), mark = part("mark")
     const nearLeft = part("nearLeft"), nearRight = part("nearRight"), flowersL = part("flowersL"), flowersR = part("flowersR")
     const festImgs = [...root.querySelectorAll("[data-fest]")]
     const reduced = matchMedia("(prefers-reduced-motion: reduce)")
@@ -613,7 +616,7 @@ export default function BloomscrollScene({ subtitle, children }) {
     }
 
     // Unfold: the backdrop tips up, the near frame swings in like pop-up flaps, the moon rises, the lights come on
-    const pieces = { back: [0, 34], flaps: [380, 80], flowers: [540, 86], title: [700, 70] }
+    const pieces = { back: [0, 34], flaps: [380, 80], flowers: [540, 86] }
     const unfoldStart = performance.now()
     const spring = (ms, from) => {
       if (reduced.matches) return 0
@@ -686,8 +689,13 @@ export default function BloomscrollScene({ subtitle, children }) {
         const fg = 1 + (still ? 0 : p * NEAR_SPEED * (W / H > 1.6 ? 0.8 : 0.6))
         flowersL.style.transform = flowersR.style.transform = `translate3d(${mx * -55}px, ${my * -18}px, 0) scale(${fg}) rotateX(${angle("flowers")}deg)`
       }
-      title.style.transform = `translate3d(0, ${fy * 0.45}px, 0) rotateX(${angle("title")}deg)`
-      title.style.opacity = String(Math.max(0, 1 - fp * 1.6))
+      // The ending: as the walk-in finishes (phones: in the first third of the scroll) the Bloomscroll mark rises into the
+      // middle of the scene and holds there, gently glowing; reduced motion shows it already there
+      const land = still ? 1 : smoothstep(0.82, 1, Math.min(1, p * (phoneMode ? 3 : 1)))
+      const float = still ? 0 : Math.sin(now / 900) * H * 0.006 * land
+      mark.style.opacity = land.toFixed(3)
+      mark.style.transform = `translate3d(-50%, calc(-50% + ${(fy * 0.45 + (1 - land) * H * 0.12 + float).toFixed(1)}px), 0) scale(${(0.6 + 0.4 * land).toFixed(3)})`
+      mark.style.setProperty("--glow", (still ? 0.8 : (0.6 + 0.25 * Math.sin(now / 700)) * land).toFixed(3))
       haze.style.opacity = String(0.7 + fp * 0.6)
 
       const on = still ? 1 : smoothstep(1500, 1950, since)
@@ -761,9 +769,9 @@ export default function BloomscrollScene({ subtitle, children }) {
             <div className="tag-bs__grain" />
             <div className="tag-bs__vignette" />
           </div>
-          <div className="tag-bs__title" data-part="title">
-            <h1>Bloomscroll</h1>
-            <p>{subtitle}</p>
+          <h1 className="sr-only">Bloomscroll</h1>
+          <div className="tag-bs__mark" data-part="mark" aria-hidden="true">
+            <NextImage src={BLOOMSCROLL_LOGO} alt="" width={3472} height={642} sizes="(max-width: 767px) 60vw, 560px" />
           </div>
         </section>
       </div>
