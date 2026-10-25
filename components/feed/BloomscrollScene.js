@@ -18,11 +18,12 @@ import { useEffect, useRef } from "react"
 // so a sharper file of the same shape replaces one with no other change.
 const IMG = "/images/bloomscroll/"
 // Bump when any scene image is replaced, so no browser mixes a cached old picture with new code
-const ART_V = "v=3"
+const ART_V = "v=4"
 const MOON = "moon.webp"
 const WIDE_ART = {
   sky: "sky.webp", far: "far-cut.webp", soft: "far-cut-blur.webp", clouds: "clouds.webp",
   fest: "festival-concert.webp", lights: "glow-lights-concert.webp", figures: "crowd-concert-figures.webp",
+  fest2x: "festival-concert@2x.webp", figures2x: "crowd-concert-figures@2x.webp",
   near: "near.webp", tallL: "trees-tall-left.webp", tallR: "trees-tall-right.webp", flowers: "near-flowers.webp",
 }
 const PHONE_ART = {
@@ -61,7 +62,7 @@ const LIFE = {
     fires: [[0.8315, 0.795, 0.024, "bonfire"], [0.937, 0.258, 0.014, "torch"]],
     wheel: [0.8264, 0.475, 0.0455],
     hoops: [[0.8795, 0.621, 0.011], [0.9175, 0.643, 0.011], [0.948, 0.655, 0.011], [0.9945, 0.646, 0.011]],
-    figures: [[0.127,0.63679,0.0295,0.20401,0.0,0.08638,0.96648],[0.148,0.64976,0.0175,0.1875,0.08931,0.05124,0.88827],[0.1605,0.63443,0.0345,0.21108,0.14348,0.10102,0.99998],[0.1965,0.70519,0.027,0.14976,0.24744,0.07906,0.70948],[0.2005,0.6533,0.0475,0.18868,0.32943,0.13909,0.89386],[0.2435,0.64976,0.014,0.17335,0.47145,0.041,0.82123],[0.2515,0.67689,0.02,0.18632,0.51537,0.05857,0.88268],[0.263,0.63915,0.024,0.19458,0.57687,0.07028,0.92181],[0.2825,0.66038,0.0235,0.20283,0.65007,0.06881,0.96089],[0.298,0.64741,0.022,0.17217,0.72182,0.06442,0.81564],[0.3125,0.65566,0.024,0.17689,0.78917,0.07028,0.838],[0.3325,0.64033,0.0245,0.20165,0.86237,0.07174,0.9553],[0.352,0.65684,0.0205,0.16863,0.93704,0.06003,0.79887]],
+    figures: [[0.12744,0.63751,0.02881,0.20311,0.0,0.0862,0.96714],[0.14844,0.65075,0.01685,0.18642,0.08912,0.05041,0.88767],[0.16089,0.63521,0.03394,0.21001,0.14244,0.10155,0.99999],[0.19678,0.70598,0.02661,0.14845,0.2469,0.07962,0.70687],[0.20093,0.6542,0.04688,0.18757,0.32944,0.14026,0.89314],[0.2439,0.65075,0.01343,0.17204,0.47261,0.04018,0.81919],[0.25195,0.67779,0.01953,0.18527,0.5157,0.05843,0.88219],[0.26343,0.63982,0.02344,0.19333,0.57706,0.07013,0.92057],[0.28296,0.6611,0.02295,0.20196,0.65011,0.06867,0.96166],[0.29834,0.64845,0.02148,0.17089,0.72169,0.06427,0.81372],[0.31299,0.6565,0.02344,0.17549,0.7889,0.07013,0.83562],[0.33276,0.64097,0.02417,0.20081,0.86194,0.07232,0.95619],[0.35229,0.65765,0.02002,0.16743,0.93718,0.0599,0.79724]],
     hop: 0.0081,
     rig: {
       heads: [[0.1275, 0.381], [0.1645, 0.355], [0.2475, 0.363], [0.2785, 0.394]], wall: [0.0525, 0.341, 0.289, 0.651], floor: 0.651, panel: [0.1425, 0.237, 0.578, 0.642],
@@ -207,9 +208,11 @@ export default function BloomscrollScene({ subtitle, children }) {
       setSrc(farImg, WIDE_ART.far)
       setSrc(farSoft, WIDE_ART.soft)
       setSrc(clouds.firstElementChild, WIDE_ART.clouds)
-      setSrc(figureSheet, WIDE_ART.figures)
+      // Big or sharp screens get the festival and its dancers at twice the pixels (same shape, so nothing moves)
+      const sharp = W * (devicePixelRatio || 1) > 2200
+      setSrc(figureSheet, sharp ? WIDE_ART.figures2x : WIDE_ART.figures)
       nearLeft.style.display = nearRight.style.display = ""
-      festImgs.forEach((img) => { setSrc(img, WIDE_ART[img.dataset.fest]); img.style.position = img.style.left = img.style.top = img.style.width = img.style.height = "" })
+      festImgs.forEach((img) => { setSrc(img, sharp && img.dataset.fest === "fest" ? WIDE_ART.fest2x : WIDE_ART[img.dataset.fest]); img.style.position = img.style.left = img.style.top = img.style.width = img.style.height = "" })
       if (wide) {
         // Desktop: the full near painting, a touch wider than the screen so no edge shows, seated on the bottom of the scene
         const nw = W * 1.06, nh = nw / NEAR_FULL_ASPECT, nl = -0.03 * W, nt = vis + 4 - nh
