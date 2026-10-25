@@ -54,12 +54,14 @@ The Bloomscroll page (`/feed`) opens with an animated festival scene: the visito
 | Unfold (spring `from·e^(−6.5t)·cos(8.5t)`) | back 0 ms / 34°, flaps 380 ms / 80°, flowers 540 ms / 86°, title 700 ms / 70° |
 | Lights | on `smoothstep(1500, 1950 ms)`, fire `smoothstep(1700, 2150 ms)`, flicker `0.86 + 0.08 sin(t/90) + 0.06 sin(t/37 + 1.3)`, shimmer `0.94 + 0.06 sin(t/700)` |
 | Fireflies | 18 far + 12 mid + 10 near (sizes 6, 11, 26 px); lags 0.55, 0.3, −0.45; phone: all in the scene, 2 faint in the air (30–50 % height, 40 % alpha), the rest at 58–92 % height, moving with the ground, front layer off; appear `smoothstep(1700, 2500 ms)` |
-| Festival life | appears `smoothstep(1500, 2100 ms)`; string-light twinkle; fire tongues and embers; fire-hoop sparks; cloud drift `sin(t/9000)·10 px` |
-| Turning wheel (phone now, wide when its art lands) | centre (0.816, 0.493), radius 0.094 W, one turn per `9000·2π` ms, 12 gondolas, 24 rim bulbs, behind the tents |
+| Festival life | appears `smoothstep(1500, 2100 ms)`; string-light twinkle; fire tongues and embers; fire-hoop sparks (the right-hand fire dancers); cloud drift `sin(t/9000)·10 px` |
+| Turning wheel (every screen) | centre (0.816, 0.493), radius 0.094 W, one turn per `9000·2π` ms, 12 gondolas, 24 rim bulbs, behind the tents |
 | Phone festival | portrait concert painting, split at **55.5 %**; left group set down **8 %**, right group **4 %** of the scene height |
-| Concert (every screen; wide pending its art) | **124 bpm**; colours teal (98, 168, 172), chartreuse (206, 255, 29), magenta (255, 79, 216), violet (138, 92, 255), warm white (255, 238, 205), changing every 8 beats; beams, LED strip, LED panel pulse, light-hoop sparks, strobe every 16 beats; crowd bounce in columns, left 0.7 %, right 0.4 % of the scene height |
+| Concert (every screen) | **124 bpm**; colours teal (98, 168, 172), chartreuse (206, 255, 29), magenta (255, 79, 216), violet (138, 92, 255), warm white (255, 238, 205), changing every 8 beats; beams, LED strip, LED panel pulse (the painted panel itself, tinted, so only its LED lines glow), strobe every 16 beats (a soft burst). The stage lights are drawn on their own canvas with faded edges, so no flash ever shows a box. |
+| Crowd hop (QA round 2, owner request) | the dancers in front of the stage are cut out whole (`scripts/crowd_figures.py`) and hop as solid figures: a quick hop on each beat, rolling across the crowd from left to right; height 0.81 % (wide) / 0.7 % (phone) of the painting. At rest the painting is exactly the original. The painted light-spinner (wide) and the right-hand hoop girl (phone) are out of the paintings, and the light-hoop sparks are gone. |
 | Bottom fade | desktop and tablet 14 % of the scene height; phone 30 % |
-| Reduced motion | everything still: moon up, lights on, no unfold, no bounce |
+| Reduced motion | everything still: moon up, lights on, no unfold, no hop, wheel still |
+| Walk-in on phones | counts from the first pixel of scroll (phones have no hold), so the scene moves straight away |
 
 ## Where it lives in tag-web
 
@@ -67,7 +69,7 @@ The Bloomscroll page (`/feed`) opens with an animated festival scene: the visito
 |---|---|
 | Scene (layers and engine) | `components/feed/BloomscrollScene.js` (client component; decorative, `aria-hidden`) |
 | Scene styles | `styles/pages/bloomscroll.css`, imported in `styles/globals.css` like `home.css` |
-| Images | `public/images/bloomscroll/` (WebP, plus AVIF where smaller). Phones only load phone images and desktops only wide ones: sources are set once the layout is known. |
+| Images | `public/images/bloomscroll/` (WebP, plus AVIF where smaller). Phones only load phone images and desktops only wide ones: sources are set once the layout is known. Every image URL carries `ART_V` (`?v=…`); bump it whenever an image is replaced, so no browser mixes a cached old picture with new code. |
 | Page | `pages/feed/index.js`: the scene at the top, the existing feed below. Latest and Trending, the composer, infinite scroll, the single-post view and post actions stay as they are. The old vine rails come off this page. |
 
 No API changes are needed. The scene only decorates the page.

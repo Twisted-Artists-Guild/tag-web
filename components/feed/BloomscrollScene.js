@@ -17,15 +17,17 @@ import { useEffect, useRef } from "react"
 // Every scene image is named here (list: docs/bloomscroll-assets.md). Layers are sized by each painting's shape, never its pixel size,
 // so a sharper file of the same shape replaces one with no other change.
 const IMG = "/images/bloomscroll/"
+// Bump when any scene image is replaced, so no browser mixes a cached old picture with new code
+const ART_V = "v=3"
 const MOON = "moon.webp"
 const WIDE_ART = {
   sky: "sky.webp", far: "far-cut.webp", soft: "far-cut-blur.webp", clouds: "clouds.webp",
-  fest: "festival-concert.webp", lights: "glow-lights-concert.webp", crowd: "crowd-concert.webp",
+  fest: "festival-concert.webp", lights: "glow-lights-concert.webp", figures: "crowd-concert-figures.webp",
   near: "near.webp", tallL: "trees-tall-left.webp", tallR: "trees-tall-right.webp", flowers: "near-flowers.webp",
 }
 const PHONE_ART = {
   sky: "p-sky.webp", far: "p-far-cut.webp", soft: "p-far-cut-blur.webp", clouds: "p-clouds.webp",
-  fest: "p-festival4c.webp", lights: "p-glow-lights4.webp", crowd: "p-crowd4.webp", flowers: "near-flowers.webp",
+  fest: "p-festival4c.webp", lights: "p-glow-lights4.webp", figures: "p-crowd4-figures.webp", flowers: "near-flowers.webp",
 }
 const FAR_LAG = 0.55
 const WALK_ZOOM = 0.18
@@ -37,16 +39,17 @@ const BEAT = 60000 / 124
 const CONCERT_COLS = [[98, 168, 172], [206, 255, 29], [255, 79, 216], [138, 92, 255], [255, 238, 205]]
 
 // Where the lights, fires, hoops, wheel and crowd sit in each concert painting, as fractions of its width (u) and height (v).
-// crowd: [u0, u1, v0, v1, bounce height]. rig: the stage lighting, with size and beam scaled to each painting's stage.
+// figures: the dancers who hop, each cut out whole (scripts/crowd_figures.py): [u, v, w, h] in the painting, then [x, w, h] in
+// their sheet, all as fractions; hop: how high, as a fraction of the painting's height. rig: the stage lighting, with size and
+// beam scaled to each painting's stage.
 const LIFE = {
   phone: {
     bulbs: [[0.91,0.5197],[0.9214,0.5862],[0.8292,0.5878],[0.9383,0.5855],[0.8187,0.5894],[0.8436,0.5895],[0.8467,0.5886],[0.9022,0.5897],[0.7444,0.5912],[0.8833,0.5903],[0.7796,0.592],[0.8615,0.5918],[0.8822,0.5929],[0.7601,0.5962],[0.7956,0.5929],[0.7768,0.603],[0.7963,0.6087],[0.9107,0.6116],[0.817,0.6137],[0.9975,0.6111],[0.9277,0.6151],[0.9641,0.6138],[0.9831,0.6141],[0.8381,0.6171],[0.9456,0.6155],[0.9972,0.6153],[0.9642,0.6172],[0.9778,0.6192],[0.8558,0.6184],[0.8778,0.6201],[0.9462,0.6188],[0.8573,0.6217],[0.8799,0.6233],[0.9516,0.6225],[0.9066,0.6237],[0.9299,0.6239],[0.8661,0.6495],[0.7759,0.6583],[0.7901,0.6625],[0.803,0.6643],[0.816,0.6654],[0.7046,0.6677],[0.9172,0.6679],[0.6911,0.6701],[0.6937,0.6741],[0.7078,0.6735],[0.7056,0.6822],[0.6846,0.6862],[0.7022,0.693],[0.6956,0.7041],[0.6816,0.7049],[0.865,0.7117],[0.9375,0.7163],[0.8549,0.7206],[0.9031,0.7231],[0.9862,0.7213],[0.8551,0.728],[0.9925,0.7309],[0.9267,0.7292],[0.907,0.7346],[0.9272,0.7328],[0.8593,0.7366],[0.9317,0.7399],[0.9857,0.7461],[0.935,0.7466]],
     fires: [[0.808, 0.805, 0.05, "bonfire"], [0.928, 0.355, 0.018, "torch"]],
     wheel: [0.816, 0.493, 0.094],
     hoops: [[0.879, 0.727, 0.019], [0.959, 0.727, 0.019]],
-    lightHoops: [[0.058, 0.648, 0.05], [0.471, 0.648, 0.05]],
-    crowd: [[0.0, 0.555, 0.606, 0.79, 0.007], [0.625, 0.715, 0.725, 0.845, 0.004]],
-    wave: 1,
+    figures: [[0.06778,0.64996,0.06222,0.08147,0.0,0.13827,0.73389],[0.11444,0.65891,0.05,0.10385,0.14321,0.11111,0.93549],[0.16111,0.65891,0.05111,0.10922,0.25926,0.11358,0.98386],[0.22,0.66249,0.04444,0.10833,0.37778,0.09876,0.97584],[0.24444,0.66697,0.05444,0.11101,0.48148,0.12098,0.99999],[0.28333,0.66697,0.04889,0.09042,0.60741,0.10864,0.81451],[0.33444,0.67413,0.05111,0.09758,0.72099,0.11358,0.87901],[0.38333,0.65443,0.07,0.09848,0.83951,0.15556,0.88711]],
+    hop: 0.007,
     rig: {
       heads: [[0.138, 0.49], [0.182, 0.488], [0.226, 0.488], [0.284, 0.49]], wall: [0.045, 0.47, 0.335, 0.6], floor: 0.606, panel: [0.155, 0.271, 0.573, 0.605],
       clip: [0.0, 0.44, 0.52, 0.72], strip: [0.045, 0.0152], size: 1, beam: 0.2,
@@ -58,9 +61,8 @@ const LIFE = {
     fires: [[0.8315, 0.795, 0.024, "bonfire"], [0.937, 0.258, 0.014, "torch"]],
     wheel: [0.8264, 0.475, 0.0455],
     hoops: [[0.8795, 0.621, 0.011], [0.9175, 0.643, 0.011], [0.948, 0.655, 0.011], [0.9945, 0.646, 0.011]],
-    lightHoops: [[0.075, 0.739, 0.0375], [0.401, 0.712, 0.03]],
-    crowd: [[0.0, 0.46, 0.651, 0.915, 0.0081], [0.665, 0.73, 0.735, 0.87, 0.005]],
-    wave: 2,
+    figures: [[0.127,0.63679,0.0295,0.20401,0.0,0.08638,0.96648],[0.148,0.64976,0.0175,0.1875,0.08931,0.05124,0.88827],[0.1605,0.63443,0.0345,0.21108,0.14348,0.10102,0.99998],[0.1965,0.70519,0.027,0.14976,0.24744,0.07906,0.70948],[0.2005,0.6533,0.0475,0.18868,0.32943,0.13909,0.89386],[0.2435,0.64976,0.014,0.17335,0.47145,0.041,0.82123],[0.2515,0.67689,0.02,0.18632,0.51537,0.05857,0.88268],[0.263,0.63915,0.024,0.19458,0.57687,0.07028,0.92181],[0.2825,0.66038,0.0235,0.20283,0.65007,0.06881,0.96089],[0.298,0.64741,0.022,0.17217,0.72182,0.06442,0.81564],[0.3125,0.65566,0.024,0.17689,0.78917,0.07028,0.838],[0.3325,0.64033,0.0245,0.20165,0.86237,0.07174,0.9553],[0.352,0.65684,0.0205,0.16863,0.93704,0.06003,0.79887]],
+    hop: 0.0081,
     rig: {
       heads: [[0.1275, 0.381], [0.1645, 0.355], [0.2475, 0.363], [0.2785, 0.394]], wall: [0.0525, 0.341, 0.289, 0.651], floor: 0.651, panel: [0.1425, 0.237, 0.578, 0.642],
       clip: [0.0, 0.3, 0.46, 0.92], strip: [0.055, 0.0123], size: 0.81, beam: 0.45,
@@ -135,8 +137,8 @@ export default function BloomscrollScene({ subtitle, children }) {
     let moonRest = 0, moonSunk = 0, nearHinge = 0, phoneMode = false, sceneTop = 0, stickTop = 0
     // per-side shift of the festival halves inside their box (tablet slides them in, phones set them down), as fractions of the box
     let lifeShift = { lx: 0, ly: 0, rx: 0, ry: 0 }
-    const setSrc = (img, file) => { const src = IMG + file; if (img.getAttribute("src") !== src) img.setAttribute("src", src) }
-    const crowdImg = new Image()
+    const setSrc = (img, file) => { const src = `${IMG}${file}?${ART_V}`; if (img.getAttribute("src") !== src) img.setAttribute("src", src) }
+    const figureSheet = new Image()
     const life = () => (phoneMode ? LIFE.phone : LIFE.wide)
 
     // Phones: the portrait far painting fills the 4:5 scene, the concert painting stands on its meadow, only the flowers come forward
@@ -145,7 +147,7 @@ export default function BloomscrollScene({ subtitle, children }) {
       setSrc(farImg, PHONE_ART.far)
       setSrc(farSoft, PHONE_ART.soft)
       setSrc(clouds.firstElementChild, PHONE_ART.clouds)
-      setSrc(crowdImg, PHONE_ART.crowd)
+      setSrc(figureSheet, PHONE_ART.figures)
       const sk = sky.style
       sk.objectFit = sk.objectPosition = sk.backgroundColor = ""
       sk.left = sk.top = "0px"
@@ -205,7 +207,7 @@ export default function BloomscrollScene({ subtitle, children }) {
       setSrc(farImg, WIDE_ART.far)
       setSrc(farSoft, WIDE_ART.soft)
       setSrc(clouds.firstElementChild, WIDE_ART.clouds)
-      setSrc(crowdImg, WIDE_ART.crowd)
+      setSrc(figureSheet, WIDE_ART.figures)
       nearLeft.style.display = nearRight.style.display = ""
       festImgs.forEach((img) => { setSrc(img, WIDE_ART[img.dataset.fest]); img.style.position = img.style.left = img.style.top = img.style.width = img.style.height = "" })
       if (wide) {
@@ -338,91 +340,116 @@ export default function BloomscrollScene({ subtitle, children }) {
       if (crowdCanvas.width !== cw || crowdCanvas.height !== ch) { crowdCanvas.width = cw; crowdCanvas.height = ch }
       const c = crowdCtx
       c.clearRect(0, 0, cw, ch)
+      if (!figureSheet.complete || !figureSheet.naturalWidth) return
       const L = life()
-      const moving = !reduced.matches
-      const phase = moving ? (t / BEAT) % 1 : 0
-      // Each thin column of the painted crowd stretches up in a rolling wave; feet stay planted
-      if (!crowdImg.complete || !crowdImg.naturalWidth) return
-      const iw = crowdImg.naturalWidth, ih = crowdImg.naturalHeight
-      const strip = Math.max(3, Math.round(4 * dpr))
-      L.crowd.forEach(([u0, u1, v0, v1, bounce], gi) => {
-        const [ox, oy] = gi ? [lifeShift.rx, lifeShift.ry] : [lifeShift.lx, lifeShift.ly]
-        const x0 = (u0 + ox) * cw, x1 = (u1 + ox) * cw, y0 = (v0 + oy) * ch, y1 = (v1 + oy) * ch, ym = y0 + (y1 - y0) * 0.42
-        const sy0 = v0 * ih, sy1 = v1 * ih, sym = sy0 + (sy1 - sy0) * 0.42
-        const amp = bounce * ch, k = L.wave
-        for (let x = x0; x < x1; x += strip) {
-          const u = x / cw - ox
-          const wave = moving ? Math.pow(Math.max(0, Math.sin(phase * Math.PI * 2 + u * 26 * k + Math.sin(u * 61 * k) * 1.6)), 2) : 0
-          const d = amp * wave * (0.55 + 0.45 * Math.sin(u * 37 * k + 1.3))
-          const sx = u * iw, sw = (strip / cw) * iw
-          c.drawImage(crowdImg, sx, sy0, sw, sym - sy0, x, y0, strip, ym - d - y0)
-          c.drawImage(crowdImg, sx, sym, sw, sy1 - sym, x, ym - d, strip, y1 - ym + d)
-        }
+      const iw = figureSheet.naturalWidth, ih = figureSheet.naturalHeight
+      const beat = reduced.matches ? -1 : t / BEAT
+      // Each dancer hops whole, never stretched: a quick hop on the beat, rolling across the crowd from left to right
+      L.figures.forEach(([u, v, w, h, sx, sw, sh], i) => {
+        const right = u > 0.5
+        const x = (u + (right ? lifeShift.rx : lifeShift.lx)) * cw, y = (v + (right ? lifeShift.ry : lifeShift.ly)) * ch
+        const at = beat < 0 ? 1 : (beat - u * 2.2 + (i % 3) * 0.13) % 1
+        const lift = at < 0.42 ? Math.sin((at / 0.42) * Math.PI) * (0.75 + 0.25 * ((i * 7) % 4) / 3) : 0
+        c.drawImage(figureSheet, sx * iw, 0, sw * iw, sh * ih, x, y - lift * L.hop * ch, w * cw, h * ch)
       })
     }
 
-    function drawConcertLights(c, at, cw, ch, t, sprite) {
+    // The stage lights are drawn on their own small canvas whose edges are then faded out, so no flash or beam ever shows
+    // a straight edge; the wash and the strobe are soft ovals that fade to nothing inside their area
+    const stageCv = document.createElement("canvas"), stageCtx = stageCv.getContext("2d")
+    const panelCv = document.createElement("canvas"), panelCtx = panelCv.getContext("2d")
+    const festLeft = festImgs.find((img) => img.dataset.fest === "fest" && img.dataset.half === "l")
+    const softOval = (g, x0, y0, x1, y1, rgba, a) => {
+      const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2, rx = (x1 - x0) / 2, ry = (y1 - y0) / 2
+      g.save()
+      g.translate(cx, cy); g.scale(1, ry / rx)
+      const grad = g.createRadialGradient(0, 0, 0, 0, 0, rx)
+      grad.addColorStop(0, `rgba(${rgba},${a})`); grad.addColorStop(1, `rgba(${rgba},0)`)
+      g.fillStyle = grad
+      g.fillRect(-rx, -rx, rx * 2, rx * 2)
+      g.restore()
+    }
+    function drawConcertLights(c, at, cw, ch, t, appear) {
       const beatPhase = (t / BEAT) % 1, beatN = Math.floor(t / BEAT)
       const pulse = Math.pow(1 - beatPhase, 3)
       const [r, g, b] = concertColour(t, 0), [r2, g2, b2] = concertColour(t, 0.5)
       const L = life(), R = L.rig, z = R.size
-      c.save()
       // Everything stays inside the stage and the space over the front rows
       const [lx, ty] = at(R.clip[0], R.clip[1]), [rx, by] = at(R.clip[2], R.clip[3])
-      c.beginPath(); c.rect(lx, ty, rx - lx, by - ty); c.clip()
+      const bw = Math.ceil(rx - lx), bhh = Math.ceil(by - ty)
+      if (stageCv.width !== bw || stageCv.height !== bhh) { stageCv.width = bw; stageCv.height = bhh }
+      const s = stageCtx
+      s.setTransform(1, 0, 0, 1, 0, 0)
+      s.globalCompositeOperation = "source-over"
+      s.clearRect(0, 0, bw, bhh)
+      s.setTransform(1, 0, 0, 1, -lx, -ty)
+      s.globalCompositeOperation = "lighter"
+      const sprite = (x, y, size, alpha) => { s.globalAlpha = Math.max(0, Math.min(1, alpha)) * appear; s.drawImage(warmSprite, x - size / 2, y - size / 2, size, size) }
       // Colour wash on the back wall of the stage
       const [sx0, sy0] = at(R.wall[0], R.wall[1]), [sx1, sy1] = at(R.wall[2], R.wall[3])
-      const wash = c.createRadialGradient((sx0 + sx1) / 2, sy1, 0, (sx0 + sx1) / 2, sy1, (sx1 - sx0) * 0.75)
-      wash.addColorStop(0, `rgba(${r},${g},${b},${0.55 + 0.35 * pulse})`)
-      wash.addColorStop(1, `rgba(${r},${g},${b},0)`)
-      c.globalAlpha = 1; c.fillStyle = wash; c.fillRect(sx0, sy0, sx1 - sx0, sy1 - sy0)
+      s.globalAlpha = 1
+      softOval(s, sx0, sy0, sx1, sy1 + (sy1 - sy0) * 0.4, `${r},${g},${b}`, 0.55 + 0.35 * pulse)
       // Moving-head beams from the truss, sweeping across the stage and the front rows
       R.heads.map(([u, v], i) => [u, v, i * 1.3]).forEach(([u, v, ph], i) => {
         const [x, y] = at(u, v)
         const ang = Math.PI / 2 + Math.sin(t / 1400 + ph) * 0.55
         const len = ch * R.beam, spread = 0.12
         const col = i % 2 ? [r2, g2, b2] : [r, g, b]
-        const gr = c.createLinearGradient(x, y, x + Math.cos(ang) * len, y + Math.sin(ang) * len)
+        const gr = s.createLinearGradient(x, y, x + Math.cos(ang) * len, y + Math.sin(ang) * len)
         gr.addColorStop(0, `rgba(${col},0.55)`); gr.addColorStop(1, `rgba(${col},0)`)
-        c.fillStyle = gr
-        c.beginPath(); c.moveTo(x, y)
-        c.lineTo(x + Math.cos(ang - spread) * len, y + Math.sin(ang - spread) * len)
-        c.lineTo(x + Math.cos(ang + spread) * len, y + Math.sin(ang + spread) * len)
-        c.closePath(); c.fill()
+        s.globalAlpha = 1
+        s.fillStyle = gr
+        s.beginPath(); s.moveTo(x, y)
+        s.lineTo(x + Math.cos(ang - spread) * len, y + Math.sin(ang - spread) * len)
+        s.lineTo(x + Math.cos(ang + spread) * len, y + Math.sin(ang + spread) * len)
+        s.closePath(); s.fill()
         sprite(x, y, cw * 0.035 * z, 0.9)
       })
       // LED strip along the front of the stage, chasing in colour
+      s.globalAlpha = 1
       for (let k = 0; k < 20; k++) {
         const [x, y] = at(R.strip[0] + k * R.strip[1], R.floor)
         const on = Math.pow(0.5 + 0.5 * Math.sin(t / 140 - k * 0.8), 3)
         const [cr, cg, cb] = k % 2 ? [r, g, b] : [r2, g2, b2]
-        c.fillStyle = `rgba(${cr},${cg},${cb},${0.35 + 0.65 * on})`
-        c.fillRect(x - cw * 0.004 * z, y - ch * 0.0015 * z, cw * 0.008 * z, ch * 0.003 * z)
+        s.fillStyle = `rgba(${cr},${cg},${cb},${0.35 + 0.65 * on})`
+        s.fillRect(x - cw * 0.004 * z, y - ch * 0.0015 * z, cw * 0.008 * z, ch * 0.003 * z)
       }
-      // The painted LED triangle panel takes the concert colour, pulsing on the beat
+      // The painted LED triangle panel lights up in the concert colour on the beat: the painting's own panel, tinted and
+      // added as light, so only its LED lines glow and never a box
       const [bx0, by0] = at(R.panel[0], R.panel[2]), [bx1, by1] = at(R.panel[1], R.panel[3])
-      const panel = c.createLinearGradient(bx0, 0, bx1, 0)
-      panel.addColorStop(0, `rgba(${r},${g},${b},0.75)`); panel.addColorStop(1, `rgba(${r2},${g2},${b2},0.75)`)
-      c.fillStyle = panel; c.globalAlpha = 0.35 + 0.55 * pulse
-      c.fillRect(bx0, by0, bx1 - bx0, by1 - by0)
-      c.globalAlpha = 1
-      // The two light hoops: bright sparks running round each hoop
-      L.lightHoops.forEach(([u, v, rr], hi) => {
-        const [x, y] = at(u, v)
-        for (let k = 0; k < 6; k++) {
-          const ang = t / 220 * (hi ? -1 : 1) + (k * Math.PI) / 3
-          const col = k % 2 ? [r, g, b] : [r2, g2, b2]
-          c.fillStyle = `rgba(${col},0.9)`
-          c.beginPath(); c.arc(x + Math.cos(ang) * rr * cw, y + Math.sin(ang) * rr * cw * 0.3, cw * 0.005 * z, 0, Math.PI * 2); c.fill()
-        }
-        sprite(x, y, rr * cw * 2.2, 0.25 + 0.25 * pulse)
-      })
-      // Strobe pop on every 16th beat
-      if (beatN % 16 === 0 && beatPhase < 0.25) {
-        c.fillStyle = `rgba(255,255,255,${0.5 * (1 - beatPhase / 0.25)})`
-        c.fillRect(sx0, sy0, sx1 - sx0, sy1 - sy0)
+      const pw = Math.ceil(bx1 - bx0), ph = Math.ceil(by1 - by0)
+      if (festLeft.complete && festLeft.naturalWidth && pw > 0 && ph > 0) {
+        if (panelCv.width !== pw || panelCv.height !== ph) { panelCv.width = pw; panelCv.height = ph }
+        const q = panelCtx, nw = festLeft.naturalWidth, nh = festLeft.naturalHeight
+        const paint = () => q.drawImage(festLeft, R.panel[0] * nw, R.panel[2] * nh, (R.panel[1] - R.panel[0]) * nw, (R.panel[3] - R.panel[2]) * nh, 0, 0, pw, ph)
+        q.globalCompositeOperation = "copy"
+        paint()
+        q.globalCompositeOperation = "multiply"
+        const tint = q.createLinearGradient(0, 0, pw, 0)
+        tint.addColorStop(0, `rgb(${r},${g},${b})`); tint.addColorStop(1, `rgb(${r2},${g2},${b2})`)
+        q.fillStyle = tint
+        q.fillRect(0, 0, pw, ph)
+        q.globalCompositeOperation = "destination-in"
+        paint()
+        s.globalAlpha = (0.35 + 0.55 * pulse) * appear
+        s.drawImage(panelCv, bx0, by0)
+        s.globalAlpha = 1
       }
-      c.restore()
+      // Strobe pop on every 16th beat: a soft burst of white over the stage
+      if (beatN % 16 === 0 && beatPhase < 0.25) softOval(s, sx0, sy0, sx1, sy1 + (sy1 - sy0) * 0.4, "255,255,255", 0.5 * (1 - beatPhase / 0.25))
+      // Fade the canvas out towards its edges, then lay it over the scene
+      s.setTransform(1, 0, 0, 1, 0, 0)
+      s.globalCompositeOperation = "destination-in"
+      s.globalAlpha = 1
+      for (const [x0, y0, x1, y1] of [[0, 0, bw, 0], [0, 0, 0, bhh]]) {
+        const fade = s.createLinearGradient(x0, y0, x1, y1)
+        fade.addColorStop(0, "rgba(0,0,0,0)"); fade.addColorStop(0.15, "rgba(0,0,0,1)")
+        fade.addColorStop(0.85, "rgba(0,0,0,1)"); fade.addColorStop(1, "rgba(0,0,0,0)")
+        s.fillStyle = fade
+        s.fillRect(0, 0, bw, bhh)
+      }
+      c.globalAlpha = 1
+      c.drawImage(stageCv, lx, ty)
     }
 
     // Ferris wheel: painted-style rim, spokes and swinging gondolas, turning slowly behind the tents
@@ -542,7 +569,7 @@ export default function BloomscrollScene({ subtitle, children }) {
           sprite(x + Math.cos(ang) * r * unit, y + Math.sin(ang) * r * unit * 1.1, unit * 0.018 * (r / 0.019), 0.9)
         }
       })
-      drawConcertLights(c, at, cw, ch, t, sprite)
+      drawConcertLights(c, at, cw, ch, t, appear)
       c.globalCompositeOperation = "source-over"
       c.globalAlpha = 1
     }
@@ -594,9 +621,10 @@ export default function BloomscrollScene({ subtitle, children }) {
     const angle = (key) => spring(performance.now() - unfoldStart - pieces[key][0], pieces[key][1])
 
     // Motion chases scroll and pointer with frame-rate-independent easing.
-    // Scroll counts from the moment the scene sticks under the site header (its height can change as the notice bar scrolls away).
+    // Desktop and tablet: scroll counts from the moment the scene sticks under the site header (its height can change as the
+    // notice bar scrolls away). Phones have no hold: the scene moves from the first pixel of scroll, so that is where it counts from.
     const readStick = () => { stickTop = parseFloat(getComputedStyle(scene).top) || 0 }
-    const scrollPos = () => Math.max(0, window.scrollY - (sceneTop - stickTop))
+    const scrollPos = () => Math.max(0, window.scrollY - (phoneMode ? 0 : sceneTop - stickTop))
     let sy = 0, px = 0, py = 0, tx = 0, ty = 0, last = performance.now()
     const onPointerMove = (e) => {
       if (!finePointer.matches) return
@@ -665,7 +693,7 @@ export default function BloomscrollScene({ subtitle, children }) {
 
       drawFlies(now, dt, y, mx, smoothstep(1700, 2500, since))
       drawLife(now, dt, smoothstep(1500, 2100, since))
-      drawWheel(now, 1)
+      drawWheel(still ? 0 : now, 1)
       drawCrowd(now)
 
       if (visible) rafId = requestAnimationFrame(frame)
@@ -704,7 +732,7 @@ export default function BloomscrollScene({ subtitle, children }) {
         <section className="tag-bs" data-part="scene">
           <div className="tag-bs__book" data-part="book" aria-hidden="true">
             <img className="tag-bs__layer tag-bs__sky" data-part="sky" alt="" width={1584} height={672} />
-            <div className="tag-bs__moon" data-part="moon"><img src={IMG + MOON} alt="" width={320} height={320} /></div>
+            <div className="tag-bs__moon" data-part="moon"><img src={`${IMG}${MOON}?${ART_V}`} alt="" width={320} height={320} /></div>
             <div className="tag-bs__layer tag-bs__fit tag-bs__clouds" data-part="clouds"><img alt="" /></div>
             <div className="tag-bs__ground" data-part="ground" />
             <div className="tag-bs__layer tag-bs__fit tag-bs__backdrop" data-part="backdrop">
