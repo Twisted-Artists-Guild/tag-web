@@ -13,6 +13,7 @@ The Bloomscroll page (`/feed`) opens with an animated festival scene: the visito
 - **Done:** the owner's wide concert painting (wheel and flames removed, stage recast as the concert) is in `festival-concert.webp`. The inputs, the cut script and the checks are in `../docs/design/bloomscroll/wide-concert-input-2026-10-25/`.
 - Every concert effect runs on every screen. The positions of the lights, hoops, flames and crowd are measured from each painting. The wheel stands where the original wide festival painted it.
 - **Tablet (portrait, 768 px and wider):** each festival group slides **6 %** of the painting's width toward the path. The approved value was 12 %, but the new left group is wider, so 6 % stops the groups overlapping (owner decision, 2026-10-25).
+- **No flat edges at the top (owner decision, 2026-10-25).** At some window shapes the far painting and the desktop near frame start below the top of the scene, and their tree tops ended in a straight line. They now fade into the sky: the far painting over its top 18 % (desktop and tablet), the desktop near frame over its top 16 %. Nothing moves or changes size.
 
 ## How fidelity is guaranteed
 

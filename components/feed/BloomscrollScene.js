@@ -194,6 +194,7 @@ export default function BloomscrollScene({ subtitle, children }) {
       const wide = W / H > 1.6
       phoneMode = W < PHONE_MAX
       scene.classList.toggle("tag-bs--phone", phoneMode)
+      scene.classList.toggle("tag-bs--wide", !phoneMode && wide)
       const overlap = Math.max(0, scene.getBoundingClientRect().bottom - feed.getBoundingClientRect().top)
       const vis = H - overlap
       wrap.style.height = H + holdFor(H) + "px"

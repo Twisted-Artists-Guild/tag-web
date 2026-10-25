@@ -109,10 +109,10 @@
   .tag-bs__backdrop {
     z-index: 2;
     transform-origin: 50% 63%;
-    /* The painting's sides melt away so its edges never show as a cut line; its top is shown in full */
-    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 8px), linear-gradient(to right, transparent 0, #000 4%, #000 96%, transparent 100%);
+    /* The painting's sides and top melt away so its edges never show as a cut line against the sky */
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 18%), linear-gradient(to right, transparent 0, #000 4%, #000 96%, transparent 100%);
     -webkit-mask-composite: source-in;
-    mask-image: linear-gradient(to bottom, transparent 0, #000 8px), linear-gradient(to right, transparent 0, #000 4%, #000 96%, transparent 100%);
+    mask-image: linear-gradient(to bottom, transparent 0, #000 18%), linear-gradient(to right, transparent 0, #000 4%, #000 96%, transparent 100%);
     mask-composite: intersect;
   }
 
@@ -203,6 +203,12 @@
     max-width: none;
     -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 8px);
     mask-image: linear-gradient(to bottom, transparent 0, #000 8px);
+  }
+
+  /* Desktop: the frame's trunks end flat at its top, so they fade into the night sky */
+  .tag-bs--wide .tag-bs__near img {
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 16%);
+    mask-image: linear-gradient(to bottom, transparent 0, #000 16%);
   }
 
   .tag-bs__near--flowers {
