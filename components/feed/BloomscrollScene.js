@@ -194,7 +194,9 @@ export default function BloomscrollScene({ children }) {
       moonSunk = horizon + mw * 0.8
     }
 
-    const holdFor = (H) => (!phoneMode ? Math.round(H * 0.8) : 0)
+    // The scene holds while the visitor walks in, then while the Bloomscroll mark arrives: 1.6 scene heights of scroll on
+    // desktop and tablet (the first half is the approved walk-in), 1.2 on phones (owner decision, 2026-10-25)
+    const holdFor = (H) => Math.round(H * (phoneMode ? 1.2 : 1.6))
     function layout() {
       const W = scene.clientWidth, H = scene.clientHeight
       const wide = W / H > 1.6
@@ -628,7 +630,7 @@ export default function BloomscrollScene({ children }) {
 
     // Motion chases scroll and pointer with frame-rate-independent easing.
     // Desktop and tablet: scroll counts from the moment the scene sticks under the site header (its height can change as the
-    // notice bar scrolls away). Phones have no hold: the scene moves from the first pixel of scroll, so that is where it counts from.
+    // notice bar scrolls away). Phones count from the first pixel of scroll, so the walk-in starts at once.
     const readStick = () => { stickTop = parseFloat(getComputedStyle(scene).top) || 0 }
     const scrollPos = () => Math.max(0, window.scrollY - (phoneMode ? 0 : sceneTop - stickTop))
     let sy = 0, px = 0, py = 0, tx = 0, ty = 0, last = performance.now()
@@ -650,8 +652,10 @@ export default function BloomscrollScene({ children }) {
       sy = still ? target : target + (sy - target) * Math.exp(-dt / 0.085)
       px += (tx - px) * (1 - Math.exp(-dt / 0.35))
       py += (ty - py) * (1 - Math.exp(-dt / 0.35))
-      // p: how far the visitor has walked in; y: how far the scene itself has scrolled (only after the hold)
-      const p = hold ? Math.min(1, sy / hold) : sy / H
+      // q: how far through the whole hold (the mark lands at its end); p: how far the visitor has walked in, which
+      // takes the first half (on desktop the same scroll as the approved walk-in); y: how far the scene has scrolled after it
+      const q = Math.min(1, sy / hold)
+      const p = Math.min(1, sy / (hold * 0.5))
       const y = still ? 0 : Math.max(0, sy - hold)
       const mx = still ? 0 : px, my = still ? 0 : py
       const since = still ? 99999 : now - unfoldStart
@@ -689,9 +693,9 @@ export default function BloomscrollScene({ children }) {
         const fg = 1 + (still ? 0 : p * NEAR_SPEED * (W / H > 1.6 ? 0.8 : 0.6))
         flowersL.style.transform = flowersR.style.transform = `translate3d(${mx * -55}px, ${my * -18}px, 0) scale(${fg}) rotateX(${angle("flowers")}deg)`
       }
-      // The ending: as the walk-in finishes (phones: in the first third of the scroll) the Bloomscroll mark rises into the
-      // middle of the scene and holds there, gently glowing; reduced motion shows it already there
-      const land = still ? 1 : smoothstep(0.82, 1, Math.min(1, p * (phoneMode ? 3 : 1)))
+      // The ending: in the last step of the hold the Bloomscroll mark rises into the middle of the scene and holds there,
+      // gently glowing; reduced motion shows it already there
+      const land = still ? 1 : smoothstep(0.86, 1, q)
       const float = still ? 0 : Math.sin(now / 900) * H * 0.006 * land
       mark.style.opacity = land.toFixed(3)
       mark.style.transform = `translate3d(-50%, calc(-50% + ${(fy * 0.45 + (1 - land) * H * 0.12 + float).toFixed(1)}px), 0) scale(${(0.6 + 0.4 * land).toFixed(3)})`

@@ -39,7 +39,7 @@ The Bloomscroll page (`/feed`) opens with an animated festival scene: the visito
 |---|---|
 | Phone layout | width < **768 px** |
 | Scene height | desktop and tablet `clamp(520px, 86svh, 900px)`; portrait 768 px and wider `100svh`; phone **4:5** box `min(125vw, 65svh)`, first post right below it |
-| Hold (sticky walk-in) | 0.8 × scene height on desktop and tablet; none on phones |
+| Hold (sticky) | 1.6 × scene height on desktop and tablet, 1.2 × on phones (owner, 2026-10-25). The walk-in (`p`) takes the first half, on desktop the same scroll as the approved 0.8; the Bloomscroll mark rises in over the last 14 % of the hold (`q` 0.86–1), then the scene scrolls away to the posts. No dancer (owner decision, 2026-10-25: the scene ends clean on the mark). |
 | Scroll easing | `sy += (target − sy) · (1 − e^(−dt/0.085))`; pointer `e^(−dt/0.35)` |
 | Book tilt (pointer) | `scale(1.03) rotateY(mx·2.2°) rotateX(−my·1.4°)` |
 | Sky plate | lag 0.7, zoom +3 % |
@@ -49,7 +49,7 @@ The Bloomscroll page (`/feed`) opens with an animated festival scene: the visito
 | Near frame (desktop) | full painting 1.06 W wide, growth `1 + p·0.45·1.2` |
 | Near frame (tablet, portrait) | tall trees 0.18 W, growth `1 + p·0.45·0.3`; flowers 1.1 W, growth `1 + p·0.45·0.6` |
 | Flowers (phone) | wide painting 1.16 W, −8 % per side, growth `1 + p·0.45·0.6`; driven by `--approach` (0–1) |
-| Ending (owner decision, 2026-10-25: the title and subtitle are gone) | the navbar's Bloomscroll mark (`BLOOMSCROLL_LOGO`, flower and wordmark) rises into the middle of the scene as the walk-in ends: `smoothstep(0.82, 1, walk)` (phones: walk = 3·p), up from +12 % of the scene height, scale 0.6 → 1, then floats ±0.6 % and glows; centred at 50 %, 38 %, width `clamp(220px, 44%, 560px)`, lag 0.45 on scroll-away. Reduced motion: already there. A hidden h1 keeps the page heading. The painted light-spinner will throw it there (plan Task 4). |
+| Ending (owner decision, 2026-10-25: the title and subtitle are gone, and no dancer) | the navbar's Bloomscroll mark (`BLOOMSCROLL_LOGO`, flower and wordmark) rises into the middle of the scene in the last part of the hold: `smoothstep(0.86, 1, q)`, up from +12 % of the scene height, scale 0.6 → 1, then floats ±0.6 % and glows; centred at 50 %, 38 %, width `clamp(220px, 44%, 560px)`, lag 0.45 on scroll-away. Reduced motion: already there. A hidden h1 keeps the page heading. |
 | Haze | opacity `0.7 + p·0.6` |
 | Unfold (spring `from·e^(−6.5t)·cos(8.5t)`) | back 0 ms / 34°, flaps 380 ms / 80°, flowers 540 ms / 86° |
 | Lights | on `smoothstep(1500, 1950 ms)`, fire `smoothstep(1700, 2150 ms)`, flicker `0.86 + 0.08 sin(t/90) + 0.06 sin(t/37 + 1.3)`, shimmer `0.94 + 0.06 sin(t/700)` |
@@ -61,7 +61,7 @@ The Bloomscroll page (`/feed`) opens with an animated festival scene: the visito
 | Crowd hop (QA round 2, owner request) | the dancers in front of the stage are cut out whole (`scripts/crowd_figures.py`) and hop as solid figures: a quick hop on each beat, rolling across the crowd from left to right; height 0.81 % (wide) / 0.7 % (phone) of the painting. At rest the painting is exactly the original. The painted light-spinner (wide) and the right-hand hoop girl (phone) are out of the paintings, and the light-hoop sparks are gone. The stage's back-right wall, painted the key magenta, is filled in from the wall around it (it used to cut out see-through). |
 | Bottom fade | desktop and tablet 14 % of the scene height; phone 30 % |
 | Reduced motion | everything still: moon up, lights on, no unfold, no hop, wheel still |
-| Walk-in on phones | counts from the first pixel of scroll (phones have no hold), so the scene moves straight away |
+| Walk-in on phones | counts from the first pixel of scroll, so the scene moves straight away |
 
 ## Where it lives in tag-web
 
