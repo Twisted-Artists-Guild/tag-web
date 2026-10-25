@@ -47,6 +47,14 @@
   --tag-shadow-rgb: 0, 0, 0; /* drop shadows */
   --tag-photo-shade: 18, 16, 22; /* rgb of the dark overlay on photos (both modes) */
   --tag-photo-text: #f5f5fc; /* text on photos: photos stay dark in both modes */
+  /* Bloomscroll scene: dusk in both modes */
+  --bs-night: #151318;
+  --bs-night-rgb: 21, 19, 24;
+  --bs-meadow: #0f1c1c;
+  --bs-teal-rgb: 98, 168, 172;
+  --bs-ghost-rgb: 245, 245, 252;
+  --bs-moon-rgb: 190, 236, 234;
+  --bs-moon-2-rgb: 160, 222, 220;
   --tag-photo-text-2: #c9c5d6;
   --tag-light-rgb: 255, 255, 255; /* white glass on photos */
   --tag-mark-start: #ffffff; /* first stop of the static TAG mark gradient */
