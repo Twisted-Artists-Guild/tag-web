@@ -19,8 +19,9 @@ All files are in `public/images/bloomscroll/`.
 | `sky.webp` | Sky plate (soft gradient, stars) | desktop, tablet | 1584×672 | 33:14 | opaque | No: soft gradient |
 | `p-sky.webp` | Sky plate | phone | 900×1117 | 0.806 | opaque | No |
 | `clouds.webp` / `p-clouds.webp` | Wispy clouds (screen blend) | wide / phone | 1584×672 / 900×1117 | | opaque on black | No: soft |
-| `far-cut.webp` | Far painting: trees, hills, path (sky cut out) | desktop, tablet | 1584×672 | 33:14 | transparent sky | **Yes (01)** |
-| `p-far-cut.webp` | Far painting | phone | 900×1117 | 0.806 | transparent sky | **Yes (02)** |
+| `far-cut.webp` | Far painting: trees, hills, path (sky cut out; top 18 % and sides 4 % faded in the file) | desktop | 1925×817 | 33:14 | transparent sky | Done: the owner's regenerated wide painting (regen-3) |
+| `far-portrait.webp` / `far-portrait-blur.webp` | Portrait back painting (owner's regen-4) and its soft-focus copy, in place of the wide one | tablet | 1024×1536 | 2:3 | transparent sky | Done |
+| `p-far-cut.webp` | Far painting, the owner's portrait painting (regen-4) cropped to 4:5, hill line on the phone's | phone | 900×1117 | 0.806 | transparent sky | Done |
 | `far-cut-blur.webp` / `p-far-cut-blur.webp` | Soft-focus copy of the far painting | wide / phone | as above | | transparent | No: rebuilt from 01/02 |
 | `festival-wide.webp` / `festival-wide@2x.webp` | Wide festival built from the owner's solo pieces: stage (no DJ), tents and tower, bonfire group | desktop, tablet | 2000×849 / 4096×1738 | 33:14 | transparent | No: rebuilt by `build_festival.py` |
 | `glow-wide.webp` | Soft light glow (screen blend) | desktop, tablet | 1000×424 | 33:14 | opaque on black | No: rebuilt by `build_festival.py` |
@@ -28,10 +29,10 @@ All files are in `public/images/bloomscroll/`.
 | `festival-phone.webp` | Phone festival, the same pieces recomposed on the 4:5 picture | phone | 900×1117 | 0.806 | transparent | No: rebuilt by `build_festival.py` |
 | `glow-phone.webp` | Phone light glow | phone | 450×558 | 0.806 | opaque on black | No: rebuilt by `build_festival.py` |
 | `cast-phone.webp` | The DJ, the booth front and the crowd at phone size | phone | people 140 px tall | sheet | transparent | No: rebuilt by `build_festival.py` |
-| `near.webp` | Near frame: trees, ferns, roses | desktop | 2112×896 | 33:14 | transparent centre | **Yes (05)** |
+| `near.webp` | Near frame: trees and ferns, lime rim light (owner's regen-2) | desktop | 1925×817 | 33:14 | transparent centre | Done |
 | `near-flowers.webp` | Rose bushes | phone, tablet | 2112×896 | 33:14 | transparent | **Yes (06)** |
-| `trees-tall-left.webp` / `trees-tall-right.webp` | Tall edge trees | tablet | 464×3333 | | transparent | No: already sharp at tablet size |
-| `moon.webp` | Moon | all | 320×320 | 1:1 | transparent | No: shown at 150 px at most |
+| `trees-tall-left.webp` / `trees-tall-right.webp` | Tablet edge trees: the owner's tree (10) and its mirror | tablet | 793×1981 | 0.40 | transparent | Done |
+| `moon.webp` | Moon (owner's regen-1) | all | 640×640 | 1:1 | transparent | Done |
 
 The grain is generated in code, and the wheel, fires, beams, fire-hoop sparks, fireflies and embers are all drawn by code. None of them need images.
 

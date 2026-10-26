@@ -20,13 +20,14 @@ import { BLOOMSCROLL_LOGO } from "@/components/Header/nav-links"
 // so a sharper file of the same shape replaces one with no other change.
 const IMG = "/images/bloomscroll/"
 // Bump when any scene image is replaced, so no browser mixes a cached old picture with new code
-const ART_V = "v=12"
+const ART_V = "v=13"
 const MOON = "moon.webp"
 const WIDE_ART = {
   sky: "sky.webp", far: "far-cut.webp", soft: "far-cut-blur.webp", clouds: "clouds.webp",
   fest: "festival-wide.webp", lights: "glow-wide.webp", figures: "cast-wide.webp",
   fest2x: "festival-wide@2x.webp", figures2x: "cast-wide@2x.webp",
   near: "near.webp", tallL: "trees-tall-left.webp", tallR: "trees-tall-right.webp", flowers: "near-flowers.webp",
+  tall: "far-portrait.webp", tallSoft: "far-portrait-blur.webp",
 }
 const PHONE_ART = {
   sky: "p-sky.webp", far: "p-far-cut.webp", soft: "p-far-cut-blur.webp", clouds: "p-clouds.webp",
@@ -37,7 +38,10 @@ const WALK_ZOOM = 0.18
 const NEAR_SPEED = 0.45
 const PHONE_MAX = 768
 const NEAR_FULL_ASPECT = 2112 / 896
-const TALL_ASPECT = 464 / 3333
+const TALL_ASPECT = 793 / 1981
+// The portrait back painting (tablets): its shape, and where its hill line sits down the picture
+const FAR_TALL_ASPECT = 1024 / 1536
+const FAR_TALL_HILL = 0.743
 const PAINT_ASPECT = 1584 / 672
 const BEAT = 60000 / 124
 const CONCERT_COLS = [[98, 168, 172], [206, 255, 29], [255, 79, 216], [138, 92, 255], [255, 238, 205]]
@@ -141,6 +145,7 @@ export default function BloomscrollScene({ children }) {
     const wrap = part("wrap"), scene = part("scene"), feed = part("feed"), book = part("book")
     const sky = part("sky"), moon = part("moon"), clouds = part("clouds"), ground = part("ground")
     const backdrop = part("backdrop"), farImg = part("far"), farSoft = part("farSoft")
+    const farTall = part("farTall"), farTallSoft = farTall.lastElementChild
     const glowLights = part("glowLights"), haze = part("haze"), mark = part("mark")
     const nearLeft = part("nearLeft"), nearRight = part("nearRight"), flowersL = part("flowersL"), flowersR = part("flowersR")
     const festImgs = [...root.querySelectorAll("[data-fest]")]
@@ -159,6 +164,8 @@ export default function BloomscrollScene({ children }) {
       setSrc(sky, PHONE_ART.sky)
       setSrc(farImg, PHONE_ART.far)
       setSrc(farSoft, PHONE_ART.soft)
+      farImg.style.visibility = farSoft.style.visibility = ""
+      farTall.style.display = "none"
       setSrc(clouds.firstElementChild, PHONE_ART.clouds)
       setSrc(figureSheet, PHONE_ART.figures)
       const sk = sky.style
@@ -261,8 +268,8 @@ export default function BloomscrollScene({ children }) {
         // so the bark is never squeezed (owner, 2026-10-25)
         const ph = vis + 4, pw = ph * TALL_ASPECT
         nearHinge = W / 2
-        // Their inner edges fade out; the right one only a little (its sliced inner trunk is removed from the picture)
-        for (const [el, file, side, fade, soft] of [[nearLeft, WIDE_ART.tallL, "left", "to left", 30], [nearRight, WIDE_ART.tallR, "right", "to right", 6]]) {
+        // The owner's tablet tree on the left and its mirror on the right, each at its own shape, inner edges barely faded
+        for (const [el, file, side, fade, soft] of [[nearLeft, WIDE_ART.tallL, "left", "to left", 4], [nearRight, WIDE_ART.tallR, "right", "to right", 4]]) {
           const s = el.style, img = el.firstElementChild
           setSrc(img, file)
           img.style.cssText = `position:absolute;top:0;${side}:0;height:100%;width:100%;`
@@ -313,6 +320,18 @@ export default function BloomscrollScene({ children }) {
         const right = img.dataset.side === "right"
         img.style.translate = dx ? `${right ? -dx : dx}px 0` : ""
       })
+      // Tablets: the portrait back painting stands in for the wide one, its hill line on the wide one's, a touch wider than
+      // the screen; it moves and zooms with the festival (the same transform, about the same point)
+      farImg.style.visibility = farSoft.style.visibility = wide ? "" : "hidden"
+      farTall.style.display = wide ? "none" : "block"
+      if (!wide) {
+        setSrc(farTall.firstElementChild, WIDE_ART.tall)
+        setSrc(farTallSoft, WIDE_ART.tallSoft)
+        const tw = W * 1.06, th = tw / FAR_TALL_ASPECT, tl = (W - tw) / 2, tt = top + bh * 0.58 - FAR_TALL_HILL * th
+        const fs = farTall.style
+        fs.left = tl + "px"; fs.top = tt + "px"; fs.width = tw + "px"; fs.height = th + "px"
+        fs.transformOrigin = `${W / 2 - tl}px ${top + bh * 0.63 - tt}px`
+      }
       // The moon rests in open sky and sinks to just under the hill line, so it always disappears behind the hills
       const hill = top + bh * 0.58, mw = moon.offsetWidth
       const sk = sky.style
@@ -697,11 +716,11 @@ export default function BloomscrollScene({ children }) {
       sky.style.transform = `translate3d(${fmx * -6}px, ${fy * 0.7}px, 0) scale(${1 + fp * 0.03}) rotateX(${angle("back")}deg)`
       // The far painting, festival and glows are one rigid piece that walks in toward the path's end
       backdrop.style.transform = `translate3d(${fmx * -12}px, ${fy * FAR_LAG + fmy * -6}px, 0) scale(${1 + fp * WALK_ZOOM}) rotateX(${angle("back")}deg)`
-      glowLights.style.transform = backdrop.style.transform
+      glowLights.style.transform = farTall.style.transform = backdrop.style.transform
       clouds.style.transform = !still ? `translate3d(${Math.sin(now / 9000) * 10}px, 0, 0) ${backdrop.style.transform}` : backdrop.style.transform
       // Phones: the dark meadow under the painting drifts with it, so its top edge never shows above the festival
       ground.style.transform = phoneMode ? `translate3d(0, ${fy * FAR_LAG}px, 0)` : ""
-      farSoft.style.opacity = String(smoothstep(0.05, 0.6, fp) * 0.8)
+      farSoft.style.opacity = farTallSoft.style.opacity = String(smoothstep(0.05, 0.6, fp) * 0.8)
 
       // The moon rises from behind the hills after the unfold and sinks back behind them as the visitor scrolls
       const rise = 1 - smoothstep(700, 2300, since)
@@ -781,6 +800,10 @@ export default function BloomscrollScene({ children }) {
             <div className="tag-bs__moon" data-part="moon"><img src={`${IMG}${MOON}?${ART_V}`} alt="" width={320} height={320} /></div>
             <div className="tag-bs__layer tag-bs__fit tag-bs__clouds" data-part="clouds"><img alt="" /></div>
             <div className="tag-bs__ground" data-part="ground" />
+            <div className="tag-bs__layer tag-bs__far-tall" data-part="farTall">
+              <img alt="" width={1024} height={1536} />
+              <img className="tag-bs__far-soft" alt="" width={1024} height={1536} />
+            </div>
             <div className="tag-bs__layer tag-bs__fit tag-bs__backdrop" data-part="backdrop">
               <img data-part="far" alt="" width={1584} height={672} />
               <img className="tag-bs__far-soft" data-part="farSoft" alt="" width={1584} height={672} />
