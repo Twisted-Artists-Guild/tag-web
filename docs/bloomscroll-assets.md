@@ -23,7 +23,7 @@ All files are in `public/images/bloomscroll/`.
 | `p-far-cut.webp` | Far painting | phone | 900×1117 | 0.806 | transparent sky | **Yes (02)** |
 | `far-cut-blur.webp` / `p-far-cut-blur.webp` | Soft-focus copy of the far painting | wide / phone | as above | | transparent | No: rebuilt from 01/02 |
 | `festival-concert.webp` / `festival-concert@2x.webp` | Wide concert festival, hopping figures lifted out (filled in behind them) | desktop, tablet | 2000×849 / 4096×1738 | 33:14 | transparent | **Done**: cut from Terry's 4096 upscale; the 1x is its downscale |
-| `crowd-concert-figures.webp` / `@2x` | The 13 wide dancers who hop, packed side by side | desktop, tablet | 668×178 / 1369×365 | sheet | transparent | No: rebuilt from 03 |
+| `crowd-concert-figures.webp` / `@2x` | The 11 wide dancers who hop, packed side by side | desktop, tablet | 576×178 / 1180×365 | sheet | transparent | No: rebuilt from 03 |
 | `glow-lights-concert.webp` | Soft light glow (screen blend) | desktop, tablet | 1000×424 | 33:14 | opaque on black | No: rebuilt from 03 |
 | `p-festival4c.webp` | Phone concert festival, hopping figures lifted out (filled in behind them) | phone | 900×1117 | 0.806 | transparent | **Yes (04)**, then re-cut |
 | `p-crowd4-figures.webp` | The 7 phone dancers who hop, packed side by side | phone | 340×124 | sheet | transparent | No: rebuilt from 04 |
