@@ -25,7 +25,7 @@ All files are in `public/images/bloomscroll/`.
 | `far-cut-blur.webp` / `p-far-cut-blur.webp` | Soft-focus copy of the far painting | wide / phone | as above | | transparent | No: rebuilt from 01/02 |
 | `festival-wide.webp` / `festival-wide@2x.webp` | Wide festival built from the owner's solo pieces: stage (no DJ), tents and tower, bonfire group | desktop, tablet | 2000×849 / 4096×1738 | 33:14 | transparent | No: rebuilt by `build_festival.py` |
 | `glow-wide.webp` | Soft light glow (screen blend) | desktop, tablet | 1000×424 | 33:14 | opaque on black | No: rebuilt by `build_festival.py` |
-| `cast-wide.webp` / `cast-wide@2x.webp` | The DJ, the booth front drawn over him and the 14 crowd people (silhouette pass, neon glow), side by side | desktop, tablet | people 170 / 340 px tall | sheet | transparent | No: rebuilt by `build_festival.py` |
+| `cast-wide.webp` / `cast-wide@2x.webp` | The DJ, the booth front with its deck gear (drawn over him) and the 14 crowd people (silhouette pass, neon glow), side by side | desktop, tablet | people 170 / 340 px tall | sheet | transparent | No: rebuilt by `build_festival.py` |
 | `festival-phone.webp` | Phone festival, the same pieces recomposed on the 4:5 picture | phone | 900×1117 | 0.806 | transparent | No: rebuilt by `build_festival.py` |
 | `glow-phone.webp` | Phone light glow | phone | 450×558 | 0.806 | opaque on black | No: rebuilt by `build_festival.py` |
 | `cast-phone.webp` | The DJ, the booth front and the crowd at phone size | phone | people 140 px tall | sheet | transparent | No: rebuilt by `build_festival.py` |
