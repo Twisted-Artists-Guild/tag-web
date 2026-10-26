@@ -20,17 +20,17 @@ import { BLOOMSCROLL_LOGO } from "@/components/Header/nav-links"
 // so a sharper file of the same shape replaces one with no other change.
 const IMG = "/images/bloomscroll/"
 // Bump when any scene image is replaced, so no browser mixes a cached old picture with new code
-const ART_V = "v=11"
+const ART_V = "v=12"
 const MOON = "moon.webp"
 const WIDE_ART = {
   sky: "sky.webp", far: "far-cut.webp", soft: "far-cut-blur.webp", clouds: "clouds.webp",
-  fest: "festival-concert.webp", lights: "glow-lights-concert.webp", figures: "crowd-concert-figures.webp",
-  fest2x: "festival-concert@2x.webp", figures2x: "crowd-concert-figures@2x.webp",
+  fest: "festival-wide.webp", lights: "glow-wide.webp", figures: "cast-wide.webp",
+  fest2x: "festival-wide@2x.webp", figures2x: "cast-wide@2x.webp",
   near: "near.webp", tallL: "trees-tall-left.webp", tallR: "trees-tall-right.webp", flowers: "near-flowers.webp",
 }
 const PHONE_ART = {
   sky: "p-sky.webp", far: "p-far-cut.webp", soft: "p-far-cut-blur.webp", clouds: "p-clouds.webp",
-  fest: "p-festival4c.webp", lights: "p-glow-lights4.webp", figures: "p-crowd4-figures.webp", flowers: "near-flowers.webp",
+  fest: "festival-phone.webp", lights: "glow-phone.webp", figures: "cast-phone.webp", flowers: "near-flowers.webp",
 }
 const FAR_LAG = 0.55
 const WALK_ZOOM = 0.18
@@ -42,34 +42,42 @@ const PAINT_ASPECT = 1584 / 672
 const BEAT = 60000 / 124
 const CONCERT_COLS = [[98, 168, 172], [206, 255, 29], [255, 79, 216], [138, 92, 255], [255, 238, 205]]
 
-// Where the lights, fires, hoops, wheel and crowd sit in each concert painting, as fractions of its width (u) and height (v).
-// figures: the dancers who hop, each cut out whole (scripts/crowd_figures.py): [u, v, w, h] in the painting, then [x, w, h] in
-// their sheet, all as fractions; hop: how high, as a fraction of the painting's height. rig: the stage lighting, with size and
-// beam scaled to each painting's stage.
+// Where the lights, fires, hoops, wheel and crowd sit in each festival picture, as fractions of its width (u) and height (v).
+// Measured on the pictures built from the owner's solo pieces (docs/design/bloomscroll/solo-assets-2026-10-25/scripts/
+// build_festival.py, which writes these numbers). cast: the DJ's and the booth front's boxes [u, v, w, h]; each person
+// [sprite, row (0 back, 1 front), x, feet, height, seed]; sheet: each sprite's [x, w, h] in the cast sheet, as fractions.
+// rig: the stage lighting, with size and beam scaled to each picture's stage.
 const LIFE = {
+  // Phone: the same pieces recomposed on the 4:5 picture; the Ferris wheel stands left of the tower, behind the tents
   phone: {
-    bulbs: [[0.91,0.5197],[0.9214,0.5862],[0.8292,0.5878],[0.9383,0.5855],[0.8187,0.5894],[0.8436,0.5895],[0.8467,0.5886],[0.9022,0.5897],[0.7444,0.5912],[0.8833,0.5903],[0.7796,0.592],[0.8615,0.5918],[0.8822,0.5929],[0.7601,0.5962],[0.7956,0.5929],[0.7768,0.603],[0.7963,0.6087],[0.9107,0.6116],[0.817,0.6137],[0.9975,0.6111],[0.9277,0.6151],[0.9641,0.6138],[0.9831,0.6141],[0.8381,0.6171],[0.9456,0.6155],[0.9972,0.6153],[0.9642,0.6172],[0.9778,0.6192],[0.8558,0.6184],[0.8778,0.6201],[0.9462,0.6188],[0.8573,0.6217],[0.8799,0.6233],[0.9516,0.6225],[0.9066,0.6237],[0.9299,0.6239],[0.8661,0.6495],[0.7759,0.6583],[0.7901,0.6625],[0.803,0.6643],[0.816,0.6654],[0.7046,0.6677],[0.9172,0.6679],[0.6911,0.6701],[0.6937,0.6741],[0.7078,0.6735],[0.7056,0.6822],[0.6846,0.6862],[0.7022,0.693],[0.6956,0.7041],[0.6816,0.7049],[0.865,0.7117],[0.9375,0.7163],[0.8549,0.7206],[0.9031,0.7231],[0.9862,0.7213],[0.8551,0.728],[0.9925,0.7309],[0.9267,0.7292],[0.907,0.7346],[0.9272,0.7328],[0.8593,0.7366],[0.9317,0.7399],[0.9857,0.7461],[0.935,0.7466]],
-    fires: [[0.808, 0.805, 0.05, "bonfire"], [0.928, 0.355, 0.018, "torch"]],
-    wheel: [0.816, 0.493, 0.094],
-    hoops: [[0.879, 0.727, 0.019], [0.959, 0.727, 0.019]],
-    figures: [[0.06778,0.64996,0.06222,0.08147,0.0,0.1647,0.73389],[0.11444,0.65891,0.05,0.10385,0.17059,0.13235,0.93549],[0.16111,0.65891,0.05111,0.10922,0.30882,0.13529,0.98386],[0.22,0.66249,0.04444,0.10833,0.45,0.11764,0.97584],[0.24444,0.66697,0.05444,0.11101,0.57353,0.14411,0.99999],[0.28333,0.66697,0.04889,0.07878,0.72353,0.12941,0.70966],[0.33444,0.67413,0.05111,0.09758,0.85882,0.13529,0.87901]],
-    hop: 0.007,
+    bulbs: [[0.9501,0.5891],[0.9165,0.591],[0.935,0.5898],[1.2199,0.5926],[0.82,0.5932],[0.8981,0.5942],[0.7411,0.5965],[0.8366,0.5949],[0.8746,0.596],[0.8884,0.5944],[0.8089,0.5957],[0.8545,0.5963],[0.7795,0.5978],[0.7959,0.5969],[0.7664,0.5975],[0.7578,0.6022],[0.7765,0.6085],[1.0672,0.6112],[1.0853,0.6106],[0.7976,0.6147],[1.039,0.6189],[0.9239,0.6187],[1.1001,0.6187],[0.821,0.6201],[1.0191,0.6227],[1.1643,0.618],[0.9451,0.6206],[0.9819,0.6188],[0.8438,0.624],[0.9636,0.6212],[1.1182,0.6236],[1.1535,0.6232],[0.9961,0.6261],[0.8687,0.6275],[0.9836,0.6236],[1.1366,0.6255],[0.9688,0.6291],[0.8946,0.6291],[0.9196,0.6299],[0.9448,0.63],[0.5907,0.6367],[0.7753,0.6617],[0.7911,0.6668],[0.8057,0.6699],[0.8199,0.672],[0.8424,0.6762],[0.9139,0.6767],[0.8851,0.6779],[0.8642,0.6788],[0.9342,0.6783],[0.8748,0.6793]],
+    fires: [[0.8078,0.8048,0.05,"bonfire"], [0.9353,0.3952,0.018,"torch"]],
+    wheel: [0.8,0.5,0.094],
+    hoops: [[0.8757,0.731,0.0383],[0.979,0.7338,0.0462]],
+    cast: {
+      dj: [0.1637,0.6317,0.0961,0.0537], booth: [0.1502,0.6818,0.123,0.0581],
+      people: [[2,0,0.101,0.7836,0.0962,0.3],[3,0,0.143,0.7837,0.0963,2.0],[4,0,0.185,0.7836,0.0963,3.7],[5,0,0.227,0.7837,0.0963,5.4],[6,0,0.269,0.7837,0.0963,7.1],[7,0,0.311,0.7837,0.0963,8.8],[8,0,0.353,0.7837,0.0963,10.5],[9,1,0.08,0.8044,0.1087,1.1],[10,1,0.129,0.8065,0.1149,3.4],[11,1,0.178,0.8044,0.1118,5.7],[12,1,0.227,0.8066,0.1088,8.0],[13,1,0.276,0.8044,0.115,10.3],[14,1,0.325,0.8066,0.1119,12.6],[15,1,0.374,0.8045,0.1087,14.9]],
+      sheet: [[0.0,0.09075,0.46452],[0.0925,0.11606,0.50323],[0.2103,0.05846,0.83871],[0.27051,0.04101,0.83871],[0.31326,0.04625,0.83871],[0.36126,0.05148,0.83871],[0.41449,0.05846,0.83871],[0.47469,0.04538,0.83871],[0.52182,0.0541,0.83871],[0.57766,0.06283,0.94194],[0.64223,0.05061,1.0],[0.69459,0.05672,0.97419],[0.75305,0.04188,0.94194],[0.79668,0.06457,1.0],[0.863,0.06457,0.97419],[0.92932,0.06894,0.94194]],
+    },
     rig: {
-      heads: [[0.138, 0.49], [0.182, 0.488], [0.226, 0.488], [0.284, 0.49]], wall: [0.045, 0.47, 0.335, 0.6], floor: 0.606, panel: [0.155, 0.271, 0.573, 0.605],
-      clip: [0.0, 0.44, 0.52, 0.72], size: 1, beam: 0.2,
+      heads: [[0.0858,0.6124],[0.1388,0.6064],[0.1814,0.5953],[0.1885,0.6168],[0.2239,0.6185],[0.2577,0.6216],[0.2758,0.5991],[0.3112,0.6116]], wall: [0.0522,0.5919,0.3456,0.6847], floor: 0.7004, panel: [0.1545,0.2689,0.6818,0.7153],
+      clip: [0.0,0.523,0.422,0.84], size: 1, beam: 0.2,
     },
   },
-  // Measured from the wide concert painting (docs/design/bloomscroll/wide-concert-input-2026-10-25); the wheel stands where the original wide festival painted it
+  // Desktop and tablet: the Ferris wheel stands right of the tower, behind the big tent (owner decision, 2026-10-25)
   wide: {
-    bulbs: [[0.9943,0.425],[0.9758,0.4365],[0.6994,0.4445],[0.9718,0.4375],[0.9719,0.4476],[0.9765,0.4503],[0.7114,0.4557],[0.9593,0.4519],[0.9548,0.454],[0.9545,0.4593],[0.9418,0.4611],[0.9602,0.4605],[0.7235,0.4676],[0.94,0.4627],[0.9442,0.464],[0.9555,0.4634],[0.9587,0.4637],[0.8274,0.467],[0.8671,0.4666],[0.8745,0.4652],[0.939,0.467],[0.9572,0.4658],[0.7894,0.4707],[0.8338,0.4688],[0.8589,0.4692],[0.8122,0.4717],[0.8171,0.471],[0.8222,0.4699],[0.842,0.471],[0.8501,0.4713],[0.7389,0.4742],[0.8051,0.4722],[0.9248,0.4787],[0.7372,0.4746],[0.7963,0.4767],[0.9398,0.4746],[0.9448,0.4746],[0.7415,0.477],[0.9432,0.4764],[0.739,0.4834],[0.804,0.484],[0.9053,0.4838],[0.7544,0.4907],[0.8124,0.4896],[0.9033,0.4898],[0.7682,0.4906],[0.7698,0.4906],[0.7718,0.4923],[0.8858,0.4979],[0.7683,0.4999],[0.8942,0.4947],[0.904,0.4929],[0.7827,0.4974],[0.8692,0.4965],[0.9042,0.4959],[0.9082,0.4968],[0.783,0.4982],[0.7856,0.5057],[0.8668,0.5],[0.906,0.4976],[0.7715,0.5012],[0.7998,0.5],[0.82,0.5012],[0.853,0.5076],[0.8933,0.5012],[0.781,0.5047],[0.7966,0.5065],[0.8228,0.5041],[0.8382,0.5078],[0.861,0.5077],[0.8691,0.5088],[0.8235,0.5094],[0.7995,0.5142],[0.8182,0.5147],[0.9768,0.5263],[0.9868,0.5328],[0.9968,0.5334],[0.999,0.5336],[0.7668,0.5601],[0.7224,0.584],[0.8765,0.5913],[0.695,0.5884],[0.733,0.5907],[0.7428,0.5938],[0.7515,0.5966],[0.8152,0.5996],[0.9915,0.6176],[0.9129,0.6234],[0.9955,0.6297],[0.9977,0.6443],[0.707,0.6598],[0.9919,0.6763],[0.6952,0.6633],[0.6824,0.6811],[0.6851,0.6865],[0.6874,0.6927]],
-    fires: [[0.8315, 0.795, 0.024, "bonfire"], [0.937, 0.258, 0.014, "torch"]],
-    wheel: [0.8264, 0.475, 0.0455],
-    hoops: [[0.8795, 0.621, 0.011], [0.9175, 0.643, 0.011], [0.948, 0.655, 0.011], [0.9945, 0.646, 0.011]],
-    figures: [[0.12744,0.63751,0.02881,0.20311,0.0,0.1,0.96714],[0.14844,0.65075,0.01685,0.18642,0.10339,0.05849,0.88767],[0.16089,0.63521,0.03394,0.21001,0.16525,0.11781,0.99999],[0.19678,0.70598,0.02661,0.1473,0.28644,0.09237,0.70139],[0.20093,0.6542,0.04688,0.18757,0.3822,0.16273,0.89314],[0.2439,0.65075,0.01343,0.17204,0.54831,0.04662,0.81919],[0.25195,0.67779,0.01953,0.18527,0.59831,0.06779,0.88219],[0.26343,0.63982,0.02344,0.19333,0.66949,0.08136,0.92057],[0.28296,0.6611,0.02295,0.20196,0.75424,0.07966,0.96166],[0.29834,0.64845,0.02148,0.17089,0.83729,0.07456,0.81372],[0.31299,0.6565,0.02344,0.17549,0.91525,0.08136,0.83562]],
-    hop: 0.0081,
+    bulbs: [[0.7696,0.5454],[0.752,0.5483],[0.7617,0.5464],[0.9106,0.5507],[0.7016,0.5517],[0.7424,0.5532],[0.6604,0.5567],[0.7103,0.5542],[0.7301,0.5559],[0.7373,0.5535],[0.6958,0.5555],[0.7196,0.5564],[0.6804,0.5587],[0.689,0.5572],[0.6736,0.5582],[0.6691,0.5654],[0.6788,0.575],[0.8307,0.5792],[0.8402,0.5782],[0.6899,0.5845],[0.816,0.5909],[0.7559,0.5906],[0.848,0.5905],[0.7021,0.5928],[0.8056,0.5967],[0.8815,0.5895],[0.7669,0.5935],[0.7862,0.5907],[0.714,0.5988],[0.7766,0.5945],[0.8574,0.5981],[0.8759,0.5975],[0.7936,0.602],[0.7271,0.604],[0.7871,0.5981],[0.867,0.6011],[0.7793,0.6065],[0.7406,0.6065],[0.7536,0.6077],[0.7668,0.6079],[0.5817,0.6181],[0.6782,0.6562],[0.6865,0.6641],[0.6941,0.6688],[0.7015,0.672],[0.7133,0.6785],[0.7507,0.6793],[0.7356,0.681],[0.7247,0.6824],[0.7612,0.6817],[0.7302,0.6832]],
+    fires: [[0.8315,0.7951,0.024,"bonfire"], [0.7618,0.2492,0.014,"torch"]],
+    wheel: [0.885,0.45,0.045],
+    hoops: [[0.883,0.6314,0.029],[0.9613,0.6376,0.035]],
+    cast: {
+      dj: [0.1442,0.451,0.0773,0.1264], booth: [0.1333,0.5726,0.099,0.1367],
+      people: [[2,0,0.1522,0.7974,0.1716,0.3],[3,0,0.1786,0.7974,0.1716,2.0],[4,0,0.2051,0.7975,0.1717,3.7],[5,0,0.2315,0.7974,0.1716,5.4],[6,0,0.2579,0.7974,0.1715,7.1],[7,0,0.2844,0.7975,0.1717,8.8],[8,0,0.3108,0.7974,0.1715,10.5],[9,1,0.139,0.8445,0.1951,1.1],[10,1,0.1698,0.8484,0.2069,3.4],[11,1,0.2007,0.8445,0.201,5.7],[12,1,0.2315,0.8484,0.1952,8.0],[13,1,0.2623,0.8444,0.2068,10.3],[14,1,0.2932,0.8484,0.201,12.6],[15,1,0.324,0.8444,0.195,14.9]],
+      sheet: [[0.0,0.11943,0.61003],[0.12018,0.15268,0.66017],[0.27362,0.0548,0.83008],[0.32918,0.03704,0.83008],[0.36697,0.04195,0.83008],[0.40967,0.048,0.83008],[0.45843,0.0548,0.83008],[0.51398,0.04119,0.83008],[0.55593,0.04989,0.83008],[0.60658,0.06009,0.9415],[0.66742,0.04724,1.0],[0.71542,0.05367,0.97214],[0.76984,0.03741,0.9415],[0.80801,0.0616,1.0],[0.87037,0.0616,0.97214],[0.93273,0.06652,0.9415]],
+    },
     rig: {
-      heads: [[0.1275, 0.381], [0.1645, 0.355], [0.2475, 0.363], [0.2785, 0.394]], wall: [0.0525, 0.341, 0.289, 0.651], floor: 0.651, panel: [0.1425, 0.237, 0.578, 0.642],
-      clip: [0.0, 0.3, 0.46, 0.92], size: 0.81, beam: 0.45,
+      heads: [[0.0815,0.4094],[0.1241,0.3952],[0.1584,0.3693],[0.1641,0.4197],[0.1926,0.4237],[0.2198,0.431],[0.2344,0.3782],[0.2628,0.4076]], wall: [0.0545,0.3611,0.2905,0.5793], floor: 0.6165, panel: [0.1368,0.2288,0.5726,0.6514],
+      clip: [0.0,0.225,0.36,0.881], size: 0.81, beam: 0.45,
     },
   },
 }
@@ -344,27 +352,52 @@ export default function BloomscrollScene({ children }) {
       })
     }
 
-    // Concert: one beat drives the crowd and the stage lights
+    // Concert: one beat drives the DJ, the crowd and the stage lights
     const crowdCanvas = part("crowd"), crowdCtx = crowdCanvas.getContext("2d")
     function drawCrowd(t) {
       const bw = backdrop.clientWidth, bh = backdrop.clientHeight
-      // Up to 1.5x resolution: the painted crowd is soft, so sharper buys nothing
-      const dpr = Math.min(devicePixelRatio || 1, 1.5)
+      const dpr = Math.min(devicePixelRatio || 1, 2)
       const cw = Math.round(bw * dpr), ch = Math.round(bh * dpr)
       if (crowdCanvas.width !== cw || crowdCanvas.height !== ch) { crowdCanvas.width = cw; crowdCanvas.height = ch }
       const c = crowdCtx
       c.clearRect(0, 0, cw, ch)
       if (!figureSheet.complete || !figureSheet.naturalWidth) return
-      const L = life()
+      const C = life().cast
       const iw = figureSheet.naturalWidth, ih = figureSheet.naturalHeight
       const beat = reduced.matches ? -1 : t / BEAT
-      // Each dancer hops whole, never stretched: a quick hop on the beat, rolling across the crowd from left to right
-      L.figures.forEach(([u, v, w, h, sx, sw, sh], i) => {
-        const right = u > 0.5
-        const x = (u + (right ? lifeShift.rx : lifeShift.lx)) * cw, y = (v + (right ? lifeShift.ry : lifeShift.ly)) * ch
-        const at = beat < 0 ? 1 : (beat - u * 2.2 + (i % 3) * 0.13) % 1
-        const lift = at < 0.42 ? Math.sin((at / 0.42) * Math.PI) * (0.75 + 0.25 * ((i * 7) % 4) / 3) : 0
-        c.drawImage(figureSheet, sx * iw, 0, sw * iw, sh * ih, x, y - lift * L.hop * ch, w * cw, h * ch)
+      // The stage group is the festival's left half, so everything here takes the left half's shift
+      const X = (u) => (u + lifeShift.lx) * cw, Y = (v) => (v + lifeShift.ly) * ch
+      // A sprite from the sheet, standing on (x, foot) at height h, leaning by tilt (radians) about its feet
+      const sprite = (k, x, foot, h, tilt) => {
+        const [sx, sw, sh] = C.sheet[k], w = (h * sw * iw) / (sh * ih)
+        c.save()
+        c.translate(x, foot)
+        if (tilt) c.rotate(tilt)
+        c.drawImage(figureSheet, sx * iw, 0, sw * iw, sh * ih, -w / 2, -h, w, h)
+        c.restore()
+      }
+      // The DJ nods on the beat and sways slowly, behind his decks; the booth's front is drawn over him
+      const [du, dv, dw, dh] = C.dj
+      const nod = beat < 0 ? 0 : Math.pow(Math.abs(Math.sin(beat * Math.PI)), 3) * dh * 0.035
+      const sway = beat < 0 ? 0 : Math.sin((beat / 4) * Math.PI * 2) * 0.025
+      sprite(0, X(du + dw / 2), Y(dv + dh) + nod, dh * ch, sway)
+      const [bu, bv, bwid, bht] = C.booth
+      sprite(1, X(bu + bwid / 2), Y(bv + bht), bht * ch, 0)
+      // The back rows sway from their feet and bob, each on its own slow timing, a little darker so they sit behind
+      c.filter = "brightness(0.82)"
+      C.people.forEach(([k, row, x, foot, h, seed]) => {
+        if (row) return
+        const lean = beat < 0 ? 0 : Math.sin((beat / 2 + seed) * Math.PI) * 0.045
+        const bob = beat < 0 ? 0 : Math.max(0, Math.sin((beat + seed * 0.5) * Math.PI * 2)) * h * 0.015
+        sprite(k, X(x), Y(foot - bob), h * ch, lean)
+      })
+      c.filter = "none"
+      // The front row hops on the beat: some every beat, some every other, each with its own phase and height
+      C.people.forEach(([k, row, x, foot, h, seed]) => {
+        if (!row) return
+        const every = seed % 2 < 1 ? 1 : 2, at = beat < 0 ? 1 : ((beat + seed * 0.37) / every) % 1
+        const lift = at < 0.38 ? Math.sin((at / 0.38) * Math.PI) * h * (0.05 + 0.03 * ((seed * 3) % 1)) : 0
+        sprite(k, X(x), Y(foot - lift), h * ch, 0)
       })
     }
 

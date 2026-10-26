@@ -22,12 +22,12 @@ All files are in `public/images/bloomscroll/`.
 | `far-cut.webp` | Far painting: trees, hills, path (sky cut out) | desktop, tablet | 1584×672 | 33:14 | transparent sky | **Yes (01)** |
 | `p-far-cut.webp` | Far painting | phone | 900×1117 | 0.806 | transparent sky | **Yes (02)** |
 | `far-cut-blur.webp` / `p-far-cut-blur.webp` | Soft-focus copy of the far painting | wide / phone | as above | | transparent | No: rebuilt from 01/02 |
-| `festival-concert.webp` / `festival-concert@2x.webp` | Wide concert festival, hopping figures lifted out (filled in behind them) | desktop, tablet | 2000×849 / 4096×1738 | 33:14 | transparent | **Done**: cut from Terry's 4096 upscale; the 1x is its downscale |
-| `crowd-concert-figures.webp` / `@2x` | The 11 wide dancers who hop, packed side by side | desktop, tablet | 576×178 / 1180×365 | sheet | transparent | No: rebuilt from 03 |
-| `glow-lights-concert.webp` | Soft light glow (screen blend) | desktop, tablet | 1000×424 | 33:14 | opaque on black | No: rebuilt from 03 |
-| `p-festival4c.webp` | Phone concert festival, hopping figures lifted out (filled in behind them) | phone | 900×1117 | 0.806 | transparent | **Yes (04)**, then re-cut |
-| `p-crowd4-figures.webp` | The 7 phone dancers who hop, packed side by side | phone | 340×124 | sheet | transparent | No: rebuilt from 04 |
-| `p-glow-lights4.webp` | Phone light glow | phone | 450×558 | 0.806 | opaque on black | No: rebuilt from 04 |
+| `festival-wide.webp` / `festival-wide@2x.webp` | Wide festival built from the owner's solo pieces: stage (no DJ), tents and tower, bonfire group | desktop, tablet | 2000×849 / 4096×1738 | 33:14 | transparent | No: rebuilt by `build_festival.py` |
+| `glow-wide.webp` | Soft light glow (screen blend) | desktop, tablet | 1000×424 | 33:14 | opaque on black | No: rebuilt by `build_festival.py` |
+| `cast-wide.webp` / `cast-wide@2x.webp` | The DJ, the booth front drawn over him and the 14 crowd people (silhouette pass, neon glow), side by side | desktop, tablet | people 170 / 340 px tall | sheet | transparent | No: rebuilt by `build_festival.py` |
+| `festival-phone.webp` | Phone festival, the same pieces recomposed on the 4:5 picture | phone | 900×1117 | 0.806 | transparent | No: rebuilt by `build_festival.py` |
+| `glow-phone.webp` | Phone light glow | phone | 450×558 | 0.806 | opaque on black | No: rebuilt by `build_festival.py` |
+| `cast-phone.webp` | The DJ, the booth front and the crowd at phone size | phone | people 140 px tall | sheet | transparent | No: rebuilt by `build_festival.py` |
 | `near.webp` | Near frame: trees, ferns, roses | desktop | 2112×896 | 33:14 | transparent centre | **Yes (05)** |
 | `near-flowers.webp` | Rose bushes | phone, tablet | 2112×896 | 33:14 | transparent | **Yes (06)** |
 | `trees-tall-left.webp` / `trees-tall-right.webp` | Tall edge trees | tablet | 464×3333 | | transparent | No: already sharp at tablet size |
@@ -73,11 +73,8 @@ The 4× sizes to expect:
    - `04`: the phone concert cut in `approved-v2-2026-10-25/scripts/`. The blur radii and dilation sizes in that cut must be scaled to the new resolution.
    - Check every cut on bright red and on the real sky for halos.
 3. Rebuild the derived files (soft-focus far, crowd figure sheets, light glows) from the sharper masters, with blur radii scaled by the same factor.
-   - Wide: `wide_concert_cut.py . <out> [source]`, then `crowd_figures.py wide <out> <work>`. It splits the figures out of the cut and rewrites the festival and glow. Both scripts scale every pixel measure to the source width.
-   - A sharper source reuses the split checked at 2000 px: run the 2000 source first (it saves `crowd-concert-labels.png`), then the sharp one with `--labels <that file>`. A fresh split at 4096 leaves the thicker outlines behind as pale rims.
-   - Make the 1x files by downscaling the sharp outputs (Lanczos), so one set of figure positions fits both.
-   - Phone: restore the committed `p-festival4c`, `p-crowd4` and `p-glow-lights4` first (`git checkout`), then `crowd_figures.py phone`.
-   - Copy the new figure positions from `work/*-figures.json` into `LIFE.*.figures`, as `[x, y, w, h, sx, w·W/sheetW, h·H/sheetH]`.
+   - The festival and the crowd: `docs/design/bloomscroll/solo-assets-2026-10-25/scripts/build_festival.py <solo dir> <crowd cast dir> public/images/bloomscroll <work dir>`. It keys the owner's solo pieces and crowd people, pulls their colours towards the old painting (kept in `work/ref-*`), composes the festival pictures, the glows and the cast sheets, and writes the scene data (cast, bulbs, torch, hoops, stage rig) to `work/life.json` for `LIFE` in the component. Check `work/check-*.png` (every measured point drawn on the picture) before copying the numbers.
+   - The old `wide_concert_cut.py` and `crowd_figures.py` made the hand-painted festival, which the solo pieces replaced; they stay as records.
 4. Export served sizes as WebP: 1× and 2× for wide art (for example `far-cut.webp` at 1584 wide and `far-cut@2x.webp` at 3168), and 1× and 2× for phone art.
    - The component picks 2× when the scene's width × the screen's pixel density is over 2200 (for example 1440 at 2×, or 1706 at 1.5×). Tablets and 1× desktops load the 1x. Glows stay 1x: they are blurs.
    - Filenames stay stable, so no positions change.
