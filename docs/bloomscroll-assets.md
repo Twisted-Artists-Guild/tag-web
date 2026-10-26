@@ -26,14 +26,14 @@ All files are in `public/images/bloomscroll/`.
 | `crowd-concert-figures.webp` / `@2x` | The 13 wide dancers who hop, packed side by side | desktop, tablet | 668×178 / 1369×365 | sheet | transparent | No: rebuilt from 03 |
 | `glow-lights-concert.webp` | Soft light glow (screen blend) | desktop, tablet | 1000×424 | 33:14 | opaque on black | No: rebuilt from 03 |
 | `p-festival4c.webp` | Phone concert festival, hopping figures lifted out (filled in behind them) | phone | 900×1117 | 0.806 | transparent | **Yes (04)**, then re-cut |
-| `p-crowd4-figures.webp` | The 8 phone dancers who hop, packed side by side | phone | 405×124 | sheet | transparent | No: rebuilt from 04 |
+| `p-crowd4-figures.webp` | The 7 phone dancers who hop, packed side by side | phone | 340×124 | sheet | transparent | No: rebuilt from 04 |
 | `p-glow-lights4.webp` | Phone light glow | phone | 450×558 | 0.806 | opaque on black | No: rebuilt from 04 |
 | `near.webp` | Near frame: trees, ferns, roses | desktop | 2112×896 | 33:14 | transparent centre | **Yes (05)** |
 | `near-flowers.webp` | Rose bushes | phone, tablet | 2112×896 | 33:14 | transparent | **Yes (06)** |
 | `trees-tall-left.webp` / `trees-tall-right.webp` | Tall edge trees | tablet | 464×3333 | | transparent | No: already sharp at tablet size |
 | `moon.webp` | Moon | all | 320×320 | 1:1 | transparent | No: shown at 150 px at most |
 
-The grain is generated in code, and the wheel, fires, beams, LED strip, fire-hoop sparks, fireflies and embers are all drawn by code. None of them need images.
+The grain is generated in code, and the wheel, fires, beams, fire-hoop sparks, fireflies and embers are all drawn by code. None of them need images.
 
 ## Upscaling: what Terry does
 

@@ -20,7 +20,7 @@ import { BLOOMSCROLL_LOGO } from "@/components/Header/nav-links"
 // so a sharper file of the same shape replaces one with no other change.
 const IMG = "/images/bloomscroll/"
 // Bump when any scene image is replaced, so no browser mixes a cached old picture with new code
-const ART_V = "v=4"
+const ART_V = "v=7"
 const MOON = "moon.webp"
 const WIDE_ART = {
   sky: "sky.webp", far: "far-cut.webp", soft: "far-cut-blur.webp", clouds: "clouds.webp",
@@ -51,11 +51,11 @@ const LIFE = {
     fires: [[0.808, 0.805, 0.05, "bonfire"], [0.928, 0.355, 0.018, "torch"]],
     wheel: [0.816, 0.493, 0.094],
     hoops: [[0.879, 0.727, 0.019], [0.959, 0.727, 0.019]],
-    figures: [[0.06778,0.64996,0.06222,0.08147,0.0,0.13827,0.73389],[0.11444,0.65891,0.05,0.10385,0.14321,0.11111,0.93549],[0.16111,0.65891,0.05111,0.10922,0.25926,0.11358,0.98386],[0.22,0.66249,0.04444,0.10833,0.37778,0.09876,0.97584],[0.24444,0.66697,0.05444,0.11101,0.48148,0.12098,0.99999],[0.28333,0.66697,0.04889,0.09042,0.60741,0.10864,0.81451],[0.33444,0.67413,0.05111,0.09758,0.72099,0.11358,0.87901],[0.38333,0.65443,0.07,0.09848,0.83951,0.15556,0.88711]],
+    figures: [[0.06778,0.64996,0.06222,0.08147,0.0,0.1647,0.73389],[0.11444,0.65891,0.05,0.10385,0.17059,0.13235,0.93549],[0.16111,0.65891,0.05111,0.10922,0.30882,0.13529,0.98386],[0.22,0.66249,0.04444,0.10833,0.45,0.11764,0.97584],[0.24444,0.66697,0.05444,0.11101,0.57353,0.14411,0.99999],[0.28333,0.66697,0.04889,0.07878,0.72353,0.12941,0.70966],[0.33444,0.67413,0.05111,0.09758,0.85882,0.13529,0.87901]],
     hop: 0.007,
     rig: {
       heads: [[0.138, 0.49], [0.182, 0.488], [0.226, 0.488], [0.284, 0.49]], wall: [0.045, 0.47, 0.335, 0.6], floor: 0.606, panel: [0.155, 0.271, 0.573, 0.605],
-      clip: [0.0, 0.44, 0.52, 0.72], strip: [0.045, 0.0152], size: 1, beam: 0.2,
+      clip: [0.0, 0.44, 0.52, 0.72], size: 1, beam: 0.2,
     },
   },
   // Measured from the wide concert painting (docs/design/bloomscroll/wide-concert-input-2026-10-25); the wheel stands where the original wide festival painted it
@@ -68,7 +68,7 @@ const LIFE = {
     hop: 0.0081,
     rig: {
       heads: [[0.1275, 0.381], [0.1645, 0.355], [0.2475, 0.363], [0.2785, 0.394]], wall: [0.0525, 0.341, 0.289, 0.651], floor: 0.651, panel: [0.1425, 0.237, 0.578, 0.642],
-      clip: [0.0, 0.3, 0.46, 0.92], strip: [0.055, 0.0123], size: 0.81, beam: 0.45,
+      clip: [0.0, 0.3, 0.46, 0.92], size: 0.81, beam: 0.45,
     },
   },
 }
@@ -413,15 +413,7 @@ export default function BloomscrollScene({ children }) {
         s.closePath(); s.fill()
         sprite(x, y, cw * 0.035 * z, 0.9)
       })
-      // LED strip along the front of the stage, chasing in colour
       s.globalAlpha = 1
-      for (let k = 0; k < 20; k++) {
-        const [x, y] = at(R.strip[0] + k * R.strip[1], R.floor)
-        const on = Math.pow(0.5 + 0.5 * Math.sin(t / 140 - k * 0.8), 3)
-        const [cr, cg, cb] = k % 2 ? [r, g, b] : [r2, g2, b2]
-        s.fillStyle = `rgba(${cr},${cg},${cb},${0.35 + 0.65 * on})`
-        s.fillRect(x - cw * 0.004 * z, y - ch * 0.0015 * z, cw * 0.008 * z, ch * 0.003 * z)
-      }
       // The painted LED triangle panel lights up in the concert colour on the beat: the painting's own panel, tinted and
       // added as light, so only its LED lines glow and never a box
       const [bx0, by0] = at(R.panel[0], R.panel[2]), [bx1, by1] = at(R.panel[1], R.panel[3])
