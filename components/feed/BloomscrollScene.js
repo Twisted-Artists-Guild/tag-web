@@ -20,7 +20,7 @@ import { BLOOMSCROLL_LOGO } from "@/components/Header/nav-links"
 // so a sharper file of the same shape replaces one with no other change.
 const IMG = "/images/bloomscroll/"
 // Bump when any scene image is replaced, so no browser mixes a cached old picture with new code
-const ART_V = "v=13"
+const ART_V = "v=16"
 const MOON = "moon.webp"
 const WIDE_ART = {
   sky: "sky.webp", far: "far-cut.webp", soft: "far-cut-blur.webp", clouds: "clouds.webp",
