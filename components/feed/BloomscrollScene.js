@@ -252,16 +252,18 @@ export default function BloomscrollScene({ children }) {
           s.height = nh + "px"
           s.transformOrigin = `${W / 2 - nl}px ${0.35 * H - nt}px`
         }
+        // The approved rose layer stays on top of the frame, each half opening with its side of the frame (owner, 2026-10-25)
         for (const [el, clip] of [[flowersL, "inset(0 50% 0 0)"], [flowersR, "inset(0 0 0 50%)"]]) {
           const s = el.style
-          s.display = "none"
+          setSrc(el.firstElementChild, WIDE_ART.flowers)
+          s.display = ""
           s.clipPath = clip
           s.maskImage = s.webkitMaskImage = ""
           s.left = nl + "px"
           s.top = nt + "px"
           s.width = nw + "px"
           s.height = nh + "px"
-          s.transformOrigin = `${W / 2 - nl}px ${nh}px`
+          s.transformOrigin = `${W / 2 - nl}px ${0.35 * H - nt}px`
         }
       } else {
         // Portrait tablets: tall trees on each edge and rose bushes in the corners; each strip has its picture's own shape,
@@ -742,6 +744,9 @@ export default function BloomscrollScene({ children }) {
       if (separate) {
         const fg = 1 + (still ? 0 : p * NEAR_SPEED * (W / H > 1.6 ? 0.8 : 0.6))
         flowersL.style.transform = flowersR.style.transform = `translate3d(${mx * -55}px, ${my * -18}px, 0) scale(${fg}) rotateX(${angle("flowers")}deg)`
+      } else {
+        flowersL.style.transform = nearLeft.style.transform
+        flowersR.style.transform = nearRight.style.transform
       }
       // The ending: once the walk-in is done the Bloomscroll mark rises into the middle of the scene and holds there,
       // gently glowing; reduced motion shows it already there
