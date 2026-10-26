@@ -194,9 +194,11 @@ export default function BloomscrollScene({ children }) {
       moonSunk = horizon + mw * 0.8
     }
 
-    // The scene holds while the visitor walks in, then while the Bloomscroll mark arrives: 1.6 scene heights of scroll on
-    // desktop and tablet (the first half is the approved walk-in), 1.2 on phones (owner decision, 2026-10-25)
-    const holdFor = (H) => Math.round(H * (phoneMode ? 1.2 : 1.6))
+    // The scene holds while the visitor walks in, then while the Bloomscroll mark arrives, with no scroll where nothing
+    // happens: the approved walk-in (0.8 scene heights on desktop and tablet, 0.6 on phones), then the mark over the rest
+    // (owner decision, 2026-10-25)
+    const walkFor = (H) => Math.round(H * (phoneMode ? 0.6 : 0.8))
+    const holdFor = (H) => Math.round(H * (phoneMode ? 0.9 : 1.15))
     function layout() {
       const W = scene.clientWidth, H = scene.clientHeight
       const wide = W / H > 1.6
@@ -639,16 +641,16 @@ export default function BloomscrollScene({ children }) {
       const dt = Math.min(64, now - last) / 1000
       last = now
       const W = scene.clientWidth, H = scene.clientHeight
-      const hold = holdFor(H)
+      const hold = holdFor(H), walk = walkFor(H)
       const target = Math.min(scrollPos(), hold + H)
       const still = reduced.matches
       sy = still ? target : target + (sy - target) * Math.exp(-dt / 0.085)
       px += (tx - px) * (1 - Math.exp(-dt / 0.35))
       py += (ty - py) * (1 - Math.exp(-dt / 0.35))
-      // q: how far through the whole hold (the mark lands at its end); p: how far the visitor has walked in, which
-      // takes the first half (on desktop the same scroll as the approved walk-in); y: how far the scene has scrolled after it
-      const q = Math.min(1, sy / hold)
-      const p = Math.min(1, sy / (hold * 0.5))
+      // p: how far the visitor has walked in; m: how far the Bloomscroll mark has come in, over the rest of the hold;
+      // y: how far the scene has scrolled after the hold
+      const p = Math.min(1, sy / walk)
+      const m = Math.min(1, Math.max(0, (sy - walk) / (hold - walk)))
       const y = still ? 0 : Math.max(0, sy - hold)
       const mx = still ? 0 : px, my = still ? 0 : py
       const since = still ? 99999 : now - unfoldStart
@@ -686,9 +688,9 @@ export default function BloomscrollScene({ children }) {
         const fg = 1 + (still ? 0 : p * NEAR_SPEED * (W / H > 1.6 ? 0.8 : 0.6))
         flowersL.style.transform = flowersR.style.transform = `translate3d(${mx * -55}px, ${my * -18}px, 0) scale(${fg}) rotateX(${angle("flowers")}deg)`
       }
-      // The ending: in the last step of the hold the Bloomscroll mark rises into the middle of the scene and holds there,
+      // The ending: once the walk-in is done the Bloomscroll mark rises into the middle of the scene and holds there,
       // gently glowing; reduced motion shows it already there
-      const land = still ? 1 : smoothstep(0.86, 1, q)
+      const land = still ? 1 : smoothstep(0, 1, m)
       const float = still ? 0 : Math.sin(now / 900) * H * 0.006 * land
       mark.style.opacity = land.toFixed(3)
       mark.style.transform = `translate3d(-50%, calc(-50% + ${(fy * 0.45 + (1 - land) * H * 0.12 + float).toFixed(1)}px), 0) scale(${(0.6 + 0.4 * land).toFixed(3)})`

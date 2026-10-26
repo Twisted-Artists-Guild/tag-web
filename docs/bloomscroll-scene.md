@@ -39,7 +39,7 @@ The Bloomscroll page (`/feed`) opens with an animated festival scene: the visito
 |---|---|
 | Phone layout | width < **768 px** |
 | Scene height | desktop and tablet `clamp(520px, 86svh, 900px)`; portrait 768 px and wider `100svh`; phone **4:5** box `min(125vw, 65svh)`, first post right below it |
-| Hold (sticky) | 1.6 × scene height on desktop and tablet, 1.2 × on phones (owner, 2026-10-25). The walk-in (`p`) takes the first half, on desktop the same scroll as the approved 0.8; the Bloomscroll mark rises in over the last 14 % of the hold (`q` 0.86–1), then the scene scrolls away to the posts. No dancer (owner decision, 2026-10-25: the scene ends clean on the mark). |
+| Hold (sticky) | 1.15 × scene height on desktop and tablet, 0.9 × on phones, with no scroll where nothing happens (owner, 2026-10-25). The walk-in (`p`) is the approved 0.8 scene heights (phones 0.6); the Bloomscroll mark (`m`) comes in over the rest of the hold, then the scene scrolls away to the posts. When the dancer clips exist the hold grows again to make room for his steps. No dancer (owner decision, 2026-10-25: the scene ends clean on the mark). |
 | Scroll easing | `sy += (target − sy) · (1 − e^(−dt/0.085))`; pointer `e^(−dt/0.35)` |
 | Book tilt (pointer) | `scale(1.03) rotateY(mx·2.2°) rotateX(−my·1.4°)` |
 | Sky plate | lag 0.7, zoom +3 % |
@@ -49,7 +49,7 @@ The Bloomscroll page (`/feed`) opens with an animated festival scene: the visito
 | Near frame (desktop) | full painting at least 1.06 W wide and never shorter than the scene, so the trees run off the top (owner, 2026-10-25), growth `1 + p·0.45·1.2` |
 | Near frame (tablet, portrait) | tall trees 0.18 W, growth `1 + p·0.45·0.3`; flowers 1.1 W, growth `1 + p·0.45·0.6` |
 | Flowers (phone) | wide painting 1.16 W, −8 % per side, growth `1 + p·0.45·0.6`; driven by `--approach` (0–1) |
-| Ending (owner decision, 2026-10-25: the title and subtitle are gone, and no dancer) | the navbar's Bloomscroll mark (`BLOOMSCROLL_LOGO`, flower and wordmark) rises into the middle of the scene in the last part of the hold: `smoothstep(0.86, 1, q)`, up from +12 % of the scene height, scale 0.6 → 1, then floats ±0.6 % and glows; centred at 50 %, 38 %, width `clamp(220px, 44%, 560px)`, lag 0.45 on scroll-away. Reduced motion: already there. A hidden h1 keeps the page heading. |
+| Ending (owner decision, 2026-10-25: the title and subtitle are gone, and no dancer) | the navbar's Bloomscroll mark (`BLOOMSCROLL_LOGO`, flower and wordmark) rises into the middle of the scene once the walk-in is done: `smoothstep(0, 1, m)`, up from +12 % of the scene height, scale 0.6 → 1, then floats ±0.6 % and glows; centred at 50 %, 38 %, width `clamp(220px, 44%, 560px)`, lag 0.45 on scroll-away. Reduced motion: already there. A hidden h1 keeps the page heading. |
 | Haze | opacity `0.7 + p·0.6` |
 | Unfold (spring `from·e^(−6.5t)·cos(8.5t)`) | back 0 ms / 34°, flaps 380 ms / 80°, flowers 540 ms / 86° |
 | Lights | on `smoothstep(1500, 1950 ms)`, fire `smoothstep(1700, 2150 ms)`, flicker `0.86 + 0.08 sin(t/90) + 0.06 sin(t/37 + 1.3)`, shimmer `0.94 + 0.06 sin(t/700)` |
