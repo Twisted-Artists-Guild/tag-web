@@ -20,7 +20,7 @@ import { BLOOMSCROLL_LOGO } from "@/components/Header/nav-links"
 // so a sharper file of the same shape replaces one with no other change.
 const IMG = "/images/bloomscroll/"
 // Bump when any scene image is replaced, so no browser mixes a cached old picture with new code
-const ART_V = "v=9"
+const ART_V = "v=10"
 const MOON = "moon.webp"
 const WIDE_ART = {
   sky: "sky.webp", far: "far-cut.webp", soft: "far-cut-blur.webp", clouds: "clouds.webp",
@@ -251,13 +251,14 @@ export default function BloomscrollScene({ children }) {
         // Portrait tablets: tall trees on each edge and rose bushes in the corners
         const ph = vis + 4, pw = W * 0.18
         nearHinge = W / 2
-        for (const [el, file, side, fade] of [[nearLeft, WIDE_ART.tallL, "left", "to left"], [nearRight, WIDE_ART.tallR, "right", "to right"]]) {
+        // Their inner edges fade out; the right one only a little, so its inner trunk stays solid (owner, 2026-10-25)
+        for (const [el, file, side, fade, soft] of [[nearLeft, WIDE_ART.tallL, "left", "to left", 30], [nearRight, WIDE_ART.tallR, "right", "to right", 6]]) {
           const s = el.style, img = el.firstElementChild
           setSrc(img, file)
           img.style.cssText = `position:absolute;top:0;${side}:0;height:100%;width:100%;`
           s.clipPath = "none"
           s.overflow = "hidden"
-          s.maskImage = s.webkitMaskImage = `linear-gradient(${fade}, transparent 0, #000 30%)`
+          s.maskImage = s.webkitMaskImage = `linear-gradient(${fade}, transparent 0, #000 ${soft}%)`
           s.left = (side === "left" ? 0 : W - pw) + "px"
           s.top = "0px"
           s.width = pw + "px"
