@@ -109,11 +109,10 @@
   .tag-bs__backdrop {
     z-index: 2;
     transform-origin: 50% 63%;
-    /* The painting's sides and top melt away so its edges never show as a cut line against the sky */
-    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 18%), linear-gradient(to right, transparent 0, #000 4%, #000 96%, transparent 100%);
-    -webkit-mask-composite: source-in;
-    mask-image: linear-gradient(to bottom, transparent 0, #000 18%), linear-gradient(to right, transparent 0, #000 4%, #000 96%, transparent 100%);
-    mask-composite: intersect;
+    /* The painting's sides melt away so its edges never show as a cut line against the sky; its top fade is built into
+       far-cut.webp itself (a second fade here doubled it, and the tree tops faded to nothing) */
+    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 4%, #000 96%, transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0, #000 4%, #000 96%, transparent 100%);
   }
 
   .tag-bs__fit > img {
