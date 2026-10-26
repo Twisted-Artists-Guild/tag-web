@@ -90,11 +90,11 @@
     margin-right: var(--tag-sb-w);
   }
 }
-/* Full-bleed pages (the landing). Unlayered so it beats the shell's p-4 utility. */
-.site-main:has(> .site-main-inner > .tag-landing) {
+/* Full-bleed pages (the landing, Bloomscroll). Unlayered so it beats the shell's p-4 utility. */
+.site-main:has(> .site-main-inner > :is(.tag-landing, .tag-bloomscroll)) {
   padding: 0;
 }
 
-.site-main-inner:has(> .tag-landing) {
+.site-main-inner:has(> :is(.tag-landing, .tag-bloomscroll)) {
   width: 100%;
 }
