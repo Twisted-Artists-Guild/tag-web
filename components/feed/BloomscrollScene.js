@@ -20,7 +20,7 @@ import { BLOOMSCROLL_LOGO } from "@/components/Header/nav-links"
 // so a sharper file of the same shape replaces one with no other change.
 const IMG = "/images/bloomscroll/"
 // Bump when any scene image is replaced, so no browser mixes a cached old picture with new code
-const ART_V = "v=10"
+const ART_V = "v=11"
 const MOON = "moon.webp"
 const WIDE_ART = {
   sky: "sky.webp", far: "far-cut.webp", soft: "far-cut-blur.webp", clouds: "clouds.webp",
@@ -37,6 +37,7 @@ const WALK_ZOOM = 0.18
 const NEAR_SPEED = 0.45
 const PHONE_MAX = 768
 const NEAR_FULL_ASPECT = 2112 / 896
+const TALL_ASPECT = 464 / 3333
 const PAINT_ASPECT = 1584 / 672
 const BEAT = 60000 / 124
 const CONCERT_COLS = [[98, 168, 172], [206, 255, 29], [255, 79, 216], [138, 92, 255], [255, 238, 205]]
@@ -248,10 +249,11 @@ export default function BloomscrollScene({ children }) {
           s.transformOrigin = `${W / 2 - nl}px ${nh}px`
         }
       } else {
-        // Portrait tablets: tall trees on each edge and rose bushes in the corners
-        const ph = vis + 4, pw = W * 0.18
+        // Portrait tablets: tall trees on each edge and rose bushes in the corners; each strip has its picture's own shape,
+        // so the bark is never squeezed (owner, 2026-10-25)
+        const ph = vis + 4, pw = ph * TALL_ASPECT
         nearHinge = W / 2
-        // Their inner edges fade out; the right one only a little, so its inner trunk stays solid (owner, 2026-10-25)
+        // Their inner edges fade out; the right one only a little (its sliced inner trunk is removed from the picture)
         for (const [el, file, side, fade, soft] of [[nearLeft, WIDE_ART.tallL, "left", "to left", 30], [nearRight, WIDE_ART.tallR, "right", "to right", 6]]) {
           const s = el.style, img = el.firstElementChild
           setSrc(img, file)
