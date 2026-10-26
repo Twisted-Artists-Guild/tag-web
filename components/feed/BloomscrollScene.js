@@ -219,8 +219,9 @@ export default function BloomscrollScene({ children }) {
       nearLeft.style.display = nearRight.style.display = ""
       festImgs.forEach((img) => { setSrc(img, sharp && img.dataset.fest === "fest" ? WIDE_ART.fest2x : WIDE_ART[img.dataset.fest]); img.style.position = img.style.left = img.style.top = img.style.width = img.style.height = "" })
       if (wide) {
-        // Desktop: the full near painting, a touch wider than the screen so no edge shows, seated on the bottom of the scene
-        const nw = W * 1.06, nh = nw / NEAR_FULL_ASPECT, nl = -0.03 * W, nt = vis + 4 - nh
+        // Desktop: the full near painting, a touch wider than the screen so no edge shows, seated on the bottom of the scene and
+        // never shorter than it, so the trees always run off the top (owner decision, 2026-10-25)
+        const nw = Math.max(W * 1.06, (vis + 4) * NEAR_FULL_ASPECT), nh = nw / NEAR_FULL_ASPECT, nl = (W - nw) / 2, nt = vis + 4 - nh
         nearHinge = W / 2 - nl
         for (const el of [nearLeft, nearRight]) {
           const s = el.style, img = el.firstElementChild

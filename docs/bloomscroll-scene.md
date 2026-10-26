@@ -13,7 +13,7 @@ The Bloomscroll page (`/feed`) opens with an animated festival scene: the visito
 - **Done:** the owner's wide concert painting (wheel and flames removed, stage recast as the concert) is in `festival-concert.webp`. The inputs, the cut script and the checks are in `../docs/design/bloomscroll/wide-concert-input-2026-10-25/`.
 - Every concert effect runs on every screen. The positions of the lights, hoops, flames and crowd are measured from each painting. The wheel stands where the original wide festival painted it.
 - **Tablet (portrait, 768 px and wider):** each festival group slides **6 %** of the painting's width toward the path. The approved value was 12 %, but the new left group is wider, so 6 % stops the groups overlapping (owner decision, 2026-10-25).
-- **No flat edges at the top (owner decision, 2026-10-25).** At some window shapes the far painting and the desktop near frame start below the top of the scene, and their tree tops ended in a straight line. They now fade into the sky: the far painting over its top 18 % (desktop and tablet), the desktop near frame over its top 16 %. Nothing moves or changes size.
+- **No flat edges at the top (owner decision, 2026-10-25).** At some window shapes the far painting and the desktop near frame start below the top of the scene, and their tree tops ended in a straight line. The far painting fades into the sky over its top 18 % (desktop and tablet). The desktop near frame is never shorter than the scene, so its trees always run off the top: on screens shaped like 1440×900 it is drawn larger than the screen width needs (owner decision after QA, 2026-10-25).
 
 ## How fidelity is guaranteed
 
@@ -46,7 +46,7 @@ The Bloomscroll page (`/feed`) opens with an animated festival scene: the visito
 | Backdrop (far painting, festival, glows, life layers) | lag **0.55**, walk-in zoom **0.18**, origin 50 % 63 % |
 | Soft-focus far painting | opacity `smoothstep(0.05, 0.6, p) × 0.8` |
 | Moon | rise `1 − smoothstep(700, 2300 ms)`, sink `max(rise, min(1, p × 1.5))`, glow `1 − smoothstep(0.35, 0.95, sink)`; rest `max(mw·0.9, min(h·0.45, h − mw·1.6))`, sunk `h + mw·0.8` (h = horizon or hill line); size `clamp(64px, 8vw, 150px)`, 46 px on portrait, 38 px on phone; x at 0.63 W (phone 0.56 W) + 0.05 W × sink |
-| Near frame (desktop) | full painting 1.06 W wide, growth `1 + p·0.45·1.2` |
+| Near frame (desktop) | full painting at least 1.06 W wide and never shorter than the scene, so the trees run off the top (owner, 2026-10-25), growth `1 + p·0.45·1.2` |
 | Near frame (tablet, portrait) | tall trees 0.18 W, growth `1 + p·0.45·0.3`; flowers 1.1 W, growth `1 + p·0.45·0.6` |
 | Flowers (phone) | wide painting 1.16 W, −8 % per side, growth `1 + p·0.45·0.6`; driven by `--approach` (0–1) |
 | Ending (owner decision, 2026-10-25: the title and subtitle are gone, and no dancer) | the navbar's Bloomscroll mark (`BLOOMSCROLL_LOGO`, flower and wordmark) rises into the middle of the scene in the last part of the hold: `smoothstep(0.86, 1, q)`, up from +12 % of the scene height, scale 0.6 → 1, then floats ±0.6 % and glows; centred at 50 %, 38 %, width `clamp(220px, 44%, 560px)`, lag 0.45 on scroll-away. Reduced motion: already there. A hidden h1 keeps the page heading. |

@@ -205,12 +205,6 @@
     mask-image: linear-gradient(to bottom, transparent 0, #000 8px);
   }
 
-  /* Desktop: the frame's trunks end flat at its top, so they fade into the night sky */
-  .tag-bs--wide .tag-bs__near img {
-    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 16%);
-    mask-image: linear-gradient(to bottom, transparent 0, #000 16%);
-  }
-
   .tag-bs__near--flowers {
     z-index: 6;
   }
