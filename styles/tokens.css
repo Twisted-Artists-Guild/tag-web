@@ -47,17 +47,34 @@
   --tag-shadow-rgb: 0, 0, 0; /* drop shadows */
   --tag-photo-shade: 18, 16, 22; /* rgb of the dark overlay on photos (both modes) */
   --tag-photo-text: #f5f5fc; /* text on photos: photos stay dark in both modes */
-  /* Bloomscroll scene: dusk in both modes */
-  --bs-night: #151318;
-  --bs-night-rgb: 21, 19, 24;
-  --bs-meadow: #0f1c1c;
-  --bs-teal-rgb: 98, 168, 172;
-  --bs-ghost-rgb: 245, 245, 252;
-  --bs-moon-rgb: 190, 236, 234;
-  --bs-moon-2-rgb: 160, 222, 220;
   --tag-photo-text-2: #c9c5d6;
   --tag-light-rgb: 255, 255, 255; /* white glass on photos */
   --tag-mark-start: #ffffff; /* first stop of the static TAG mark gradient */
+  --tag-bs-night: #151318;
+  --tag-bs-night-rgb: 21, 19, 24;
+  --tag-bs-meadow: #0f1c1c;
+  --tag-bs-teal-rgb: 98, 168, 172;
+  --tag-bs-ghost-rgb: 245, 245, 252;
+  --tag-bs-moon-rgb: 190, 236, 234;
+  --tag-bs-moon-2-rgb: 160, 222, 220;
+  --tag-bs-lime-rgb: 206, 255, 29;
+  --tag-bs-pink-rgb: 255, 79, 216;
+  --tag-bs-violet-rgb: 138, 92, 255;
+  --tag-bs-warm-white-rgb: 255, 238, 205;
+  --tag-bs-strobe-rgb: 255, 255, 255;
+  --tag-bs-firefly-rgb: 236, 255, 140;
+  --tag-bs-flame-core-rgb: 255, 246, 210;
+  --tag-bs-flame-mid-rgb: 255, 190, 80;
+  --tag-bs-flame-edge-rgb: 240, 110, 40;
+  --tag-bs-flame-tip-rgb: 200, 60, 30;
+  --tag-bs-glow-core-rgb: 255, 248, 220;
+  --tag-bs-glow-mid-rgb: 255, 214, 140;
+  --tag-bs-glow-edge-rgb: 255, 150, 60;
+  --tag-bs-glow-tip-rgb: 255, 120, 40;
+  --tag-bs-wheel-rgb: 44, 85, 82;
+  --tag-bs-wheel-hi-rgb: 79, 139, 134;
+  --tag-bs-wheel-dark-rgb: 23, 51, 50;
+  --tag-bs-window-rgb: 255, 214, 120;
 
   /* status */
   --tag-info: #8f72ff;

@@ -9,20 +9,17 @@
 
  Open source · low-profit · human-first*/
 
-/* Bloomscroll: the festival scene at the top of /feed. Dusk in both modes.
- * Values match the approved design (docs/bloomscroll-scene.md); inline styles from the scene script do the rest. */
 @layer components {
   .tag-bs-wrap {
     position: relative;
   }
 
-  /* The scene holds (sticky, just under the site header) while the visitor walks in, then scrolls away before the posts */
   .tag-bs {
     position: sticky;
     top: var(--tag-sb-top);
     height: clamp(520px, 86svh, 900px);
     overflow: hidden;
-    background: var(--bs-night);
+    background: var(--tag-bs-night);
     perspective: 1600px;
     perspective-origin: 50% 70%;
     color: var(--tag-photo-text);
@@ -78,16 +75,15 @@
     will-change: transform;
   }
 
-  /* One soft halo that fades to nothing at its own edge, so it never shows a box or ring */
   .tag-bs__moon::before {
     content: "";
     position: absolute;
     inset: -220%;
     opacity: var(--glow, 1);
     background: radial-gradient(circle closest-side,
-      rgba(var(--bs-moon-rgb), 0.55) 0%, rgba(var(--bs-moon-2-rgb), 0.5) 18%, rgba(var(--bs-teal-rgb), 0.34) 24%,
-      rgba(var(--bs-teal-rgb), 0.2) 33%, rgba(var(--bs-teal-rgb), 0.11) 44%, rgba(var(--bs-teal-rgb), 0.05) 58%,
-      rgba(var(--bs-teal-rgb), 0.018) 76%, rgba(var(--bs-teal-rgb), 0) 100%);
+      rgba(var(--tag-bs-moon-rgb), 0.55) 0%, rgba(var(--tag-bs-moon-2-rgb), 0.5) 18%, rgba(var(--tag-bs-teal-rgb), 0.34) 24%,
+      rgba(var(--tag-bs-teal-rgb), 0.2) 33%, rgba(var(--tag-bs-teal-rgb), 0.11) 44%, rgba(var(--tag-bs-teal-rgb), 0.05) 58%,
+      rgba(var(--tag-bs-teal-rgb), 0.018) 76%, rgba(var(--tag-bs-teal-rgb), 0) 100%);
   }
 
   .tag-bs__moon img {
@@ -109,17 +105,14 @@
   .tag-bs__backdrop {
     z-index: 2;
     transform-origin: 50% 63%;
-    /* The painting's sides melt away so its edges never show as a cut line against the sky; its top fade is built into
-       far-cut.webp itself (a second fade here doubled it, and the tree tops faded to nothing) */
-    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 4%, #000 96%, transparent 100%);
-    mask-image: linear-gradient(to right, transparent 0, #000 4%, #000 96%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to right, transparent 0, black 4%, black 96%, transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0, black 4%, black 96%, transparent 100%);
   }
 
   .tag-bs__fit > img {
     object-fit: fill;
   }
 
-  /* Tablets: the portrait back painting, sized and placed by the scene script, just behind the festival */
   .tag-bs__far-tall {
     z-index: 2;
     inset: auto;
@@ -134,14 +127,13 @@
     max-width: none;
   }
 
-  /* Dark meadow under the painting where a narrow screen leaves room below it */
   .tag-bs__ground {
     position: absolute;
     z-index: 1;
     left: 0;
     right: 0;
     bottom: 0;
-    background: var(--bs-meadow);
+    background: var(--tag-bs-meadow);
   }
 
   .tag-bs__far-soft {
@@ -161,7 +153,7 @@
     inset: 0;
     z-index: 3;
     pointer-events: none;
-    background: radial-gradient(60% 28% at 50% 64%, rgba(var(--bs-ghost-rgb), 0.2), transparent 70%);
+    background: radial-gradient(60% 28% at 50% 64%, rgba(var(--tag-bs-ghost-rgb), 0.2), transparent 70%);
     mix-blend-mode: screen;
   }
 
@@ -181,7 +173,6 @@
     z-index: 7;
   }
 
-  /* Festival life (fire, lights, wheel, crowd) is drawn inside the festival layer, so it moves with it */
   .tag-bs__backdrop > canvas {
     position: absolute;
     inset: 0;
@@ -194,7 +185,6 @@
     mix-blend-mode: screen;
   }
 
-  /* The near frame, in two halves so each side can swing in */
   .tag-bs__near {
     position: absolute;
     z-index: 5;
@@ -215,15 +205,14 @@
     width: 100%;
     height: 100%;
     max-width: none;
-    -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 8px);
-    mask-image: linear-gradient(to bottom, transparent 0, #000 8px);
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, black 8px);
+    mask-image: linear-gradient(to bottom, transparent 0, black 8px);
   }
 
   .tag-bs__near--flowers {
     z-index: 6;
   }
 
-  /* Festival and its lights in two halves, so each group can sit on its own ground */
   .tag-bs__half-l {
     clip-path: inset(0 50% 0 0);
   }
@@ -247,10 +236,9 @@
     inset: 0;
     z-index: 9;
     pointer-events: none;
-    background: radial-gradient(120% 90% at 50% 45%, transparent 60%, rgba(var(--bs-night-rgb), 0.55) 100%);
+    background: radial-gradient(120% 90% at 50% 45%, transparent 60%, rgba(var(--tag-bs-night-rgb), 0.55) 100%);
   }
 
-  /* The ending: the navbar's Bloomscroll mark, risen into the middle of the scene (the script moves it and sets --glow) */
   .tag-bs__mark {
     position: absolute;
     left: 50%;
@@ -267,7 +255,7 @@
     position: absolute;
     inset: -60% -12%;
     opacity: var(--glow, 0);
-    background: radial-gradient(closest-side, rgba(var(--bs-ghost-rgb), 0.3), rgba(var(--bs-teal-rgb), 0.16) 55%, transparent);
+    background: radial-gradient(closest-side, rgba(var(--tag-bs-ghost-rgb), 0.3), rgba(var(--tag-bs-teal-rgb), 0.16) 55%, transparent);
   }
 
   .tag-bs__mark img {
@@ -275,10 +263,9 @@
     display: block;
     width: 100%;
     height: auto;
-    filter: drop-shadow(0 2px 14px rgba(var(--bs-night-rgb), 0.7));
+    filter: drop-shadow(0 2px 14px rgba(var(--tag-bs-night-rgb), 0.7));
   }
 
-  /* The scene melts into the page below */
   .tag-bs::after {
     content: "";
     position: absolute;
@@ -289,14 +276,12 @@
     pointer-events: none;
   }
 
-  /* The feed overlaps the bottom of the scene */
   .tag-bs-feed {
     position: relative;
     z-index: 12;
     margin-top: -4vh;
   }
 
-  /* Portrait screens: the scene fills the screen */
   @media (max-aspect-ratio: 1/1) {
     .tag-bs {
       height: 100svh;
@@ -307,7 +292,6 @@
     }
   }
 
-  /* Phones: a 4:5 scene with the first post right below it */
   @media (max-width: 767px) {
     .tag-bs {
       height: min(125vw, 65svh);
@@ -322,7 +306,6 @@
     }
   }
 
-  /* Phones: phone-shaped art, no grain, no side fade on the portrait painting, a taller bottom fade */
   .tag-bs--phone .tag-bs__grain {
     display: none;
   }
@@ -334,6 +317,6 @@
 
   .tag-bs--phone::after {
     height: 30%;
-    background: linear-gradient(to bottom, transparent, rgba(var(--bs-night-rgb), 0.6) 55%, var(--tag-bg));
+    background: linear-gradient(to bottom, transparent, rgba(var(--tag-bs-night-rgb), 0.6) 55%, var(--tag-bg));
   }
 }

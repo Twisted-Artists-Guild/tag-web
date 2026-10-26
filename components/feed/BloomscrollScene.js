@@ -15,11 +15,7 @@ import NextImage from "next/image"
 import { useEffect, useRef } from "react"
 import { BLOOMSCROLL_LOGO } from "@/components/Header/nav-links"
 
-// The approved design (docs/bloomscroll-scene.md). Numbers here are the signed-off values: change them only with a new approval.
-// Every scene image is named here (list: docs/bloomscroll-assets.md). Layers are sized by each painting's shape, never its pixel size,
-// so a sharper file of the same shape replaces one with no other change.
 const IMG = "/images/bloomscroll/"
-// Bump when any scene image is replaced, so no browser mixes a cached old picture with new code
 const ART_V = "v=16"
 const MOON = "moon.webp"
 const WIDE_ART = {
@@ -39,20 +35,12 @@ const NEAR_SPEED = 0.45
 const PHONE_MAX = 768
 const NEAR_FULL_ASPECT = 2112 / 896
 const TALL_ASPECT = 793 / 1981
-// The portrait back painting (tablets): its shape, and where its hill line sits down the picture
 const FAR_TALL_ASPECT = 1024 / 1536
 const FAR_TALL_HILL = 0.743
 const PAINT_ASPECT = 1584 / 672
 const BEAT = 60000 / 124
-const CONCERT_COLS = [[98, 168, 172], [206, 255, 29], [255, 79, 216], [138, 92, 255], [255, 238, 205]]
 
-// Where the lights, fires, hoops, wheel and crowd sit in each festival picture, as fractions of its width (u) and height (v).
-// Measured on the pictures built from the owner's solo pieces (docs/design/bloomscroll/solo-assets-2026-10-25/scripts/
-// build_festival.py, which writes these numbers). cast: the DJ's and the booth front's boxes [u, v, w, h]; each person
-// [sprite, row (0 back, 1 front), x, feet, height, seed]; sheet: each sprite's [x, w, h] in the cast sheet, as fractions.
-// rig: the stage lighting, with size and beam scaled to each picture's stage.
 const LIFE = {
-  // Phone: the same pieces recomposed on the 4:5 picture; the Ferris wheel stands left of the tower, behind the tents
   phone: {
     bulbs: [[0.95,0.5892],[0.9162,0.5911],[0.9347,0.5899],[1.2201,0.5922],[0.8195,0.5933],[0.8978,0.5943],[0.8362,0.595],[0.7405,0.5966],[0.8881,0.5945],[0.8541,0.5964],[0.8742,0.5961],[0.8084,0.5958],[0.7953,0.597],[0.7658,0.5976],[0.7789,0.5979],[0.7572,0.6023],[0.7759,0.6086],[1.0672,0.6113],[1.0854,0.6107],[0.7971,0.6148],[1.039,0.619],[0.9236,0.6188],[0.8205,0.6203],[1.1002,0.6188],[1.0191,0.6228],[1.1645,0.6181],[0.9449,0.6207],[0.9818,0.6189],[0.8433,0.6242],[1.1184,0.6238],[0.9634,0.6214],[1.1538,0.6234],[0.8684,0.6277],[0.996,0.6263],[0.9835,0.6238],[1.1368,0.6257],[0.8943,0.6293],[0.9686,0.6293],[0.9446,0.6302],[0.9193,0.6301],[0.7747,0.6619],[0.7906,0.6671],[0.8052,0.6702],[0.8194,0.6722],[0.8419,0.6765],[0.9137,0.677],[0.8848,0.6781],[0.9339,0.6786],[0.8638,0.6791],[0.8744,0.6796]],
     fires: [[0.8078,0.8048,0.05,"bonfire"], [0.9174,0.4015,0.018,"torch"]],
@@ -68,7 +56,6 @@ const LIFE = {
       clip: [0.0,0.523,0.422,0.84], size: 1, beam: 0.2,
     },
   },
-  // Desktop and tablet: the Ferris wheel stands right of the tower, behind the big tent (owner decision, 2026-10-25)
   wide: {
     bulbs: [[0.7695,0.5455],[0.7519,0.5485],[0.7615,0.5465],[0.9107,0.5502],[0.7013,0.5519],[0.7423,0.5533],[0.71,0.5544],[0.66,0.5569],[0.7372,0.5537],[0.7194,0.5566],[0.7299,0.5561],[0.6955,0.5556],[0.6887,0.5574],[0.6732,0.5583],[0.6801,0.5589],[0.6688,0.5656],[0.6785,0.5752],[0.8308,0.5794],[0.8403,0.5784],[0.6896,0.5847],[0.816,0.5911],[0.7557,0.5908],[0.7018,0.593],[0.848,0.5908],[0.8056,0.5969],[0.8816,0.5897],[0.7668,0.5937],[0.7861,0.5909],[0.7138,0.599],[0.8575,0.5984],[0.7765,0.5947],[0.876,0.5977],[0.7269,0.6043],[0.7936,0.6022],[0.787,0.5984],[0.8671,0.6013],[0.7404,0.6068],[0.7793,0.6068],[0.7667,0.6082],[0.7535,0.608],[0.6779,0.6566],[0.6862,0.6645],[0.6938,0.6692],[0.7013,0.6724],[0.713,0.6789],[0.7505,0.6797],[0.7354,0.6814],[0.7611,0.6821],[0.7245,0.6829],[0.73,0.6836]],
     fires: [[0.8315,0.7951,0.024,"bonfire"], [0.7525,0.2587,0.014,"torch"]],
@@ -88,9 +75,9 @@ const LIFE = {
 
 const smoothstep = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t) }
 
-function concertColour(t, shift) {
-  const span = BEAT * 8, k = t / span + shift, i = Math.floor(k), f = k - i, n = CONCERT_COLS.length
-  const A = CONCERT_COLS[((i % n) + n) % n], B = CONCERT_COLS[(((i + 1) % n) + n) % n], m = Math.min(1, f * 4)
+function concertColour(t, shift, cols) {
+  const span = BEAT * 8, k = t / span + shift, i = Math.floor(k), f = k - i, n = cols.length
+  const A = cols[((i % n) + n) % n], B = cols[(((i + 1) % n) + n) % n], m = Math.min(1, f * 4)
   return A.map((v, j) => Math.round(v + (B[j] - v) * m))
 }
 
@@ -105,35 +92,8 @@ function radialSprite(size, stops) {
   return cv
 }
 
-// A painted-looking flame: three tongues of warm gradient that lick upward and sway
-function drawFlame(c, x, y, R, t, seed, appear) {
-  const tongues = [[0, 1.6, 0.55], [-0.35, 1.15, 0.38], [0.35, 1.2, 0.38]]
-  tongues.forEach(([off, hgt, wid], k) => {
-    const sway = Math.sin(t / (180 + k * 37) + seed * 2 + k) * R * 0.18 + Math.sin(t / 73 + k * 3 + seed) * R * 0.06
-    const h = R * hgt * (0.85 + 0.15 * Math.sin(t / (90 + k * 21) + seed + k * 1.3))
-    const w = R * wid
-    const bx = x + off * R, by = y
-    const g = c.createLinearGradient(bx, by, bx, by - h)
-    g.addColorStop(0, "rgba(255,246,210,0.95)")
-    g.addColorStop(0.35, "rgba(255,190,80,0.85)")
-    g.addColorStop(0.75, "rgba(240,110,40,0.45)")
-    g.addColorStop(1, "rgba(200,60,30,0)")
-    c.globalAlpha = appear
-    c.fillStyle = g
-    c.beginPath()
-    c.moveTo(bx - w, by)
-    c.bezierCurveTo(bx - w * 1.1, by - h * 0.45, bx + sway - w * 0.4, by - h * 0.7, bx + sway, by - h)
-    c.bezierCurveTo(bx + sway + w * 0.4, by - h * 0.7, bx + w * 1.1, by - h * 0.45, bx + w, by)
-    c.closePath()
-    c.fill()
-  })
-}
-
 /**
- * The Bloomscroll festival scene: a pop-up book the visitor walks into as they scroll, with the feed below.
- * Phones (under 768px) get the portrait art, tablets and desktops the wide art: the same concert on both.
- * The flower layer exposes the walk-in as --approach (0 to 1) for the blooming roses.
- * The walk-in ends on the navbar's Bloomscroll mark, risen into the middle of the scene.
+ * The Bloomscroll festival scene at the top of the feed.
  * @param {{ children: React.ReactNode }} props the feed goes in children
  */
 export default function BloomscrollScene({ children }) {
@@ -151,15 +111,17 @@ export default function BloomscrollScene({ children }) {
     const festImgs = [...root.querySelectorAll("[data-fest]")]
     const reduced = matchMedia("(prefers-reduced-motion: reduce)")
     const finePointer = matchMedia("(hover: hover) and (pointer: fine)")
+    const tokens = getComputedStyle(document.documentElement)
+    const rgb = (name) => tokens.getPropertyValue(`--tag-bs-${name}-rgb`).trim()
+    const concertCols = ["teal", "lime", "pink", "violet", "warm-white"].map((name) => rgb(name).split(",").map(Number))
+    const flameStops = [[0, `rgba(${rgb("flame-core")}, 0.95)`], [0.35, `rgba(${rgb("flame-mid")}, 0.85)`], [0.75, `rgba(${rgb("flame-edge")}, 0.45)`], [1, `rgba(${rgb("flame-tip")}, 0)`]]
 
     let moonRest = 0, moonSunk = 0, nearHinge = 0, phoneMode = false, sceneTop = 0, stickTop = 0
-    // per-side shift of the festival halves inside their box (tablet slides them in, phones set them down), as fractions of the box
     let lifeShift = { lx: 0, ly: 0, rx: 0, ry: 0 }
     const setSrc = (img, file) => { const src = `${IMG}${file}?${ART_V}`; if (img.getAttribute("src") !== src) img.setAttribute("src", src) }
     const figureSheet = new Image()
     const life = () => (phoneMode ? LIFE.phone : LIFE.wide)
 
-    // Phones: the portrait far painting fills the 4:5 scene, the concert painting stands on its meadow, only the flowers come forward
     function layoutPhone(W, H, vis) {
       setSrc(sky, PHONE_ART.sky)
       setSrc(farImg, PHONE_ART.far)
@@ -181,8 +143,6 @@ export default function BloomscrollScene({ children }) {
       }
       ground.style.top = H + "px"
       const horizon = H * 0.69
-      // The groups were painted a little high for this meadow, so each half is set down onto the grass (left 8%, right 4%).
-      // The stage group reaches past the middle, so the halves split at 55.5%.
       const split = 55.5
       festImgs.forEach((img) => {
         setSrc(img, PHONE_ART[img.dataset.fest])
@@ -210,9 +170,6 @@ export default function BloomscrollScene({ children }) {
       moonSunk = horizon + mw * 0.8
     }
 
-    // The scene holds while the visitor walks in, then while the Bloomscroll mark arrives, with no scroll where nothing
-    // happens: the approved walk-in (0.8 scene heights on desktop and tablet, 0.6 on phones), then the mark over the rest
-    // (owner decision, 2026-10-25)
     const walkFor = (H) => Math.round(H * (phoneMode ? 0.6 : 0.8))
     const holdFor = (H) => Math.round(H * (phoneMode ? 0.9 : 1.15))
     function layout() {
@@ -226,19 +183,15 @@ export default function BloomscrollScene({ children }) {
       wrap.style.height = H + holdFor(H) + "px"
       sceneTop = wrap.getBoundingClientRect().top + window.scrollY
       if (phoneMode) { layoutPhone(W, H, vis); return }
-      // Tablet and desktop: the wide art
       setSrc(sky, WIDE_ART.sky)
       setSrc(farImg, WIDE_ART.far)
       setSrc(farSoft, WIDE_ART.soft)
       setSrc(clouds.firstElementChild, WIDE_ART.clouds)
-      // Big or sharp screens get the festival and its dancers at twice the pixels (same shape, so nothing moves)
       const sharp = W * (devicePixelRatio || 1) > 2200
       setSrc(figureSheet, sharp ? WIDE_ART.figures2x : WIDE_ART.figures)
       nearLeft.style.display = nearRight.style.display = ""
       festImgs.forEach((img) => { setSrc(img, sharp && img.dataset.fest === "fest" ? WIDE_ART.fest2x : WIDE_ART[img.dataset.fest]); img.style.position = img.style.left = img.style.top = img.style.width = img.style.height = "" })
       if (wide) {
-        // Desktop: the full near painting, a touch wider than the screen so no edge shows, seated on the bottom of the scene and
-        // never shorter than it, so the trees always run off the top (owner decision, 2026-10-25)
         const nw = Math.max(W * 1.06, (vis + 4) * NEAR_FULL_ASPECT), nh = nw / NEAR_FULL_ASPECT, nl = (W - nw) / 2, nt = vis + 4 - nh
         nearHinge = W / 2 - nl
         for (const el of [nearLeft, nearRight]) {
@@ -252,7 +205,6 @@ export default function BloomscrollScene({ children }) {
           s.height = nh + "px"
           s.transformOrigin = `${W / 2 - nl}px ${0.35 * H - nt}px`
         }
-        // The approved rose layer stays on top of the frame, each half opening with its side of the frame (owner, 2026-10-25)
         for (const [el, clip] of [[flowersL, "inset(0 50% 0 0)"], [flowersR, "inset(0 0 0 50%)"]]) {
           const s = el.style
           setSrc(el.firstElementChild, WIDE_ART.flowers)
@@ -266,18 +218,15 @@ export default function BloomscrollScene({ children }) {
           s.transformOrigin = `${W / 2 - nl}px ${0.35 * H - nt}px`
         }
       } else {
-        // Portrait tablets: tall trees on each edge and rose bushes in the corners; each strip has its picture's own shape,
-        // so the bark is never squeezed (owner, 2026-10-25)
         const ph = vis + 4, pw = ph * TALL_ASPECT
         nearHinge = W / 2
-        // The owner's tablet tree on the left and its mirror on the right, each at its own shape, inner edges barely faded
         for (const [el, file, side, fade, soft] of [[nearLeft, WIDE_ART.tallL, "left", "to left", 4], [nearRight, WIDE_ART.tallR, "right", "to right", 4]]) {
           const s = el.style, img = el.firstElementChild
           setSrc(img, file)
           img.style.cssText = `position:absolute;top:0;${side}:0;height:100%;width:100%;`
           s.clipPath = "none"
           s.overflow = "hidden"
-          s.maskImage = s.webkitMaskImage = `linear-gradient(${fade}, transparent 0, #000 ${soft}%)`
+          s.maskImage = s.webkitMaskImage = `linear-gradient(${fade}, transparent 0, black ${soft}%)`
           s.left = (side === "left" ? 0 : W - pw) + "px"
           s.top = "0px"
           s.width = pw + "px"
@@ -290,7 +239,7 @@ export default function BloomscrollScene({ children }) {
           const s = el.style
           s.display = ""
           s.clipPath = "none"
-          s.maskImage = s.webkitMaskImage = `linear-gradient(${fade}, #000 0, #000 26%, transparent 36%)`
+          s.maskImage = s.webkitMaskImage = `linear-gradient(${fade}, black 0, black 26%, transparent 36%)`
           s.left = left + "px"
           s.top = vis + 4 - fh + "px"
           s.width = fw + "px"
@@ -305,7 +254,6 @@ export default function BloomscrollScene({ children }) {
       } else {
         bw = W * 1.55; bh = bw / PAINT_ASPECT
       }
-      // Portrait: the painting lifts off the bottom edge so the festival isn't lost in the fade; dark meadow fills below
       const base = wide ? vis + 8 : vis * 0.9
       const top = base - bh
       ground.style.top = (wide ? vis - 2 : base - 6) + "px"
@@ -315,15 +263,12 @@ export default function BloomscrollScene({ children }) {
         el.style.width = bw + "px"
         el.style.height = bh + "px"
       }
-      // Portrait: each festival group slides toward the path, stopping short of the other (left group ends at 0.445, right starts at 0.577); desktop keeps them where they are
       const dx = wide ? 0 : bw * 0.06
       lifeShift = { lx: dx / bw, ly: 0, rx: -dx / bw, ry: 0 }
       festImgs.forEach((img) => {
         const right = img.dataset.side === "right"
         img.style.translate = dx ? `${right ? -dx : dx}px 0` : ""
       })
-      // Tablets: the portrait back painting stands in for the wide one, its hill line on the wide one's, a touch wider than
-      // the screen; it moves and zooms with the festival (the same transform, about the same point)
       farImg.style.visibility = farSoft.style.visibility = wide ? "" : "hidden"
       farTall.style.display = wide ? "none" : "block"
       if (!wide) {
@@ -334,13 +279,11 @@ export default function BloomscrollScene({ children }) {
         fs.left = tl + "px"; fs.top = tt + "px"; fs.width = tw + "px"; fs.height = th + "px"
         fs.transformOrigin = `${W / 2 - tl}px ${top + bh * 0.63 - tt}px`
       }
-      // The moon rests in open sky and sinks to just under the hill line, so it always disappears behind the hills
       const hill = top + bh * 0.58, mw = moon.offsetWidth
       const sk = sky.style
       if (wide) {
         sk.left = sk.top = sk.width = sk.height = sk.objectFit = sk.objectPosition = sk.backgroundColor = ""
       } else {
-        // Portrait: the sky is sized so its pale glow sits just behind the hills and the rest stays rich teal
         const plateH = hill / 0.62, plateW = Math.max(W * 1.1, plateH * PAINT_ASPECT)
         sk.left = (W - plateW) / 2 + "px"
         sk.top = "0px"
@@ -352,10 +295,9 @@ export default function BloomscrollScene({ children }) {
       moonSunk = hill + mw * 0.8
     }
 
-    // Fireflies at three depths: far ones barely move, near ones sweep past
     const flyCanvases = [part("fliesBack"), part("fliesFront")]
-    const flySprite = radialSprite(32, [[0, "rgba(236,255,140,1)"], [0.25, "rgba(206,255,29,0.55)"], [1, "rgba(206,255,29,0)"]])
-    const warmSprite = radialSprite(64, [[0, "rgba(255,248,220,1)"], [0.2, "rgba(255,214,140,0.7)"], [0.55, "rgba(255,150,60,0.18)"], [1, "rgba(255,120,40,0)"]])
+    const flySprite = radialSprite(32, [[0, `rgba(${rgb("firefly")}, 1)`], [0.25, `rgba(${rgb("lime")}, 0.55)`], [1, `rgba(${rgb("lime")}, 0)`]])
+    const warmSprite = radialSprite(64, [[0, `rgba(${rgb("glow-core")}, 1)`], [0.2, `rgba(${rgb("glow-mid")}, 0.7)`], [0.55, `rgba(${rgb("glow-edge")}, 0.18)`], [1, `rgba(${rgb("glow-tip")}, 0)`]])
     const mkFly = (depth) => ({
       x: Math.random(), y: 0.35 + Math.random() * 0.6, depth,
       vx: (Math.random() - 0.5) * 0.015, vy: (Math.random() - 0.5) * 0.012,
@@ -373,7 +315,6 @@ export default function BloomscrollScene({ children }) {
       })
     }
 
-    // Concert: one beat drives the DJ, the crowd and the stage lights
     const crowdCanvas = part("crowd"), crowdCtx = crowdCanvas.getContext("2d")
     function drawCrowd(t) {
       const bw = backdrop.clientWidth, bh = backdrop.clientHeight
@@ -386,9 +327,7 @@ export default function BloomscrollScene({ children }) {
       const C = life().cast
       const iw = figureSheet.naturalWidth, ih = figureSheet.naturalHeight
       const beat = reduced.matches ? -1 : t / BEAT
-      // The stage group is the festival's left half, so everything here takes the left half's shift
       const X = (u) => (u + lifeShift.lx) * cw, Y = (v) => (v + lifeShift.ly) * ch
-      // A sprite from the sheet, standing on (x, foot) at height h, leaning by tilt (radians) about its feet
       const sprite = (k, x, foot, h, tilt) => {
         const [sx, sw, sh] = C.sheet[k], w = (h * sw * iw) / (sh * ih)
         c.save()
@@ -397,14 +336,12 @@ export default function BloomscrollScene({ children }) {
         c.drawImage(figureSheet, sx * iw, 0, sw * iw, sh * ih, -w / 2, -h, w, h)
         c.restore()
       }
-      // The DJ nods on the beat and sways slowly, behind his decks; the booth's front is drawn over him
       const [du, dv, dw, dh] = C.dj
       const nod = beat < 0 ? 0 : Math.pow(Math.abs(Math.sin(beat * Math.PI)), 3) * dh * 0.035
       const sway = beat < 0 ? 0 : Math.sin((beat / 4) * Math.PI * 2) * 0.025
       sprite(0, X(du + dw / 2), Y(dv + dh) + nod, dh * ch, sway)
       const [bu, bv, bwid, bht] = C.booth
       sprite(1, X(bu + bwid / 2), Y(bv + bht), bht * ch, 0)
-      // The back rows sway from their feet and bob, each on its own slow timing, a little darker so they sit behind
       c.filter = "brightness(0.82)"
       C.people.forEach(([k, row, x, foot, h, seed]) => {
         if (row) return
@@ -413,7 +350,6 @@ export default function BloomscrollScene({ children }) {
         sprite(k, X(x), Y(foot - bob), h * ch, lean)
       })
       c.filter = "none"
-      // The front row hops on the beat: some every beat, some every other, each with its own phase and height
       C.people.forEach(([k, row, x, foot, h, seed]) => {
         if (!row) return
         const every = seed % 2 < 1 ? 1 : 2, at = beat < 0 ? 1 : ((beat + seed * 0.37) / every) % 1
@@ -422,8 +358,6 @@ export default function BloomscrollScene({ children }) {
       })
     }
 
-    // The stage lights are drawn on their own small canvas whose edges are then faded out, so no flash or beam ever shows
-    // a straight edge; the wash and the strobe are soft ovals that fade to nothing inside their area
     const stageCv = document.createElement("canvas"), stageCtx = stageCv.getContext("2d")
     const panelCv = document.createElement("canvas"), panelCtx = panelCv.getContext("2d")
     const festLeft = festImgs.find((img) => img.dataset.fest === "fest" && img.dataset.half === "l")
@@ -440,9 +374,8 @@ export default function BloomscrollScene({ children }) {
     function drawConcertLights(c, at, cw, ch, t, appear) {
       const beatPhase = (t / BEAT) % 1, beatN = Math.floor(t / BEAT)
       const pulse = Math.pow(1 - beatPhase, 3)
-      const [r, g, b] = concertColour(t, 0), [r2, g2, b2] = concertColour(t, 0.5)
+      const [r, g, b] = concertColour(t, 0, concertCols), [r2, g2, b2] = concertColour(t, 0.5, concertCols)
       const L = life(), R = L.rig, z = R.size
-      // Everything stays inside the stage and the space over the front rows
       const [lx, ty] = at(R.clip[0], R.clip[1]), [rx, by] = at(R.clip[2], R.clip[3])
       const bw = Math.ceil(rx - lx), bhh = Math.ceil(by - ty)
       if (stageCv.width !== bw || stageCv.height !== bhh) { stageCv.width = bw; stageCv.height = bhh }
@@ -453,11 +386,9 @@ export default function BloomscrollScene({ children }) {
       s.setTransform(1, 0, 0, 1, -lx, -ty)
       s.globalCompositeOperation = "lighter"
       const sprite = (x, y, size, alpha) => { s.globalAlpha = Math.max(0, Math.min(1, alpha)) * appear; s.drawImage(warmSprite, x - size / 2, y - size / 2, size, size) }
-      // Colour wash on the back wall of the stage
       const [sx0, sy0] = at(R.wall[0], R.wall[1]), [sx1, sy1] = at(R.wall[2], R.wall[3])
       s.globalAlpha = 1
       softOval(s, sx0, sy0, sx1, sy1 + (sy1 - sy0) * 0.4, `${r},${g},${b}`, 0.55 + 0.35 * pulse)
-      // Moving-head beams from the truss, sweeping across the stage and the front rows
       R.heads.map(([u, v], i) => [u, v, i * 1.3]).forEach(([u, v, ph], i) => {
         const [x, y] = at(u, v)
         const ang = Math.PI / 2 + Math.sin(t / 1400 + ph) * 0.55
@@ -474,8 +405,6 @@ export default function BloomscrollScene({ children }) {
         sprite(x, y, cw * 0.035 * z, 0.9)
       })
       s.globalAlpha = 1
-      // The painted LED triangle panel lights up in the concert colour on the beat: the painting's own panel, tinted and
-      // added as light, so only its LED lines glow and never a box
       const [bx0, by0] = at(R.panel[0], R.panel[2]), [bx1, by1] = at(R.panel[1], R.panel[3])
       const pw = Math.ceil(bx1 - bx0), ph = Math.ceil(by1 - by0)
       if (festLeft.complete && festLeft.naturalWidth && pw > 0 && ph > 0) {
@@ -495,9 +424,7 @@ export default function BloomscrollScene({ children }) {
         s.drawImage(panelCv, bx0, by0)
         s.globalAlpha = 1
       }
-      // Strobe pop on every 16th beat: a soft burst of white over the stage
-      if (beatN % 16 === 0 && beatPhase < 0.25) softOval(s, sx0, sy0, sx1, sy1 + (sy1 - sy0) * 0.4, "255,255,255", 0.5 * (1 - beatPhase / 0.25))
-      // Fade the canvas out towards its edges, then lay it over the scene
+      if (beatN % 16 === 0 && beatPhase < 0.25) softOval(s, sx0, sy0, sx1, sy1 + (sy1 - sy0) * 0.4, rgb("strobe"), 0.5 * (1 - beatPhase / 0.25))
       s.setTransform(1, 0, 0, 1, 0, 0)
       s.globalCompositeOperation = "destination-in"
       s.globalAlpha = 1
@@ -512,7 +439,6 @@ export default function BloomscrollScene({ children }) {
       c.drawImage(stageCv, lx, ty)
     }
 
-    // Ferris wheel: painted-style rim, spokes and swinging gondolas, turning slowly behind the tents
     const wheelCanvas = part("wheel"), wheelCtx = wheelCanvas.getContext("2d")
     function drawWheel(t, appear) {
       const bw = backdrop.clientWidth, bh = backdrop.clientHeight
@@ -524,9 +450,8 @@ export default function BloomscrollScene({ children }) {
       const [u, v, r] = life().wheel
       const x = (u + lifeShift.rx) * cw, y = (v + lifeShift.ry) * ch, R = r * cw
       const spin = reduced.matches ? 0 : t / 9000
-      const teal = "#2c5552", tealHi = "#4f8b86", dark = "#173332"
+      const teal = `rgb(${rgb("wheel")})`, tealHi = `rgb(${rgb("wheel-hi")})`, dark = `rgb(${rgb("wheel-dark")})`
       c.lineCap = "round"
-      // Legs (the A-frame), mostly hidden by the tents
       for (const s of [-1, 1]) {
         for (const [col, lw, dx] of [[dark, 0.06, 0], [tealHi, 0.025, -0.01 * s]]) {
           c.strokeStyle = col; c.lineWidth = R * lw
@@ -538,14 +463,12 @@ export default function BloomscrollScene({ children }) {
         c.strokeStyle = teal; c.lineWidth = R * 0.022
         c.beginPath(); c.moveTo(x, y); c.lineTo(x + Math.cos(a) * R, y + Math.sin(a) * R); c.stroke()
       }
-      // Double rim with a brushed highlight
       for (const [rad, col, lw] of [[1, dark, 0.07], [1, teal, 0.045], [0.995, tealHi, 0.015], [0.62, dark, 0.04], [0.62, teal, 0.022]]) {
         c.strokeStyle = col; c.lineWidth = R * lw
         c.beginPath(); c.arc(x, y, R * rad, 0, Math.PI * 2); c.stroke()
       }
       c.fillStyle = dark; c.beginPath(); c.arc(x, y, R * 0.09, 0, Math.PI * 2); c.fill()
       c.fillStyle = tealHi; c.beginPath(); c.arc(x - R * 0.02, y - R * 0.02, R * 0.04, 0, Math.PI * 2); c.fill()
-      // Gondolas hang straight down from the rim, each with a warm lit window
       for (let k = 0; k < 12; k++) {
         const a = spin + (k * Math.PI) / 6
         const gx = x + Math.cos(a) * R, gy = y + Math.sin(a) * R
@@ -559,11 +482,10 @@ export default function BloomscrollScene({ children }) {
         c.fillStyle = teal
         c.beginPath(); c.roundRect(-R * 0.07, R * 0.08, R * 0.14, R * 0.035, R * 0.015); c.fill()
         const lit = 0.55 + 0.45 * Math.sin(t / 420 + k * 1.7)
-        c.fillStyle = `rgba(255, 214, 120, ${0.55 + 0.45 * lit})`
+        c.fillStyle = `rgba(${rgb("window")}, ${0.55 + 0.45 * lit})`
         c.fillRect(-R * 0.05, R * 0.12, R * 0.1, R * 0.045)
         c.restore()
       }
-      // Bulbs along the rim
       c.globalCompositeOperation = "lighter"
       for (let k = 0; k < 24; k++) {
         const a = spin + (k * Math.PI) / 12
@@ -575,7 +497,6 @@ export default function BloomscrollScene({ children }) {
       c.globalAlpha = 1
     }
 
-    // Festival life: drawn in the festival painting's own coordinates, so it stays pinned to it
     const lifeCanvas = part("life"), lifeCtx = lifeCanvas.getContext("2d")
     const embers = []
     function drawLife(t, dt, appear) {
@@ -594,16 +515,29 @@ export default function BloomscrollScene({ children }) {
       const unit = cw
       c.globalCompositeOperation = "lighter"
       const sprite = (x, y, size, alpha) => { c.globalAlpha = Math.max(0, Math.min(1, alpha)) * appear; c.drawImage(warmSprite, x - size / 2, y - size / 2, size, size) }
-      // String lights: a staggered twinkle along each string
       L.bulbs.forEach(([u, v], i) => {
         const [x, y] = at(u, v)
         sprite(x, y, unit * 0.036, 0.2 + 0.8 * Math.pow(0.5 + 0.5 * Math.sin(t / 380 - u * 40 + (i % 3) * 2.1), 2))
       })
-      // Fires: painted-style flames in the empty basket and on the logs, flickering light and rising embers
       L.fires.forEach(([u, v, r, kind], fi) => {
         const [x, y] = at(u, v)
         const R = r * unit
-        drawFlame(c, x, y, R * (kind === "torch" ? 1.15 : 1), t, fi, appear)
+        const fR = R * (kind === "torch" ? 1.15 : 1)
+        for (const [k, [off, hgt, wid]] of [[0, 1.6, 0.55], [-0.35, 1.15, 0.38], [0.35, 1.2, 0.38]].entries()) {
+          const sway = Math.sin(t / (180 + k * 37) + fi * 2 + k) * fR * 0.18 + Math.sin(t / 73 + k * 3 + fi) * fR * 0.06
+          const h = fR * hgt * (0.85 + 0.15 * Math.sin(t / (90 + k * 21) + fi + k * 1.3))
+          const w = fR * wid, bx = x + off * fR
+          const g = c.createLinearGradient(bx, y, bx, y - h)
+          flameStops.forEach(([at, colour]) => g.addColorStop(at, colour))
+          c.globalAlpha = appear
+          c.fillStyle = g
+          c.beginPath()
+          c.moveTo(bx - w, y)
+          c.bezierCurveTo(bx - w * 1.1, y - h * 0.45, bx + sway - w * 0.4, y - h * 0.7, bx + sway, y - h)
+          c.bezierCurveTo(bx + sway + w * 0.4, y - h * 0.7, bx + w * 1.1, y - h * 0.45, bx + w, y)
+          c.closePath()
+          c.fill()
+        }
         for (let k = 0; k < 5; k++) {
           const fl = 0.6 + 0.25 * Math.sin(t / (70 + k * 23) + k * 1.7) + 0.15 * Math.sin(t / (31 + k * 11) + fi)
           sprite(x + Math.sin(t / (150 + k * 40) + k) * R * 0.3, y - R * (0.2 + k * 0.22) * fl, R * (3 - k * 0.4) * fl, 0.55 * fl)
@@ -621,7 +555,6 @@ export default function BloomscrollScene({ children }) {
         const [x, y] = at(e.x, e.y)
         sprite(x, y, unit * (e.big ? 0.014 : 0.01), e.life)
       }
-      // Fire hoops: sparks whirling around each hoop
       L.hoops.forEach(([u, v, r], hi) => {
         const [x, y] = at(u, v)
         for (let k = 0; k < 4; k++) {
@@ -641,11 +574,9 @@ export default function BloomscrollScene({ children }) {
       flyCanvases.forEach((cv, i) => {
         const c = cv.getContext("2d")
         c.clearRect(0, 0, cv.width, cv.height)
-        // Phones: every firefly lives in the scene, behind the roses, so the front canvas stays empty
         if (appear <= 0 || (phoneMode && i === 1)) return
         const s = cv.width / W
         flies[i].forEach((f, k) => {
-          // Phones: two faint ones in the air, the rest hover over the meadow and the festival grounds
           const air = phoneMode && k < 2
           const lo = phoneMode ? (air ? 0.3 : 0.58) : 0.3, hi = phoneMode ? (air ? 0.5 : 0.92) : 0.98
           if (phoneMode) f.y = Math.min(hi, Math.max(lo, f.y))
@@ -659,7 +590,6 @@ export default function BloomscrollScene({ children }) {
           }
           const glow = reduced.matches ? 0.7 : 0.35 + 0.65 * Math.max(0, Math.sin(t / 600 + f.phase))
           c.globalAlpha = glow * appear * (air ? 0.4 : 1)
-          // Phones: they move with the ground they hover over, not with the scroll
           const lag = phoneMode ? FAR_LAG : lagByDepth[f.depth]
           const px = (f.x * W + mx * [-10, -22, -60][f.depth]) * s
           const py = (f.y * H + y * lag) * s
@@ -669,20 +599,15 @@ export default function BloomscrollScene({ children }) {
       })
     }
 
-    // Unfold: the backdrop tips up, the near frame swings in like pop-up flaps, the moon rises, the lights come on
     const pieces = { back: [0, 34], flaps: [380, 80], flowers: [540, 86] }
     const unfoldStart = performance.now()
-    const spring = (ms, from) => {
+    const angle = (key) => {
+      const [delay, from] = pieces[key], ms = performance.now() - unfoldStart - delay
       if (reduced.matches) return 0
       if (ms <= 0) return from
-      const t = ms / 1000
-      return from * Math.exp(-t * 6.5) * Math.cos(t * 8.5)
+      return from * Math.exp((-ms / 1000) * 6.5) * Math.cos((ms / 1000) * 8.5)
     }
-    const angle = (key) => spring(performance.now() - unfoldStart - pieces[key][0], pieces[key][1])
 
-    // Motion chases scroll and pointer with frame-rate-independent easing.
-    // Desktop and tablet: scroll counts from the moment the scene sticks under the site header (its height can change as the
-    // notice bar scrolls away). Phones count from the first pixel of scroll, so the walk-in starts at once.
     const readStick = () => { stickTop = parseFloat(getComputedStyle(scene).top) || 0 }
     const scrollPos = () => Math.max(0, window.scrollY - (phoneMode ? 0 : sceneTop - stickTop))
     let sy = 0, px = 0, py = 0, tx = 0, ty = 0, last = performance.now()
@@ -704,8 +629,6 @@ export default function BloomscrollScene({ children }) {
       sy = still ? target : target + (sy - target) * Math.exp(-dt / 0.085)
       px += (tx - px) * (1 - Math.exp(-dt / 0.35))
       py += (ty - py) * (1 - Math.exp(-dt / 0.35))
-      // p: how far the visitor has walked in; m: how far the Bloomscroll mark has come in, over the rest of the hold;
-      // y: how far the scene has scrolled after the hold
       const p = Math.min(1, sy / walk)
       const m = Math.min(1, Math.max(0, (sy - walk) / (hold - walk)))
       const y = still ? 0 : Math.max(0, sy - hold)
@@ -714,17 +637,13 @@ export default function BloomscrollScene({ children }) {
       const fy = still ? 0 : y, fp = still ? 0 : p, fmx = still ? 0 : mx, fmy = still ? 0 : my
 
       book.style.transform = still ? "" : `scale(1.03) rotateY(${mx * 2.2}deg) rotateX(${-my * 1.4}deg)`
-      // The sky is effectively at infinity, so it barely zooms
       sky.style.transform = `translate3d(${fmx * -6}px, ${fy * 0.7}px, 0) scale(${1 + fp * 0.03}) rotateX(${angle("back")}deg)`
-      // The far painting, festival and glows are one rigid piece that walks in toward the path's end
       backdrop.style.transform = `translate3d(${fmx * -12}px, ${fy * FAR_LAG + fmy * -6}px, 0) scale(${1 + fp * WALK_ZOOM}) rotateX(${angle("back")}deg)`
       glowLights.style.transform = farTall.style.transform = backdrop.style.transform
       clouds.style.transform = !still ? `translate3d(${Math.sin(now / 9000) * 10}px, 0, 0) ${backdrop.style.transform}` : backdrop.style.transform
-      // Phones: the dark meadow under the painting drifts with it, so its top edge never shows above the festival
       ground.style.transform = phoneMode ? `translate3d(0, ${fy * FAR_LAG}px, 0)` : ""
       farSoft.style.opacity = farTallSoft.style.opacity = String(smoothstep(0.05, 0.6, fp) * 0.8)
 
-      // The moon rises from behind the hills after the unfold and sinks back behind them as the visitor scrolls
       const rise = 1 - smoothstep(700, 2300, since)
       const sink = Math.max(rise, Math.min(1, p * 1.5))
       const mw = moon.offsetWidth
@@ -733,7 +652,6 @@ export default function BloomscrollScene({ children }) {
       moon.style.transform = `translate3d(${mxPos}px, ${myPos}px, 0)`
       moon.style.setProperty("--glow", String(1 - smoothstep(0.35, 0.95, sink)))
 
-      // The near frame comes toward the visitor as they walk in; --approach is the walk-in value for the blooming roses
       scene.style.setProperty("--approach", p.toFixed(3))
       const separate = W / H <= 1.6
       const grow = 1 + fp * NEAR_SPEED * (separate ? 0.3 : 1.2)
@@ -748,8 +666,6 @@ export default function BloomscrollScene({ children }) {
         flowersL.style.transform = nearLeft.style.transform
         flowersR.style.transform = nearRight.style.transform
       }
-      // The ending: once the walk-in is done the Bloomscroll mark rises into the middle of the scene and holds there,
-      // gently glowing; reduced motion shows it already there
       const land = still ? 1 : smoothstep(0, 1, m)
       const float = still ? 0 : Math.sin(now / 900) * H * 0.006 * land
       mark.style.opacity = land.toFixed(3)
@@ -773,7 +689,6 @@ export default function BloomscrollScene({ children }) {
       if (!running && visible) { running = true; last = performance.now(); rafId = requestAnimationFrame(frame) }
     }
     const observer = new IntersectionObserver(([e]) => { visible = e.isIntersecting; kick() })
-    // The scene's own size, not the window's: opening a sidebar narrows it too
     const resizer = new ResizeObserver(() => { sizeCanvases(); layout(); readStick() })
 
     sizeCanvases()
