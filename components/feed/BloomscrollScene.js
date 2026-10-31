@@ -743,10 +743,10 @@ export default function BloomscrollScene({ children }) {
       }
     }
     const blurredMask = (box, points, blur, baseOpacity) => `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${box}" preserveAspectRatio="none"><defs><linearGradient id="f" x1="0" y1="0" x2="0" y2="1"><stop offset="0.8" stop-color="black"/><stop offset="1" stop-color="black" stop-opacity="${baseOpacity}"/></linearGradient><filter id="b" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="${blur}"/></filter></defs><polygon points="${points.join(" ")}" fill="url(#f)" filter="url(#b)"/></svg>`)}")`
-    const wave = (n, at) => Array.from({ length: n + 1 }, (_, k) => at(k / n))
+    const wave = (n, at) => Array.from({ length: n + 13 }, (_, k) => at((k - 6) / n))
     const sway = (t) => 0.66 + 0.09 * Math.sin(t * Math.PI * 2) + 0.05 * Math.sin(t * Math.PI * 6 + 1.3)
-    const edgeMask = (right) => blurredMask("100 640", [right ? "100,0" : "0,0", ...wave(40, (t) => `${(right ? 1 - sway(t) : sway(t)) * 100},${t * 640}`), right ? "100,640" : "0,640"], "9 4", 1)
-    const grassMask = blurredMask("900 100", ["0,100", ...wave(60, (t) => `${t * 900},${(0.42 + 0.14 * Math.sin(t * Math.PI * 2 + 0.6) + 0.08 * Math.sin(t * Math.PI * 6)) * 100}`), "900,100"], "6 7", 0)
+    const edgeMask = (right) => blurredMask("100 640", [right ? "160,-120" : "-60,-120", ...wave(40, (t) => `${(right ? 1 - sway(t) : sway(t)) * 100},${t * 640}`), right ? "160,760" : "-60,760"], "9 4", 1)
+    const grassMask = blurredMask("900 100", ["-90,100", ...wave(60, (t) => `${t * 900},${(0.42 + 0.14 * Math.sin(t * Math.PI * 2 + 0.6) + 0.08 * Math.sin(t * Math.PI * 6)) * 100}`), "990,100"], "6 7", 0)
     const grass = garden.querySelector(".tag-bs-garden__grass"), grounds = [...garden.querySelectorAll(".tag-bs-garden__ground")]
     setSrc(grass, GRASS)
     grass.style.maskImage = grass.style.webkitMaskImage = grassMask
