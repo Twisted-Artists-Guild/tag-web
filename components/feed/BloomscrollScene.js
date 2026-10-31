@@ -733,11 +733,9 @@ export default function BloomscrollScene({ children }) {
     const grass = garden.querySelector(".tag-bs-garden__grass"), grounds = [...garden.querySelectorAll(".tag-bs-garden__ground")]
     setSrc(grass, GRASS)
     grass.style.maskImage = grass.style.webkitMaskImage = grassMask
-    grounds.forEach((img, n) => setSrc(img, GROUNDS[n]))
     const path = garden.querySelector(".tag-bs-garden__path"), shade = rgb("path-shade")
     const litter = [...garden.querySelectorAll(".tag-bs-garden__litter")], fringe = [...garden.querySelectorAll(".tag-bs-garden__fringe")]
     litter.forEach((el, n) => { el.style.backgroundImage = `url(${IMG}${LITTER[n]}?${ART_V})` })
-    fringe.forEach((el, n) => { el.style.backgroundImage = `url(${IMG}${FRINGE[n]}?${ART_V})` })
     let pathAt = 0
     Promise.all([PATH, ...LITTER].map((file) => {
       const img = new Image()
@@ -808,6 +806,10 @@ export default function BloomscrollScene({ children }) {
       path.style.backgroundSize = `100% 100%, 100% 100%, ${Math.max(1400, rootR.width)}px auto`
       litter.forEach((el) => { el.style.top = `${pathTop}px`; el.hidden = vine })
       fringe.forEach((el) => { el.hidden = vine })
+      if (!vine) {
+        grounds.forEach((img, n) => setSrc(img, GROUNDS[n]))
+        fringe.forEach((el, n) => { el.style.backgroundImage = `url(${IMG}${FRINGE[n]}?${ART_V})` })
+      }
       litter[0].style.left = `${w - 170}px`
       litter[1].style.right = `${w - 170}px`
       fringe[0].style.left = `${w * 0.56}px`
