@@ -23,6 +23,7 @@
     perspective: 1600px;
     perspective-origin: 50% 70%;
     color: var(--tag-photo-text);
+    clip-path: inset(0 0 2px 0);
   }
 
   .tag-bs__book {
