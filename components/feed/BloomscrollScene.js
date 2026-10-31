@@ -44,7 +44,7 @@ const BUSH_ASPECT = 466 / 560
 const BUSH_MAX = 340
 const VINE_GUTTER = 120
 const VINE_W = 22
-const BLOOM_MS = 1500
+const BLOOM_MS = 1500, PATH_FADE_MS = 700
 const BLOOM_LINE = 0.84
 const SEPAL = "M0,0 C-7,-10 -6,-28 0,-38 C6,-28 7,-10 0,0Z"
 const ROSE_SHEET = "roses.webp"
@@ -758,6 +758,12 @@ export default function BloomscrollScene({ children }) {
     const litter = [...garden.querySelectorAll(".tag-bs-garden__litter")], fringe = [...garden.querySelectorAll(".tag-bs-garden__fringe")]
     litter.forEach((el, n) => { el.style.backgroundImage = `url(${IMG}${LITTER[n]}?${ART_V})` })
     fringe.forEach((el, n) => { el.style.backgroundImage = `url(${IMG}${FRINGE[n]}?${ART_V})` })
+    let pathAt = 0
+    Promise.all([PATH, ...LITTER].map((file) => {
+      const img = new Image()
+      img.src = `${IMG}${file}?${ART_V}`
+      return img.decode().catch(() => {})
+    })).then(() => { pathAt = performance.now() })
     const bed = { L: 0, w: 0, top: 0, vine: false, dpr: 1 }
     const beds = [...garden.querySelectorAll(".tag-bs-garden__bed")].map((el, n) => {
       el.style.maskImage = el.style.webkitMaskImage = edgeMask(n === 1)
@@ -895,7 +901,8 @@ export default function BloomscrollScene({ children }) {
       garden.style.transform = `translate3d(0, ${-Math.max(0, bed.L - window.scrollY)}px, 0)`
       beds[0].el.style.transform = beds[0].ground.style.transform = litter[0].style.transform = fringe[0].style.transform = `translate3d(${-(1 - g) * travel}px, 0, 0)`
       beds[1].el.style.transform = beds[1].ground.style.transform = litter[1].style.transform = fringe[1].style.transform = `translate3d(${(1 - g) * travel}px, 0, 0)`
-      path.style.opacity = litter[0].style.opacity = litter[1].style.opacity = g.toFixed(3)
+      const shown = pathAt ? g * smoothstep(0, PATH_FADE_MS, now - pathAt) : 0
+      path.style.opacity = litter[0].style.opacity = litter[1].style.opacity = shown.toFixed(3)
       const locked = window.scrollY >= bed.L - 1, vh = innerHeight, top = garden.getBoundingClientRect().top
       for (const b of beds) {
         for (const rose of b.roses) {
