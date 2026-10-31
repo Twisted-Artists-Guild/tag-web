@@ -39,7 +39,7 @@ const FAR_TALL_ASPECT = 1024 / 1536
 const FAR_TALL_HILL = 0.743
 const PAINT_ASPECT = 1584 / 672
 const BEAT = 60000 / 124
-const BUSHES = ["garden-bush-1.webp", "garden-bush-2.webp", "garden-bush-3.webp", "garden-bush-4.webp", "garden-bush-5.webp"]
+const BUSHES = ["hedge-1.webp", "hedge-2.webp", "hedge-3.webp", "hedge-4.webp", "hedge-5.webp"]
 const BUSH_ASPECT = 466 / 560
 const BUSH_MAX = 340
 const VINE_GUTTER = 120
@@ -48,8 +48,11 @@ const BLOOM_MS = 1500
 const BLOOM_LINE = 0.84
 const SEPAL = "M0,0 C-7,-10 -6,-28 0,-38 C6,-28 7,-10 0,0Z"
 const ROSE_SHEET = "roses.webp"
-const GRASS = "grass.webp"
-const GROUNDS = ["ground-l.webp", "ground-r.webp"]
+const GRASS = "path-grass.webp"
+const GROUNDS = ["path-ground-l.webp", "path-ground-r.webp"]
+const PATH = "path.webp"
+const LITTER = ["litter-l.webp", "litter-r.webp"]
+const FRINGE = ["fringe-l.webp", "fringe-r.webp"]
 const ROSES = [
   { teal: false, w: 224, h: 213, c: [111.8, 106.4], R: 99.6, full: [0, 0, 206, 194, 9, 9],
     petals: [[683, 358, 86, 62, 24, 134, 0.83, 131.2], [771, 358, 90, 58, 91, 143, 0.778, 70.4], [373, 358, 67, 83, 106, 37, 0.524, 313.1], [351, 196, 132, 139, 10, 18, 0.509, 204.4], [412, 0, 160, 181, 53, 11, 0.505, 345.9], [490, 358, 63, 73, 105, 93, 0.438, 45.6], [442, 358, 46, 73, 104, 57, 0.239, 321.2], [124, 358, 105, 94, 39, 63, 0.216, 169.1], [178, 458, 52, 37, 76, 76, 0.151, 229.5]] },
@@ -744,13 +747,17 @@ export default function BloomscrollScene({ children }) {
     }
     const blurredMask = (box, points, blur, baseOpacity) => `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${box}" preserveAspectRatio="none"><defs><linearGradient id="f" x1="0" y1="0" x2="0" y2="1"><stop offset="0.8" stop-color="black"/><stop offset="1" stop-color="black" stop-opacity="${baseOpacity}"/></linearGradient><filter id="b" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="${blur}"/></filter></defs><polygon points="${points.join(" ")}" fill="url(#f)" filter="url(#b)"/></svg>`)}")`
     const wave = (n, at) => Array.from({ length: n + 13 }, (_, k) => at((k - 6) / n))
-    const sway = (t) => 0.66 + 0.09 * Math.sin(t * Math.PI * 2) + 0.05 * Math.sin(t * Math.PI * 6 + 1.3)
-    const edgeMask = (right) => blurredMask("100 640", [right ? "160,-120" : "-60,-120", ...wave(40, (t) => `${(right ? 1 - sway(t) : sway(t)) * 100},${t * 640}`), right ? "160,760" : "-60,760"], "9 4", 1)
+    const sway = (t) => 0.7 + 0.07 * Math.sin(t * Math.PI * 2) + 0.04 * Math.sin(t * Math.PI * 6 + 1.3)
+    const edgeMask = (right) => blurredMask("100 640", [right ? "160,-120" : "-60,-120", ...wave(40, (t) => `${(right ? 1 - sway(t) : sway(t)) * 100},${t * 640}`), right ? "160,760" : "-60,760"], "3 3", 1)
     const grassMask = blurredMask("900 100", ["-90,100", ...wave(60, (t) => `${t * 900},${(0.42 + 0.14 * Math.sin(t * Math.PI * 2 + 0.6) + 0.08 * Math.sin(t * Math.PI * 6)) * 100}`), "990,100"], "6 7", 0)
     const grass = garden.querySelector(".tag-bs-garden__grass"), grounds = [...garden.querySelectorAll(".tag-bs-garden__ground")]
     setSrc(grass, GRASS)
     grass.style.maskImage = grass.style.webkitMaskImage = grassMask
     grounds.forEach((img, n) => setSrc(img, GROUNDS[n]))
+    const path = garden.querySelector(".tag-bs-garden__path"), shade = rgb("path-shade")
+    const litter = [...garden.querySelectorAll(".tag-bs-garden__litter")], fringe = [...garden.querySelectorAll(".tag-bs-garden__fringe")]
+    litter.forEach((el, n) => { el.style.backgroundImage = `url(${IMG}${LITTER[n]}?${ART_V})` })
+    fringe.forEach((el, n) => { el.style.backgroundImage = `url(${IMG}${FRINGE[n]}?${ART_V})` })
     const bed = { L: 0, w: 0, top: 0, vine: false, dpr: 1 }
     const beds = [...garden.querySelectorAll(".tag-bs-garden__bed")].map((el, n) => {
       el.style.maskImage = el.style.webkitMaskImage = edgeMask(n === 1)
@@ -854,6 +861,16 @@ export default function BloomscrollScene({ children }) {
       const height = Math.max(0, rootR.height - bed.top)
       garden.style.top = `${bed.top}px`
       garden.style.height = `${height}px`
+      const pathTop = vine ? 0 : H * 0.26, edge = vine ? 0 : w, dark = `rgba(${shade}, 0.78)`, clear = `rgba(${shade}, 0)`
+      path.style.top = `${pathTop}px`
+      path.style.backgroundImage = `linear-gradient(to bottom, ${clear} calc(100% - 320px), rgba(${shade}, 0.94) calc(100% - 70px)), linear-gradient(to right, ${dark} 0, ${dark} ${edge}px, ${clear} ${edge + 320}px, ${clear} calc(100% - ${edge + 320}px), ${dark} calc(100% - ${edge}px), ${dark} 100%), url(${IMG}${PATH}?${ART_V})`
+      path.style.backgroundSize = `100% 100%, 100% 100%, ${Math.max(1400, rootR.width)}px auto`
+      litter.forEach((el) => { el.style.top = `${pathTop}px`; el.hidden = vine })
+      fringe.forEach((el) => { el.hidden = vine })
+      litter[0].style.left = `${w - 170}px`
+      litter[1].style.right = `${w - 170}px`
+      fringe[0].style.left = `${w * 0.56}px`
+      fringe[1].style.right = `${w * 0.56}px`
       if (w !== bed.w || vine !== bed.vine) {
         bed.w = w
         bed.vine = vine
@@ -876,8 +893,9 @@ export default function BloomscrollScene({ children }) {
       const g = reduced.matches ? 1 : smoothstep(0, holdFor(scene.clientHeight), sy)
       const travel = bed.w + 60
       garden.style.transform = `translate3d(0, ${-Math.max(0, bed.L - window.scrollY)}px, 0)`
-      beds[0].el.style.transform = beds[0].ground.style.transform = `translate3d(${-(1 - g) * travel}px, 0, 0)`
-      beds[1].el.style.transform = beds[1].ground.style.transform = `translate3d(${(1 - g) * travel}px, 0, 0)`
+      beds[0].el.style.transform = beds[0].ground.style.transform = litter[0].style.transform = fringe[0].style.transform = `translate3d(${-(1 - g) * travel}px, 0, 0)`
+      beds[1].el.style.transform = beds[1].ground.style.transform = litter[1].style.transform = fringe[1].style.transform = `translate3d(${(1 - g) * travel}px, 0, 0)`
+      path.style.opacity = litter[0].style.opacity = litter[1].style.opacity = g.toFixed(3)
       const locked = window.scrollY >= bed.L - 1, vh = innerHeight, top = garden.getBoundingClientRect().top
       for (const b of beds) {
         for (const rose of b.roses) {
@@ -997,9 +1015,14 @@ export default function BloomscrollScene({ children }) {
       </div>
       <div className="tag-bs-feed" data-part="feed">{children}</div>
       <div className="tag-bs-garden" data-part="garden" aria-hidden="true">
+        <div className="tag-bs-garden__path" />
+        <div className="tag-bs-garden__litter tag-bs-garden__litter--l" />
+        <div className="tag-bs-garden__litter tag-bs-garden__litter--r" />
         <img className="tag-bs-garden__grass" alt="" />
         <div className="tag-bs-garden__bed tag-bs-garden__bed--l"><div className="tag-bs-garden__bush" /></div>
         <div className="tag-bs-garden__bed tag-bs-garden__bed--r"><div className="tag-bs-garden__bush" /></div>
+        <div className="tag-bs-garden__fringe tag-bs-garden__fringe--l" />
+        <div className="tag-bs-garden__fringe tag-bs-garden__fringe--r" />
         <img className="tag-bs-garden__ground tag-bs-garden__ground--l" alt="" />
         <img className="tag-bs-garden__ground tag-bs-garden__ground--r" alt="" />
       </div>
