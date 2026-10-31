@@ -39,7 +39,7 @@ const FAR_TALL_ASPECT = 1024 / 1536
 const FAR_TALL_HILL = 0.743
 const PAINT_ASPECT = 1584 / 672
 const BEAT = 60000 / 124
-const BUSHES = ["bush-1.webp", "bush-2.webp", "bush-3.webp", "bush-4.webp", "bush-5.webp"]
+const BUSHES = ["garden-bush-1.webp", "garden-bush-2.webp", "garden-bush-3.webp", "garden-bush-4.webp", "garden-bush-5.webp"]
 const BUSH_ASPECT = 466 / 560
 const BUSH_MAX = 340
 const VINE_GUTTER = 120
@@ -48,6 +48,8 @@ const BLOOM_MS = 1500
 const BLOOM_LINE = 0.84
 const SEPAL = "M0,0 C-7,-10 -6,-28 0,-38 C6,-28 7,-10 0,0Z"
 const ROSE_SHEET = "roses.webp"
+const GRASS = "grass.webp"
+const GROUNDS = ["ground-l.webp", "ground-r.webp"]
 const ROSES = [
   { teal: false, w: 224, h: 213, c: [111.8, 106.4], R: 99.6, full: [0, 0, 206, 194, 9, 9],
     petals: [[683, 358, 86, 62, 24, 134, 0.83, 131.2], [771, 358, 90, 58, 91, 143, 0.778, 70.4], [373, 358, 67, 83, 106, 37, 0.524, 313.1], [351, 196, 132, 139, 10, 18, 0.509, 204.4], [412, 0, 160, 181, 53, 11, 0.505, 345.9], [490, 358, 63, 73, 105, 93, 0.438, 45.6], [442, 358, 46, 73, 104, 57, 0.239, 321.2], [124, 358, 105, 94, 39, 63, 0.216, 169.1], [178, 458, 52, 37, 76, 76, 0.151, 229.5]] },
@@ -728,9 +730,32 @@ export default function BloomscrollScene({ children }) {
     const clamp = (x) => Math.max(0, Math.min(1, x))
     const ease = (x) => x * x * x * (x * (x * 6 - 15) + 10)
     const seeded = (seed) => () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647 }
-    const whites = ROSES.flatMap((art, i) => (art.teal ? [] : [i])), teals = ROSES.flatMap((art, i) => (art.teal ? [i] : []))
+    const deck = (rnd) => {
+      let pile = [], last = -1
+      return () => {
+        if (!pile.length) {
+          pile = ROSES.map((_, i) => i)
+          for (let i = pile.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [pile[i], pile[j]] = [pile[j], pile[i]] }
+          if (pile[pile.length - 1] === last) [pile[0], pile[pile.length - 1]] = [pile[pile.length - 1], pile[0]]
+        }
+        last = pile.pop()
+        return last
+      }
+    }
+    const blurredMask = (box, points, blur, baseOpacity) => `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${box}" preserveAspectRatio="none"><defs><linearGradient id="f" x1="0" y1="0" x2="0" y2="1"><stop offset="0.8" stop-color="black"/><stop offset="1" stop-color="black" stop-opacity="${baseOpacity}"/></linearGradient><filter id="b" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="${blur}"/></filter></defs><polygon points="${points.join(" ")}" fill="url(#f)" filter="url(#b)"/></svg>`)}")`
+    const wave = (n, at) => Array.from({ length: n + 1 }, (_, k) => at(k / n))
+    const sway = (t) => 0.66 + 0.09 * Math.sin(t * Math.PI * 2) + 0.05 * Math.sin(t * Math.PI * 6 + 1.3)
+    const edgeMask = (right) => blurredMask("100 640", [right ? "100,0" : "0,0", ...wave(40, (t) => `${(right ? 1 - sway(t) : sway(t)) * 100},${t * 640}`), right ? "100,640" : "0,640"], "9 4", 1)
+    const grassMask = blurredMask("900 100", ["0,100", ...wave(60, (t) => `${t * 900},${(0.42 + 0.14 * Math.sin(t * Math.PI * 2 + 0.6) + 0.08 * Math.sin(t * Math.PI * 6)) * 100}`), "900,100"], "6 7", 0)
+    const grass = garden.querySelector(".tag-bs-garden__grass"), grounds = [...garden.querySelectorAll(".tag-bs-garden__ground")]
+    setSrc(grass, GRASS)
+    grass.style.maskImage = grass.style.webkitMaskImage = grassMask
+    grounds.forEach((img, n) => setSrc(img, GROUNDS[n]))
     const bed = { L: 0, w: 0, top: 0, vine: false, dpr: 1 }
-    const beds = [...garden.children].map((el, n) => ({ el, bush: el.firstElementChild, right: n === 1, roses: [], kept: [] }))
+    const beds = [...garden.querySelectorAll(".tag-bs-garden__bed")].map((el, n) => {
+      el.style.maskImage = el.style.webkitMaskImage = edgeMask(n === 1)
+      return { el, bush: el.firstElementChild, ground: grounds[n], right: n === 1, roses: [], kept: [] }
+    })
 
     function drawRose(rose) {
       const art = ROSES[rose.art], cv = rose.el, c = cv.getContext("2d"), [cx, cy] = art.c, p = rose.p
@@ -793,25 +818,25 @@ export default function BloomscrollScene({ children }) {
 
     function plant(b, height) {
       const segH = bed.w * BUSH_ASPECT
-      for (; b.bushTo < height; b.bushTo += segH * 0.6 * (0.9 + b.bushRnd() * 0.2)) {
+      for (; b.bushTo < height; b.bushTo += segH * 0.42 * (0.9 + b.bushRnd() * 0.2)) {
         let pick = Math.floor(b.bushRnd() * BUSHES.length)
         if (pick === b.bushPick) pick = (pick + 1) % BUSHES.length
         b.bushPick = pick
-        const scale = 0.94 + b.bushRnd() * 0.16, img = document.createElement("img")
+        const scale = 1.06 + b.bushRnd() * 0.1, img = document.createElement("img")
         img.alt = ""
         img.decoding = "async"
         img.src = `${IMG}${BUSHES[pick]}?${ART_V}`
-        Object.assign(img.style, { top: `${b.bushTo}px`, left: `${(b.bushRnd() - 0.6) * 0.1 * bed.w}px`, width: `${bed.w * scale}px`, height: `${segH * scale}px` })
+        Object.assign(img.style, { top: `${b.bushTo}px`, left: `${-b.bushRnd() * 0.08 * bed.w}px`, width: `${bed.w * scale}px`, height: `${segH * scale}px` })
         b.bush.appendChild(img)
       }
       const rnd = b.roseRnd
-      for (; b.roseTo < height - 50; b.roseTo += 58 + rnd() * 52) {
-        const teal = rnd() < 0.45, seed = Math.floor(rnd() * 1000), set = teal ? teals : whites
+      for (; b.roseTo < height - (bed.vine ? 110 : 250); b.roseTo += 58 + rnd() * 52) {
+        const seed = Math.floor(rnd() * 1000)
         const size = bed.vine ? 17 + rnd() * 7 : 50 + rnd() * 38
-        const bud = !bed.vine && rnd() < 0.08, jitter = rnd() * 400, fx = 0.16 + rnd() * 0.7
+        const bud = !bed.vine && rnd() < 0.08, jitter = rnd() * 400, fx = 0.08 + rnd() * 0.32
         b.roses.push({
           y: b.roseTo, fx, size, seed, bud, jitter, el: null, t0: undefined,
-          art: set[seed % set.length], tilt: ((((seed * 37) % 40) - 20) * Math.PI) / 180, spin: seed % 2 ? 1 : -1,
+          art: b.variety(), tilt: ((((seed * 37) % 40) - 20) * Math.PI) / 180, spin: seed % 2 ? 1 : -1,
           p: b.kept[b.roses.length] ?? (reduced.matches ? 1 : 0),
         })
       }
@@ -826,7 +851,7 @@ export default function BloomscrollScene({ children }) {
       bed.dpr = Math.min(2, devicePixelRatio || 1)
       bed.L = phoneMode ? holdFor(H) : sceneTop - stickTop + holdFor(H)
       bed.top = bed.L + stickTop + H * (vine ? 1 : 0.74) - rootTop
-      const height = Math.max(0, colR.bottom + window.scrollY - rootTop - bed.top + 40)
+      const height = Math.max(0, rootR.height - bed.top)
       garden.style.top = `${bed.top}px`
       garden.style.height = `${height}px`
       if (w !== bed.w || vine !== bed.vine) {
@@ -837,7 +862,10 @@ export default function BloomscrollScene({ children }) {
           b.roses.forEach((rose) => rose.el?.remove())
           b.bush.replaceChildren()
           b.el.style.width = `${w}px`
-          Object.assign(b, { roses: [], bushTo: -w * BUSH_ASPECT * 0.3, roseTo: 80, bushPick: -1, bushRnd: seeded(7 + n * 6), roseRnd: seeded(29 + n * 24) })
+          b.ground.style.width = `${w + 260}px`
+          b.ground.hidden = vine
+          Object.assign(b, { roses: [], bushTo: -w * BUSH_ASPECT * 0.3, roseTo: 80, bushPick: -1, bushRnd: seeded(7 + n * 6), roseRnd: seeded(29 + n * 24), variety: deck(seeded(101 + n * 57)) })
+          if (b.right) { b.variety(); b.variety() }
         })
       }
       beds.forEach((b) => plant(b, height))
@@ -848,8 +876,8 @@ export default function BloomscrollScene({ children }) {
       const g = reduced.matches ? 1 : smoothstep(0, holdFor(scene.clientHeight), sy)
       const travel = bed.w + 60
       garden.style.transform = `translate3d(0, ${-Math.max(0, bed.L - window.scrollY)}px, 0)`
-      beds[0].el.style.transform = `translate3d(${-(1 - g) * travel}px, 0, 0)`
-      beds[1].el.style.transform = `translate3d(${(1 - g) * travel}px, 0, 0)`
+      beds[0].el.style.transform = beds[0].ground.style.transform = `translate3d(${-(1 - g) * travel}px, 0, 0)`
+      beds[1].el.style.transform = beds[1].ground.style.transform = `translate3d(${(1 - g) * travel}px, 0, 0)`
       const locked = window.scrollY >= bed.L - 1, vh = innerHeight, top = garden.getBoundingClientRect().top
       for (const b of beds) {
         for (const rose of b.roses) {
@@ -878,7 +906,41 @@ export default function BloomscrollScene({ children }) {
     gardenWatch.observe(garden)
     gardenResizer.observe(scene)
     gardenResizer.observe(feed)
+
+    const footFlies = part("footFlies"), footCtx = footFlies.getContext("2d"), flyRnd = seeded(5)
+    const swarm = Array.from({ length: 8 }, (_, i) => ({
+      x: i % 4 === 3 ? 0.3 + flyRnd() * 0.4 : i % 2 ? 1 - flyRnd() * 0.22 : flyRnd() * 0.22, y: 0.2 + flyRnd() * 0.6,
+      vx: (flyRnd() - 0.5) * 0.006, vy: (flyRnd() - 0.5) * 0.01, phase: flyRnd() * Math.PI * 2, size: 8 + flyRnd() * 6,
+    }))
+    let fliesOn = false, fliesRaf = 0, fliesLast = 0
+    function hover(now) {
+      const dt = Math.min(64, now - fliesLast) / 1000, still = reduced.matches
+      fliesLast = now
+      const dpr = Math.min(2, devicePixelRatio || 1), w = footFlies.clientWidth, h = footFlies.clientHeight
+      if (footFlies.width !== Math.round(w * dpr)) { footFlies.width = Math.round(w * dpr); footFlies.height = Math.round(h * dpr) }
+      footCtx.setTransform(dpr, 0, 0, dpr, 0, 0)
+      footCtx.clearRect(0, 0, w, h)
+      for (const f of swarm.slice(0, phoneMode ? 4 : swarm.length)) {
+        if (!still) {
+          f.x += (f.vx + Math.sin(now / 1300 + f.phase) * 0.004) * dt
+          f.y += (f.vy + Math.cos(now / 1700 + f.phase) * 0.012) * dt
+          if (f.x < 0.02 || f.x > 0.98) f.vx = -f.vx
+          if (f.y < 0.12) f.vy = Math.abs(f.vy)
+          if (f.y > 0.88) f.vy = -Math.abs(f.vy)
+        }
+        footCtx.globalAlpha = still ? 0.6 : 0.3 + 0.7 * Math.max(0, Math.sin(now / 650 + f.phase))
+        footCtx.drawImage(flySprite, f.x * w - f.size / 2, f.y * h - f.size / 2, f.size, f.size)
+      }
+      fliesRaf = fliesOn && !still ? requestAnimationFrame(hover) : 0
+    }
+    const fliesWatch = new IntersectionObserver(([e]) => {
+      fliesOn = e.isIntersecting
+      if (fliesOn && !fliesRaf) { fliesLast = performance.now(); fliesRaf = requestAnimationFrame(hover) }
+    })
+    fliesWatch.observe(footFlies)
     return () => {
+      cancelAnimationFrame(fliesRaf)
+      fliesWatch.disconnect()
       cancelAnimationFrame(gardenRaf)
       gardenWatch.disconnect()
       gardenResizer.disconnect()
@@ -935,9 +997,13 @@ export default function BloomscrollScene({ children }) {
       </div>
       <div className="tag-bs-feed" data-part="feed">{children}</div>
       <div className="tag-bs-garden" data-part="garden" aria-hidden="true">
+        <img className="tag-bs-garden__grass" alt="" />
         <div className="tag-bs-garden__bed tag-bs-garden__bed--l"><div className="tag-bs-garden__bush" /></div>
         <div className="tag-bs-garden__bed tag-bs-garden__bed--r"><div className="tag-bs-garden__bush" /></div>
+        <img className="tag-bs-garden__ground tag-bs-garden__ground--l" alt="" />
+        <img className="tag-bs-garden__ground tag-bs-garden__ground--r" alt="" />
       </div>
+      <canvas className="tag-bs-garden__flies" data-part="footFlies" aria-hidden="true" />
     </div>
   )
 }

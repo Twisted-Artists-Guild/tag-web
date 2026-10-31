@@ -338,6 +338,10 @@
     top: 0;
     bottom: 0;
     will-change: transform;
+    -webkit-mask-size: 100% 640px;
+    mask-size: 100% 640px;
+    -webkit-mask-repeat: repeat-y;
+    mask-repeat: repeat-y;
   }
 
   .tag-bs-garden__bed--l {
@@ -352,10 +356,8 @@
     position: absolute;
     inset: 0;
     overflow: hidden;
-    -webkit-mask-image: linear-gradient(to bottom, transparent 0, black 160px), linear-gradient(to right, black 62%, transparent);
-    -webkit-mask-composite: source-in;
-    mask-image: linear-gradient(to bottom, transparent 0, black 160px), linear-gradient(to right, black 62%, transparent);
-    mask-composite: intersect;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, black 160px, black calc(100% - 90px), transparent calc(100% - 10px));
+    mask-image: linear-gradient(to bottom, transparent 0, black 160px, black calc(100% - 90px), transparent calc(100% - 10px));
   }
 
   .tag-bs-garden__bed--r .tag-bs-garden__bush {
@@ -369,5 +371,70 @@
 
   .tag-bs-garden__rose {
     position: absolute;
+  }
+
+  .tag-bs-garden__grass {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    max-width: none;
+    height: 130px;
+    object-fit: cover;
+    object-position: center bottom;
+    -webkit-mask-size: 900px 100%;
+    mask-size: 900px 100%;
+    -webkit-mask-repeat: repeat-x;
+    mask-repeat: repeat-x;
+  }
+
+  .tag-bs-garden__ground {
+    position: absolute;
+    bottom: 0;
+    height: 260px;
+    max-width: none;
+    object-fit: cover;
+  }
+
+  .tag-bs-garden__ground--l {
+    left: 0;
+    object-position: left bottom;
+    -webkit-mask-image: radial-gradient(ellipse 100% 120% at 0% 100%, black 30%, rgba(0, 0, 0, 0.6) 48%, transparent 70%), linear-gradient(to top, transparent 0, black 34px);
+    -webkit-mask-composite: source-in;
+    mask-image: radial-gradient(ellipse 100% 120% at 0% 100%, black 30%, rgba(0, 0, 0, 0.6) 48%, transparent 70%), linear-gradient(to top, transparent 0, black 34px);
+    mask-composite: intersect;
+  }
+
+  .tag-bs-garden__ground--r {
+    right: 0;
+    object-position: right bottom;
+    -webkit-mask-image: radial-gradient(ellipse 100% 120% at 100% 100%, black 30%, rgba(0, 0, 0, 0.6) 48%, transparent 70%), linear-gradient(to top, transparent 0, black 34px);
+    -webkit-mask-composite: source-in;
+    mask-image: radial-gradient(ellipse 100% 120% at 100% 100%, black 30%, rgba(0, 0, 0, 0.6) 48%, transparent 70%), linear-gradient(to top, transparent 0, black 34px);
+    mask-composite: intersect;
+  }
+
+  .tag-bs-garden__flies {
+    position: absolute;
+    left: 0;
+    bottom: -96px;
+    z-index: 12;
+    width: 100%;
+    height: 200px;
+    pointer-events: none;
+  }
+
+  .tag-bloomscroll > .tag-bs-feed {
+    padding-bottom: 144px;
+  }
+
+  @media (max-width: 767px) {
+    .tag-bs-garden__grass {
+      height: 72px;
+    }
+
+    .tag-bloomscroll > .tag-bs-feed {
+      padding-bottom: 96px;
+    }
   }
 }
