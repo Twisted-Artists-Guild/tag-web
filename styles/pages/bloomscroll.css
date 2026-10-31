@@ -23,6 +23,7 @@
     perspective: 1600px;
     perspective-origin: 50% 70%;
     color: var(--tag-photo-text);
+    clip-path: inset(0 0 2px 0);
   }
 
   .tag-bs__book {
@@ -318,5 +319,156 @@
   .tag-bs--phone::after {
     height: 30%;
     background: linear-gradient(to bottom, transparent, rgba(var(--tag-bs-night-rgb), 0.6) 55%, var(--tag-bg));
+  }
+
+  .tag-bloomscroll {
+    position: relative;
+  }
+
+  .tag-bs-garden {
+    position: absolute;
+    inset-inline: 0;
+    z-index: 11;
+    overflow: clip;
+    pointer-events: none;
+  }
+
+  .tag-bs-garden__bed {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    will-change: transform;
+    -webkit-mask-size: 100% 640px;
+    mask-size: 100% 640px;
+    -webkit-mask-repeat: repeat-y;
+    mask-repeat: repeat-y;
+  }
+
+  .tag-bs-garden__bed--l {
+    left: 0;
+  }
+
+  .tag-bs-garden__bed--r {
+    right: 0;
+  }
+
+  .tag-bs-garden__bush {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, black 160px, black calc(100% - 90px), transparent calc(100% - 10px));
+    mask-image: linear-gradient(to bottom, transparent 0, black 160px, black calc(100% - 90px), transparent calc(100% - 10px));
+  }
+
+  .tag-bs-garden__bed--r .tag-bs-garden__bush {
+    transform: scaleX(-1);
+  }
+
+  .tag-bs-garden__bush img {
+    position: absolute;
+    max-width: none;
+  }
+
+  .tag-bs-garden__rose {
+    position: absolute;
+  }
+
+  .tag-bs-garden__path {
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0;
+    background-repeat: no-repeat, no-repeat, repeat;
+    background-position: 0 0, 0 0, center top;
+    opacity: 0;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, black 260px);
+    mask-image: linear-gradient(to bottom, transparent 0, black 260px);
+  }
+
+  .tag-bs-garden__litter {
+    position: absolute;
+    bottom: 0;
+    width: 420px;
+    opacity: 0;
+    background-repeat: repeat-y;
+    background-size: 420px auto;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, black 320px, black calc(100% - 260px), transparent calc(100% - 120px));
+    mask-image: linear-gradient(to bottom, transparent 0, black 320px, black calc(100% - 260px), transparent calc(100% - 120px));
+  }
+
+  .tag-bs-garden__fringe {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 208px;
+    background-repeat: repeat-y;
+    background-size: 208px auto;
+    will-change: transform;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, black 200px, black calc(100% - 150px), transparent calc(100% - 60px));
+    mask-image: linear-gradient(to bottom, transparent 0, black 200px, black calc(100% - 150px), transparent calc(100% - 60px));
+  }
+
+  .tag-bs-garden__grass {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    max-width: none;
+    height: 130px;
+    object-fit: cover;
+    object-position: center bottom;
+    -webkit-mask-size: 900px 100%;
+    mask-size: 900px 100%;
+    -webkit-mask-repeat: repeat-x;
+    mask-repeat: repeat-x;
+  }
+
+  .tag-bs-garden__ground {
+    position: absolute;
+    bottom: 0;
+    height: 260px;
+    max-width: none;
+    object-fit: cover;
+  }
+
+  .tag-bs-garden__ground--l {
+    left: 0;
+    object-position: left bottom;
+    -webkit-mask-image: radial-gradient(ellipse 100% 120% at 0% 100%, black 30%, rgba(0, 0, 0, 0.6) 48%, transparent 70%), linear-gradient(to top, transparent 0, black 34px);
+    -webkit-mask-composite: source-in;
+    mask-image: radial-gradient(ellipse 100% 120% at 0% 100%, black 30%, rgba(0, 0, 0, 0.6) 48%, transparent 70%), linear-gradient(to top, transparent 0, black 34px);
+    mask-composite: intersect;
+  }
+
+  .tag-bs-garden__ground--r {
+    right: 0;
+    object-position: right bottom;
+    -webkit-mask-image: radial-gradient(ellipse 100% 120% at 100% 100%, black 30%, rgba(0, 0, 0, 0.6) 48%, transparent 70%), linear-gradient(to top, transparent 0, black 34px);
+    -webkit-mask-composite: source-in;
+    mask-image: radial-gradient(ellipse 100% 120% at 100% 100%, black 30%, rgba(0, 0, 0, 0.6) 48%, transparent 70%), linear-gradient(to top, transparent 0, black 34px);
+    mask-composite: intersect;
+  }
+
+  .tag-bs-garden__flies {
+    position: absolute;
+    left: 0;
+    bottom: -96px;
+    z-index: 12;
+    width: 100%;
+    height: 200px;
+    pointer-events: none;
+  }
+
+  .tag-bloomscroll > .tag-bs-feed {
+    padding-bottom: 144px;
+  }
+
+  @media (max-width: 767px) {
+    .tag-bs-garden__grass {
+      height: 72px;
+    }
+
+    .tag-bloomscroll > .tag-bs-feed {
+      padding-bottom: 96px;
+    }
   }
 }
