@@ -319,4 +319,54 @@
     height: 30%;
     background: linear-gradient(to bottom, transparent, rgba(var(--tag-bs-night-rgb), 0.6) 55%, var(--tag-bg));
   }
+
+  .tag-bloomscroll {
+    position: relative;
+  }
+
+  .tag-bs-garden {
+    position: absolute;
+    inset-inline: 0;
+    z-index: 11;
+    overflow: clip;
+    pointer-events: none;
+  }
+
+  .tag-bs-garden__bed {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    will-change: transform;
+  }
+
+  .tag-bs-garden__bed--l {
+    left: 0;
+  }
+
+  .tag-bs-garden__bed--r {
+    right: 0;
+  }
+
+  .tag-bs-garden__bush {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0, black 160px), linear-gradient(to right, black 62%, transparent);
+    -webkit-mask-composite: source-in;
+    mask-image: linear-gradient(to bottom, transparent 0, black 160px), linear-gradient(to right, black 62%, transparent);
+    mask-composite: intersect;
+  }
+
+  .tag-bs-garden__bed--r .tag-bs-garden__bush {
+    transform: scaleX(-1);
+  }
+
+  .tag-bs-garden__bush img {
+    position: absolute;
+    max-width: none;
+  }
+
+  .tag-bs-garden__rose {
+    position: absolute;
+  }
 }
