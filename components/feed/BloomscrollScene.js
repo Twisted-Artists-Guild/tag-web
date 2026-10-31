@@ -921,14 +921,17 @@ export default function BloomscrollScene({ children }) {
       }
       gardenRaf = gardenOn ? requestAnimationFrame(tend) : 0
     }
-    const gardenWatch = new IntersectionObserver(([e]) => {
-      gardenOn = e.isIntersecting
+    const gardenSeen = new Set()
+    const gardenWatch = new IntersectionObserver((entries) => {
+      entries.forEach((e) => (e.isIntersecting ? gardenSeen.add(e.target) : gardenSeen.delete(e.target)))
+      gardenOn = gardenSeen.size > 0
       if (gardenOn && !gardenRaf) gardenRaf = requestAnimationFrame(tend)
     })
     const gardenResizer = new ResizeObserver(() => layoutGarden())
     sheet.addEventListener("load", () => beds.forEach((b) => b.roses.forEach((rose) => rose.el && drawRose(rose))))
     layoutGarden()
     gardenWatch.observe(garden)
+    gardenWatch.observe(scene)
     gardenResizer.observe(scene)
     gardenResizer.observe(feed)
 
