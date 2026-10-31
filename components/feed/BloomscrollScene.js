@@ -330,7 +330,7 @@ export default function BloomscrollScene({ children }) {
 
     const crowdCanvas = part("crowd"), crowdCtx = crowdCanvas.getContext("2d")
     function drawCrowd(t) {
-      const bw = backdrop.clientWidth, bh = backdrop.clientHeight
+      const { bw, bh } = box
       const dpr = Math.min(devicePixelRatio || 1, 2)
       const cw = Math.round(bw * dpr), ch = Math.round(bh * dpr)
       if (crowdCanvas.width !== cw || crowdCanvas.height !== ch) { crowdCanvas.width = cw; crowdCanvas.height = ch }
@@ -454,7 +454,7 @@ export default function BloomscrollScene({ children }) {
 
     const wheelCanvas = part("wheel"), wheelCtx = wheelCanvas.getContext("2d")
     function drawWheel(t, appear) {
-      const bw = backdrop.clientWidth, bh = backdrop.clientHeight
+      const { bw, bh } = box
       const dpr = Math.min(devicePixelRatio || 1, 2)
       const cw = Math.round(bw * dpr), ch = Math.round(bh * dpr)
       if (wheelCanvas.width !== cw || wheelCanvas.height !== ch) { wheelCanvas.width = cw; wheelCanvas.height = ch }
@@ -513,7 +513,7 @@ export default function BloomscrollScene({ children }) {
     const lifeCanvas = part("life"), lifeCtx = lifeCanvas.getContext("2d")
     const embers = []
     function drawLife(t, dt, appear) {
-      const bw = backdrop.clientWidth, bh = backdrop.clientHeight
+      const { bw, bh } = box
       const dpr = Math.min(devicePixelRatio || 1, 2)
       const cw = Math.round(bw * dpr), ch = Math.round(bh * dpr)
       if (lifeCanvas.width !== cw || lifeCanvas.height !== ch) { lifeCanvas.width = cw; lifeCanvas.height = ch }
@@ -581,7 +581,7 @@ export default function BloomscrollScene({ children }) {
     }
 
     function drawFlies(t, dt, y, mx, appear) {
-      const W = scene.clientWidth, H = scene.clientHeight
+      const { W, H } = box
       const lagByDepth = [FAR_LAG, 0.3, -NEAR_SPEED]
       const sizeByDepth = [6, 11, 26]
       flyCanvases.forEach((cv, i) => {
@@ -631,11 +631,16 @@ export default function BloomscrollScene({ children }) {
     }
     const onPointerLeave = () => { tx = 0; ty = 0 }
 
+    const box = { W: 0, H: 0, bw: 0, bh: 0, mw: 0 }
+    function measure() {
+      Object.assign(box, { W: scene.clientWidth, H: scene.clientHeight, bw: backdrop.clientWidth, bh: backdrop.clientHeight, mw: moon.offsetWidth })
+    }
+
     let visible = true, running = false, rafId = 0
     function frame(now) {
       const dt = Math.min(64, now - last) / 1000
       last = now
-      const W = scene.clientWidth, H = scene.clientHeight
+      const { W, H } = box
       const hold = holdFor(H), walk = walkFor(H)
       const target = Math.min(scrollPos(), hold + H)
       const still = reduced.matches
@@ -659,13 +664,12 @@ export default function BloomscrollScene({ children }) {
 
       const rise = 1 - smoothstep(700, 2300, since)
       const sink = Math.max(rise, Math.min(1, p * 1.5))
-      const mw = moon.offsetWidth
+      const mw = box.mw
       const mxPos = W * ((phoneMode ? 0.56 : 0.63) + sink * 0.05) - mw / 2 + mx * -4
       const myPos = moonRest + sink * (moonSunk - moonRest) + y * 0.72 - mw / 2
       moon.style.transform = `translate3d(${mxPos}px, ${myPos}px, 0)`
       moon.style.setProperty("--glow", String(1 - smoothstep(0.35, 0.95, sink)))
 
-      scene.style.setProperty("--approach", p.toFixed(3))
       const separate = W / H <= 1.6
       const grow = 1 + fp * NEAR_SPEED * (separate ? 0.3 : 1.2)
       const near = `translate3d(${fmx * -45}px, ${-fy * NEAR_SPEED * 0.25 + fmy * -14}px, 0) scale(${grow})`
@@ -702,10 +706,11 @@ export default function BloomscrollScene({ children }) {
       if (!running && visible) { running = true; last = performance.now(); rafId = requestAnimationFrame(frame) }
     }
     const observer = new IntersectionObserver(([e]) => { visible = e.isIntersecting; kick() })
-    const resizer = new ResizeObserver(() => { sizeCanvases(); layout(); readStick() })
+    const resizer = new ResizeObserver(() => { sizeCanvases(); layout(); measure(); readStick() })
 
     sizeCanvases()
     layout()
+    measure()
     readStick()
     sy = scrollPos()
     window.addEventListener("pointermove", onPointerMove, { passive: true })
@@ -826,7 +831,7 @@ export default function BloomscrollScene({ children }) {
 
     let gardenOn = false, gardenRaf = 0
     function tend(now) {
-      const g = reduced.matches ? 1 : smoothstep(0, holdFor(scene.clientHeight), sy)
+      const g = reduced.matches ? 1 : smoothstep(0, holdFor(box.H), sy)
       const travel = bed.w + 60
       garden.style.transform = `translate3d(0, ${-Math.max(0, bed.L - window.scrollY)}px, 0)`
       beds[0].el.style.transform = beds[0].ground.style.transform = litter[0].style.transform = fringe[0].style.transform = `translate3d(${-(1 - g) * travel}px, 0, 0)`
