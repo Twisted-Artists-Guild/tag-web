@@ -88,11 +88,11 @@ export default function FeedPostCard({ post, showIdentityGlow = true }) {
     if (postDeleted) return null;
 
     return (
-        <article className="card bg-base-100 shadow-sm border border-base-300">
+        <article className="card bg-base-100 shadow-sm border border-base-300" data-vine-post={post.feedPostID}>
             <div className="card-body p-4 gap-3">
                 {/* Author row */}
                 <div className="flex items-center gap-3">
-                    <div className="avatar">
+                    <div className="avatar" data-vine-avatar>
                         <div
                             className={`w-10 rounded-full bg-base-300 overflow-hidden border ${showIdentityGlow ? "" : "border-base-300"}`}
                             style={showIdentityGlow ? getIdentityGlowStyle({
@@ -131,7 +131,7 @@ export default function FeedPostCard({ post, showIdentityGlow = true }) {
                             <IoTrashOutline />
                         </button>
                     )}
-                    <ReportButton targetType="FeedPost" targetId={post.feedPostID} targetURL={'/feed?post=' + post.feedPostID} />
+                    <ReportButton targetType="FeedPost" targetId={post.feedPostID} targetURL={'/feed?post=' + post.feedPostID} className="tag-bs-vine__flag" />
                 </div>
 
                 {/* Body */}

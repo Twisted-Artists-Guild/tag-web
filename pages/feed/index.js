@@ -15,6 +15,7 @@ import { useRouter } from 'next/router';
 import Link from 'next/link';
 import TagSEO from '@/components/TagSEO';
 import BloomscrollScene from '@/components/feed/BloomscrollScene';
+import BloomscrollVine from '@/components/feed/BloomscrollVine';
 import FeedPostCard from '@/components/feed/FeedPostCard';
 import FeedComposer from '@/components/feed/FeedComposer';
 import {
@@ -152,7 +153,7 @@ export default function BloomscrollFeed() {
     return (
         <BloomscrollScene>
             <TagSEO metadataProp={{ title: "Bloomscroll", description: "Your creative social feed on TAG" }} canonicalSlug="feed" />
-            <div className="container mx-auto px-4 pb-8 max-w-2xl">
+            <div className="container mx-auto pb-8 max-w-[760px] tag-bs-feed__column">
                 <div className="flex justify-end gap-1 mb-6">
                     {ALGORITHMS.map(algo => (
                         <button
@@ -172,27 +173,29 @@ export default function BloomscrollFeed() {
                 )}
 
                 {/* Feed Posts */}
-                <div className="space-y-4">
-                    {loading ? (
-                        <div className="flex justify-center py-12"><span className="loading loading-spinner loading-lg text-primary"></span></div>
-                    ) : posts.length === 0 ? (
-                        <div className="card bg-base-100 border border-base-300 shadow-sm">
-                            <div className="card-body items-center text-center py-12">
-                                <IoFlowerOutline className="text-5xl text-base-content/20 mb-3" />
-                                <p className="text-base-content/50 text-lg">The feed is quiet... be the first to bloom!</p>
+                <BloomscrollVine>
+                    <div className="tag-bs-vine__list">
+                        {loading ? (
+                            <div className="flex justify-center py-12"><span className="loading loading-spinner loading-lg text-primary"></span></div>
+                        ) : posts.length === 0 ? (
+                            <div className="card bg-base-100 border border-base-300 shadow-sm">
+                                <div className="card-body items-center text-center py-12">
+                                    <IoFlowerOutline className="text-5xl text-base-content/20 mb-3" />
+                                    <p className="text-base-content/50 text-lg">The feed is quiet... be the first to bloom!</p>
+                                </div>
                             </div>
-                        </div>
-                    ) : posts.map(post => (
-                        <FeedPostCard key={post.feedPostID} post={post} showIdentityGlow={false} />
-                    ))}
+                        ) : posts.map(post => (
+                            <FeedPostCard key={post.feedPostID} post={post} showIdentityGlow={false} />
+                        ))}
 
-                    {/* Infinite scroll sentinel */}
-                    {page < totalPages && (
-                        <div ref={observerRef} className="flex justify-center py-4">
-                            {loadingMore && <span className="loading loading-spinner text-primary"></span>}
-                        </div>
-                    )}
-                </div>
+                        {/* Infinite scroll sentinel */}
+                        {page < totalPages && (
+                            <div ref={observerRef} className="flex justify-center py-4">
+                                {loadingMore && <span className="loading loading-spinner text-primary"></span>}
+                            </div>
+                        )}
+                    </div>
+                </BloomscrollVine>
             </div>
         </BloomscrollScene>
     );

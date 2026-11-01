@@ -14,10 +14,8 @@
 import NextImage from "next/image"
 import { useEffect, useRef } from "react"
 import { BLOOMSCROLL_LOGO } from "@/components/Header/nav-links"
-import { BLOOM_MS, ROSE_SHEET, deck, paintRose, seeded } from "@/components/feed/bloomscrollRoses"
+import { ART_V, BLOOM_MS, IMG, ROSE_SHEET, deck, paintRose, seeded } from "@/components/feed/bloomscrollRoses"
 
-const IMG = "/images/bloomscroll/"
-const ART_V = "v=16"
 const MOON = "moon.webp"
 const WIDE_ART = {
   sky: "sky.webp", far: "far-cut.webp", soft: "far-cut-blur.webp", clouds: "clouds.webp",

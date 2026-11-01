@@ -281,6 +281,7 @@
     position: relative;
     z-index: 12;
     margin-top: -4vh;
+    overflow-x: clip;
   }
 
   @media (max-aspect-ratio: 1/1) {
@@ -469,6 +470,91 @@
 
     .tag-bloomscroll > .tag-bs-feed {
       padding-bottom: 96px;
+    }
+  }
+
+  .tag-bs-feed__column {
+    --tag-bs-vine-pad: 44px;
+    padding-inline: var(--tag-bs-vine-pad);
+  }
+
+  .tag-bs-vine {
+    position: relative;
+  }
+
+  .tag-bs-vine__list {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 54px;
+  }
+
+  .tag-bs-vine__layer {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: calc(-1 * var(--tag-bs-vine-pad));
+    right: calc(-1 * var(--tag-bs-vine-pad));
+    pointer-events: none;
+  }
+
+  .tag-bs-vine__layer--front {
+    z-index: 2;
+  }
+
+  .tag-bs-vine__svg {
+    position: absolute;
+    left: 0;
+    top: 0;
+    overflow: visible;
+  }
+
+  .tag-bs-vine__sprig,
+  .tag-bs-vine__rose {
+    position: absolute;
+    max-width: none;
+  }
+
+  .tag-bs-vine__bark {
+    fill: rgb(var(--tag-bs-stem-rgb));
+    stroke: rgb(var(--tag-bs-stem-rgb));
+    stroke-width: 0.6;
+    stroke-linejoin: round;
+  }
+
+  .tag-bs-vine__grain {
+    fill: none;
+    stroke: rgba(var(--tag-bs-sepal-rgb), 0.85);
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .tag-bs-vine__rim {
+    fill: none;
+    stroke: rgba(var(--tag-bs-lime-rgb), 0.5);
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .tag-bs-vine__guide {
+    fill: none;
+    stroke: none;
+  }
+
+  .tag-bs-vine__thorn {
+    fill: rgb(var(--tag-bs-stem-rgb));
+    stroke: rgba(var(--tag-bs-lime-rgb), 0.3);
+    stroke-width: 0.6;
+  }
+
+  @media (max-width: 600px) {
+    .tag-bs-feed__column {
+      --tag-bs-vine-pad: 26px;
+    }
+
+    .tag-bs-vine__list {
+      gap: 44px;
     }
   }
 }

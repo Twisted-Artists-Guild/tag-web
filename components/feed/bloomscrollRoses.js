@@ -9,6 +9,8 @@
 
  Open source · low-profit · human-first*/
 
+export const IMG = "/images/bloomscroll/"
+export const ART_V = "v=16"
 export const BLOOM_MS = 1500
 export const ROSE_SHEET = "roses.webp"
 const SEPAL = "M0,0 C-7,-10 -6,-28 0,-38 C6,-28 7,-10 0,0Z"
