@@ -187,6 +187,16 @@
     box-shadow: 0 4px 12px -6px rgba(var(--tag-shadow-rgb), 0.5);
   }
 
+  .tag-pal__seg--fit {
+    grid-template-columns: none;
+    grid-auto-columns: minmax(0, 1fr);
+    grid-auto-flow: column;
+  }
+
+  .tag-pal__seg--fit + .tag-pal__title {
+    margin-top: 16px;
+  }
+
   .tag-pal__note {
     margin: 12px 0 0;
     font: 500 11.5px/1.45 var(--tag-font-body);
