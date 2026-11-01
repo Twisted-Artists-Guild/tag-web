@@ -15,6 +15,7 @@ import { ART_V, BLOOM_MS, IMG, ROSE_SHEET, TINTS, WHITE_ROSES, deck, paintRose, 
 
 const CHUNK = 600
 const STANDOUT_GAP = 4
+const SPACING = { off: null, few: [4, 6], normal: [2, 4], lots: [1, 1] }
 const FLOWERS = [{ value: "off", label: "Off" }, { value: "few", label: "Few" }, { value: "normal", label: "Normal" }, { value: "lots", label: "Lots" }]
 const COLOURS = [{ value: "calm", label: "Calm" }, { value: "soft", label: "Soft" }, { value: "full", label: "Full" }]
 const DEFAULTS = { flowers: "normal", colour: "soft" }
@@ -160,26 +161,28 @@ export default function FeedRoses({ children, flowers = DEFAULTS.flowers, colour
         built = { top: box.top + window.scrollY, from, to, height: box.height }
         const { flowers, colour } = prefs.current
         const seed = (Number(cards[0].dataset.postId) || 1) * 7
-        const pool = colour === "calm" ? WHITE_ROSES : undefined, roseRnd = seeded(seed + 6), variety = deck(seeded(seed + 7), pool), second = deck(seeded(seed + 8), pool)
-        const size = phone ? 32 : 40, out = phone ? 7 : 10, big = phone ? 46 : 58, bigOut = phone ? 11 : 15
-        let lastStandout = -STANDOUT_GAP
+        const pool = colour === "calm" ? WHITE_ROSES : undefined, roseRnd = seeded(seed + 6), variety = deck(seeded(seed + 7), pool), rhythm = seeded(seed + 9)
+        const size = phone ? 32 : 40, out = 3, big = phone ? 46 : 58, bigOut = phone ? 8 : 9
+        const spacing = SPACING[flowers]
+        let lastStandout = -STANDOUT_GAP, next = 0
         cards.forEach((el, i) => {
           const id = el.dataset.postId
-          const seedN = Math.floor(roseRnd() * 1000), art = variety(), extra = second()
-          const shown = flowers === "lots" || flowers === "normal" || (flowers === "few" && i % 3 === 0)
-          const standout = flowers !== "off" && el.dataset.postArt === "1" && i - lastStandout >= STANDOUT_GAP
+          const seedN = Math.floor(roseRnd() * 1000)
+          const shown = !!spacing && i >= next
+          if (shown) next = i + spacing[0] + Math.floor(rhythm() * (spacing[1] - spacing[0] + 1))
+          const standout = !!spacing && el.dataset.postArt === "1" && i - lastStandout >= STANDOUT_GAP
           if (standout) lastStandout = i
-          if (flowers === "off" || (!shown && !standout)) return
+          if (!shown && !standout) return
+          const art = variety()
           if (!blooms.has(id)) blooms.set(id, { p: reduced ? 1 : 0 })
           const bloom = blooms.get(id)
           bloom.slow = standout
           if (watch && bloom.p < 1 && bloom.t0 === undefined) watch.observe(el)
           const r = el.getBoundingClientRect(), top = r.top - box.top
           if (top + r.height < from || top > to) return
-          const right = i % 2, gap = standout ? bigOut : out
+          const gap = standout ? bigOut : out
           const tint = standout ? standoutTint : colour === "full" && TINTS[i % TINTS.length] ? `rgb(${rgb(TINTS[i % TINTS.length])})` : null
-          face(id, id, i * 2 + 1, right ? r.right - box.left + gap : r.left - box.left - gap, top - gap, standout ? big : size, art, seedN, tint)
-          if (flowers === "lots") face(`${id}+`, id, i * 2 + 2, right ? r.left - box.left - out : r.right - box.left + out, top - out, size, extra, seedN + 1, colour === "full" && TINTS[(i + 2) % TINTS.length] ? `rgb(${rgb(TINTS[(i + 2) % TINTS.length])})` : null)
+          face(id, id, i + 1, r.left - box.left - gap, top - gap, standout ? big : size, art, seedN, tint)
         })
       }
       for (const [id, rose] of faces) if (!seen.has(id)) { rose.el.remove(); faces.delete(id) }
