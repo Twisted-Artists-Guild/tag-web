@@ -496,6 +496,7 @@
     bottom: 0;
     left: calc(-1 * var(--tag-bs-vine-pad));
     right: calc(-1 * var(--tag-bs-vine-pad));
+    z-index: 0;
     pointer-events: none;
   }
 
