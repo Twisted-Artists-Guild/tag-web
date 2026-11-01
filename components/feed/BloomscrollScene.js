@@ -14,9 +14,8 @@
 import NextImage from "next/image"
 import { useEffect, useRef } from "react"
 import { BLOOMSCROLL_LOGO } from "@/components/Header/nav-links"
+import { ART_V, BLOOM_MS, IMG, ROSES, ROSE_SHEET, TINTS, WHITE_ROSES, deck, paintRose, seeded, tintCanvas } from "@/components/feed/bloomscrollRoses"
 
-const IMG = "/images/bloomscroll/"
-const ART_V = "v=16"
 const MOON = "moon.webp"
 const WIDE_ART = {
   sky: "sky.webp", far: "far-cut.webp", soft: "far-cut-blur.webp", clouds: "clouds.webp",
@@ -44,25 +43,13 @@ const BUSH_ASPECT = 466 / 560
 const BUSH_MAX = 340
 const VINE_GUTTER = 120
 const VINE_W = 22
-const BLOOM_MS = 1500, PATH_FADE_MS = 700
+const PATH_FADE_MS = 700
 const BLOOM_LINE = 0.84
-const SEPAL = "M0,0 C-7,-10 -6,-28 0,-38 C6,-28 7,-10 0,0Z"
-const ROSE_SHEET = "roses.webp"
 const GRASS = "path-grass.webp"
 const GROUNDS = ["path-ground-l.webp", "path-ground-r.webp"]
 const PATH = "path.webp"
 const LITTER = ["litter-l.webp", "litter-r.webp"]
 const FRINGE = ["fringe-l.webp", "fringe-r.webp"]
-const ROSES = [
-  { teal: false, w: 224, h: 213, c: [111.8, 106.4], R: 99.6, full: [0, 0, 206, 194, 9, 9],
-    petals: [[683, 358, 86, 62, 24, 134, 0.83, 131.2], [771, 358, 90, 58, 91, 143, 0.778, 70.4], [373, 358, 67, 83, 106, 37, 0.524, 313.1], [351, 196, 132, 139, 10, 18, 0.509, 204.4], [412, 0, 160, 181, 53, 11, 0.505, 345.9], [490, 358, 63, 73, 105, 93, 0.438, 45.6], [442, 358, 46, 73, 104, 57, 0.239, 321.2], [124, 358, 105, 94, 39, 63, 0.216, 169.1], [178, 458, 52, 37, 76, 76, 0.151, 229.5]] },
-  { teal: true, w: 224, h: 185, c: [106.9, 99], R: 90.3, full: [574, 0, 206, 167, 9, 9],
-    petals: [[322, 358, 49, 88, 10, 75, 0.872, 163.8], [591, 358, 32, 63, 45, 14, 0.808, 227.8], [555, 358, 34, 69, 130, 59, 0.474, 350.2], [956, 358, 47, 47, 56, 96, 0.421, 137.9], [887, 358, 19, 49, 70, 56, 0.382, 211.6], [232, 458, 29, 33, 93, 70, 0.125, 252.5], [782, 0, 175, 165, 28, 9, 0.097, 357.8]] },
-  { teal: false, w: 224, h: 204, c: [116.1, 102.7], R: 94.1, full: [208, 0, 202, 182, 11, 11],
-    petals: [[0, 458, 111, 46, 76, 13, 0.731, 271.9], [908, 358, 46, 49, 40, 106, 0.698, 150.1], [231, 358, 89, 89, 43, 40, 0.531, 215.2], [315, 458, 35, 18, 95, 48, 0.508, 268.2], [771, 196, 159, 119, 12, 38, 0.437, 176.3], [206, 196, 143, 150, 69, 41, 0.376, 18.7]] },
-  { teal: false, w: 224, h: 180, c: [97.8, 90.9], R: 93.8, full: [0, 196, 204, 160, 10, 10],
-    petals: [[863, 358, 22, 50, 15, 69, 0.759, 177.5], [625, 358, 56, 63, 114, 28, 0.622, 325.1], [485, 196, 118, 133, 11, 24, 0.408, 170.1], [605, 196, 164, 127, 40, 41, 0.386, 50.9], [113, 458, 63, 39, 70, 38, 0.357, 285.7], [263, 458, 50, 21, 100, 72, 0.342, 347.7], [0, 358, 122, 98, 49, 11, 0.329, 277.8]] },
-]
 
 const LIFE = {
   phone: {
@@ -118,10 +105,17 @@ function radialSprite(size, stops) {
 
 /**
  * The Bloomscroll festival scene at the top of the feed.
- * @param {{ children: React.ReactNode }} props the feed goes in children
+ * @param {{ children: React.ReactNode, flowers?: string, colour?: string }} props the feed goes in children
  */
-export default function BloomscrollScene({ children }) {
+export default function BloomscrollScene({ children, flowers = "normal", colour = "soft" }) {
   const rootRef = useRef(null)
+  const gardenPrefs = useRef({ flowers, colour })
+  const gardenApply = useRef(null)
+
+  useEffect(() => {
+    gardenPrefs.current = { flowers, colour }
+    gardenApply.current?.()
+  }, [flowers, colour])
 
   useEffect(() => {
     const root = rootRef.current
@@ -341,7 +335,7 @@ export default function BloomscrollScene({ children }) {
 
     const crowdCanvas = part("crowd"), crowdCtx = crowdCanvas.getContext("2d")
     function drawCrowd(t) {
-      const bw = backdrop.clientWidth, bh = backdrop.clientHeight
+      const { bw, bh } = box
       const dpr = Math.min(devicePixelRatio || 1, 2)
       const cw = Math.round(bw * dpr), ch = Math.round(bh * dpr)
       if (crowdCanvas.width !== cw || crowdCanvas.height !== ch) { crowdCanvas.width = cw; crowdCanvas.height = ch }
@@ -465,7 +459,7 @@ export default function BloomscrollScene({ children }) {
 
     const wheelCanvas = part("wheel"), wheelCtx = wheelCanvas.getContext("2d")
     function drawWheel(t, appear) {
-      const bw = backdrop.clientWidth, bh = backdrop.clientHeight
+      const { bw, bh } = box
       const dpr = Math.min(devicePixelRatio || 1, 2)
       const cw = Math.round(bw * dpr), ch = Math.round(bh * dpr)
       if (wheelCanvas.width !== cw || wheelCanvas.height !== ch) { wheelCanvas.width = cw; wheelCanvas.height = ch }
@@ -524,7 +518,7 @@ export default function BloomscrollScene({ children }) {
     const lifeCanvas = part("life"), lifeCtx = lifeCanvas.getContext("2d")
     const embers = []
     function drawLife(t, dt, appear) {
-      const bw = backdrop.clientWidth, bh = backdrop.clientHeight
+      const { bw, bh } = box
       const dpr = Math.min(devicePixelRatio || 1, 2)
       const cw = Math.round(bw * dpr), ch = Math.round(bh * dpr)
       if (lifeCanvas.width !== cw || lifeCanvas.height !== ch) { lifeCanvas.width = cw; lifeCanvas.height = ch }
@@ -592,7 +586,7 @@ export default function BloomscrollScene({ children }) {
     }
 
     function drawFlies(t, dt, y, mx, appear) {
-      const W = scene.clientWidth, H = scene.clientHeight
+      const { W, H } = box
       const lagByDepth = [FAR_LAG, 0.3, -NEAR_SPEED]
       const sizeByDepth = [6, 11, 26]
       flyCanvases.forEach((cv, i) => {
@@ -642,11 +636,16 @@ export default function BloomscrollScene({ children }) {
     }
     const onPointerLeave = () => { tx = 0; ty = 0 }
 
+    const box = { W: 0, H: 0, bw: 0, bh: 0, mw: 0 }
+    function measure() {
+      Object.assign(box, { W: scene.clientWidth, H: scene.clientHeight, bw: backdrop.clientWidth, bh: backdrop.clientHeight, mw: moon.offsetWidth })
+    }
+
     let visible = true, running = false, rafId = 0
     function frame(now) {
       const dt = Math.min(64, now - last) / 1000
       last = now
-      const W = scene.clientWidth, H = scene.clientHeight
+      const { W, H } = box
       const hold = holdFor(H), walk = walkFor(H)
       const target = Math.min(scrollPos(), hold + H)
       const still = reduced.matches
@@ -670,13 +669,12 @@ export default function BloomscrollScene({ children }) {
 
       const rise = 1 - smoothstep(700, 2300, since)
       const sink = Math.max(rise, Math.min(1, p * 1.5))
-      const mw = moon.offsetWidth
+      const mw = box.mw
       const mxPos = W * ((phoneMode ? 0.56 : 0.63) + sink * 0.05) - mw / 2 + mx * -4
       const myPos = moonRest + sink * (moonSunk - moonRest) + y * 0.72 - mw / 2
       moon.style.transform = `translate3d(${mxPos}px, ${myPos}px, 0)`
       moon.style.setProperty("--glow", String(1 - smoothstep(0.35, 0.95, sink)))
 
-      scene.style.setProperty("--approach", p.toFixed(3))
       const separate = W / H <= 1.6
       const grow = 1 + fp * NEAR_SPEED * (separate ? 0.3 : 1.2)
       const near = `translate3d(${fmx * -45}px, ${-fy * NEAR_SPEED * 0.25 + fmy * -14}px, 0) scale(${grow})`
@@ -713,10 +711,11 @@ export default function BloomscrollScene({ children }) {
       if (!running && visible) { running = true; last = performance.now(); rafId = requestAnimationFrame(frame) }
     }
     const observer = new IntersectionObserver(([e]) => { visible = e.isIntersecting; kick() })
-    const resizer = new ResizeObserver(() => { sizeCanvases(); layout(); readStick() })
+    const resizer = new ResizeObserver(() => { sizeCanvases(); layout(); measure(); readStick() })
 
     sizeCanvases()
     layout()
+    measure()
     readStick()
     sy = scrollPos()
     window.addEventListener("pointermove", onPointerMove, { passive: true })
@@ -729,22 +728,8 @@ export default function BloomscrollScene({ children }) {
     const garden = part("garden"), column = feed.querySelector(":scope > .container")
     const sheet = new Image()
     sheet.src = `${IMG}${ROSE_SHEET}?${ART_V}`
-    const sepal = new Path2D(SEPAL), sepalFill = `rgb(${rgb("sepal")})`
+    const sepalFill = `rgb(${rgb("sepal")})`
     const clamp = (x) => Math.max(0, Math.min(1, x))
-    const ease = (x) => x * x * x * (x * (x * 6 - 15) + 10)
-    const seeded = (seed) => () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647 }
-    const deck = (rnd) => {
-      let pile = [], last = -1
-      return () => {
-        if (!pile.length) {
-          pile = ROSES.map((_, i) => i)
-          for (let i = pile.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [pile[i], pile[j]] = [pile[j], pile[i]] }
-          if (pile[pile.length - 1] === last) [pile[0], pile[pile.length - 1]] = [pile[pile.length - 1], pile[0]]
-        }
-        last = pile.pop()
-        return last
-      }
-    }
     const blurredMask = (box, points, blur, baseOpacity) => `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${box}" preserveAspectRatio="none"><defs><linearGradient id="f" x1="0" y1="0" x2="0" y2="1"><stop offset="0.8" stop-color="black"/><stop offset="1" stop-color="black" stop-opacity="${baseOpacity}"/></linearGradient><filter id="b" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="${blur}"/></filter></defs><polygon points="${points.join(" ")}" fill="url(#f)" filter="url(#b)"/></svg>`)}")`
     const wave = (n, at) => Array.from({ length: n + 13 }, (_, k) => at((k - 6) / n))
     const sway = (t) => 0.7 + 0.07 * Math.sin(t * Math.PI * 2) + 0.04 * Math.sin(t * Math.PI * 6 + 1.3)
@@ -753,11 +738,9 @@ export default function BloomscrollScene({ children }) {
     const grass = garden.querySelector(".tag-bs-garden__grass"), grounds = [...garden.querySelectorAll(".tag-bs-garden__ground")]
     setSrc(grass, GRASS)
     grass.style.maskImage = grass.style.webkitMaskImage = grassMask
-    grounds.forEach((img, n) => setSrc(img, GROUNDS[n]))
     const path = garden.querySelector(".tag-bs-garden__path"), shade = rgb("path-shade")
     const litter = [...garden.querySelectorAll(".tag-bs-garden__litter")], fringe = [...garden.querySelectorAll(".tag-bs-garden__fringe")]
     litter.forEach((el, n) => { el.style.backgroundImage = `url(${IMG}${LITTER[n]}?${ART_V})` })
-    fringe.forEach((el, n) => { el.style.backgroundImage = `url(${IMG}${FRINGE[n]}?${ART_V})` })
     let pathAt = 0
     Promise.all([PATH, ...LITTER].map((file) => {
       const img = new Image()
@@ -771,53 +754,15 @@ export default function BloomscrollScene({ children }) {
     })
 
     function drawRose(rose) {
-      const art = ROSES[rose.art], cv = rose.el, c = cv.getContext("2d"), [cx, cy] = art.c, p = rose.p
-      c.setTransform(1, 0, 0, 1, 0, 0)
-      c.clearRect(0, 0, cv.width, cv.height)
-      if (!sheet.complete) return
-      const k = (rose.size * bed.dpr) / Math.max(art.w, art.h)
-      c.translate(cv.width / 2, cv.height / 2)
-      c.scale(k, k)
-      c.translate(cx - art.w / 2, cy - art.h / 2)
-      const piece = (box) => c.drawImage(sheet, box[0], box[1], box[2], box[3], box[4] - cx, box[5] - cy, box[2], box[3])
-      const es = ease(clamp(p / 0.6))
-      if (es < 1) {
-        const sk = (art.R / 36) * (0.42 + 0.3 * es)
-        c.globalAlpha = 1 - es
-        c.fillStyle = sepalFill
-        for (let n = 0; n < 5; n++) {
-          c.save()
-          c.rotate(((n * 72 + 36 + rose.seed * 11) * Math.PI) / 180)
-          c.scale(sk * 0.9, sk)
-          c.fill(sepal)
-          c.restore()
-        }
-        c.globalAlpha = 1
-      }
-      c.rotate(rose.tilt)
-      const eb = ease(clamp(p))
-      if (eb >= 1) { piece(art.full); return }
-      c.rotate(((1 - eb) * -14 * rose.spin * Math.PI) / 180)
-      c.scale(0.66 + 0.34 * eb, 0.66 + 0.34 * eb)
-      const us = 0.3 + 0.7 * ease(clamp((p - 0.04) / 0.8))
-      c.save()
-      c.scale(us, us)
-      piece(art.full)
-      c.restore()
-      for (const pt of art.petals) {
-        const r = pt[6], inner = r < 0.3, a = (pt[7] * Math.PI) / 180
-        const turn = ((((pt[7] * rose.spin) % 360) + 360) % 360) / 360
-        const e = ease(clamp((p - (inner ? 0.26 + turn * 0.05 : 0.22 * (1 - r) + turn * 0.07)) / 0.7))
-        c.save()
-        if (e < 1) {
-          c.rotate((1 - e) * ((rose.spin * (inner ? 10 : 6 + 12 * r) * Math.PI) / 180) + a)
-          c.scale(e + (1 - e) * (inner ? 0.62 : 0.3), e + (1 - e) * (inner ? 0.78 : 0.6))
-          c.rotate(-a)
-        }
-        piece(pt)
-        c.restore()
-      }
+      const { colour } = gardenPrefs.current, tint = colour === "full" && TINTS[rose.seed % TINTS.length]
+      paintRose(rose.el, colour === "calm" && ROSES[rose.art].teal ? { ...rose, art: WHITE_ROSES[rose.seed % WHITE_ROSES.length] } : rose, sheet, bed.dpr, sepalFill)
+      if (tint && sheet.complete && sheet.naturalWidth) tintCanvas(rose.el, `rgb(${rgb(tint)})`)
     }
+
+    const mateOf = (r) => r.mate || (r.mate = {
+      y: r.y + 29, fx: r.fx > 0.24 ? r.fx - 0.12 : r.fx + 0.14, size: r.size * 0.78, seed: r.seed + 1, bud: false, jitter: r.jitter + 180,
+      el: null, t0: undefined, art: (r.art + 2) % ROSES.length, tilt: -r.tilt, spin: -r.spin, p: reduced.matches ? 1 : 0,
+    })
 
     function sprout(b, rose) {
       const cv = document.createElement("canvas"), box = rose.size * 1.3, x = rose.fx * bed.w
@@ -873,6 +818,10 @@ export default function BloomscrollScene({ children }) {
       path.style.backgroundSize = `100% 100%, 100% 100%, ${Math.max(1400, rootR.width)}px auto`
       litter.forEach((el) => { el.style.top = `${pathTop}px`; el.hidden = vine })
       fringe.forEach((el) => { el.hidden = vine })
+      if (!vine) {
+        grounds.forEach((img, n) => setSrc(img, GROUNDS[n]))
+        fringe.forEach((el, n) => { el.style.backgroundImage = `url(${IMG}${FRINGE[n]}?${ART_V})` })
+      }
       litter[0].style.left = `${w - 170}px`
       litter[1].style.right = `${w - 170}px`
       fringe[0].style.left = `${w * 0.56}px`
@@ -896,7 +845,7 @@ export default function BloomscrollScene({ children }) {
 
     let gardenOn = false, gardenRaf = 0
     function tend(now) {
-      const g = reduced.matches ? 1 : smoothstep(0, holdFor(scene.clientHeight), sy)
+      const g = reduced.matches ? 1 : smoothstep(0, holdFor(box.H), sy)
       const travel = bed.w + 60
       garden.style.transform = `translate3d(0, ${-Math.max(0, bed.L - window.scrollY)}px, 0)`
       beds[0].el.style.transform = beds[0].ground.style.transform = litter[0].style.transform = fringe[0].style.transform = `translate3d(${-(1 - g) * travel}px, 0, 0)`
@@ -904,19 +853,24 @@ export default function BloomscrollScene({ children }) {
       const shown = pathAt ? g * smoothstep(0, PATH_FADE_MS, now - pathAt) : 0
       path.style.opacity = litter[0].style.opacity = litter[1].style.opacity = shown.toFixed(3)
       const locked = window.scrollY >= bed.L - 1, vh = innerHeight, top = garden.getBoundingClientRect().top
+      const { flowers } = gardenPrefs.current
       for (const b of beds) {
-        for (const rose of b.roses) {
-          const y = top + rose.y
-          if (y < -vh || y > vh * 2) {
-            if (rose.el) { rose.el.remove(); rose.el = null }
-            continue
+        for (let i = 0; i < b.roses.length; i++) {
+          const main = b.roses[i], skip = flowers === "off" || (flowers === "few" && i % 3 !== 0)
+          if (flowers !== "lots" && main.mate?.el) { main.mate.el.remove(); main.mate.el = null }
+          for (const rose of flowers === "lots" ? [main, mateOf(main)] : [main]) {
+            const y = top + rose.y
+            if (skip || y < -vh || y > vh * 2) {
+              if (rose.el) { rose.el.remove(); rose.el = null }
+              continue
+            }
+            if (!rose.el) sprout(b, rose)
+            if (rose.p >= 1) continue
+            if (rose.t0 === undefined && locked && !rose.bud && y < vh * BLOOM_LINE) rose.t0 = now + rose.jitter
+            if (rose.t0 === undefined) continue
+            rose.p = clamp((now - rose.t0) / BLOOM_MS)
+            drawRose(rose)
           }
-          if (!rose.el) sprout(b, rose)
-          if (rose.p >= 1) continue
-          if (rose.t0 === undefined && locked && !rose.bud && y < vh * BLOOM_LINE) rose.t0 = now + rose.jitter
-          if (rose.t0 === undefined) continue
-          rose.p = clamp((now - rose.t0) / BLOOM_MS)
-          drawRose(rose)
         }
       }
       gardenRaf = gardenOn ? requestAnimationFrame(tend) : 0
@@ -929,6 +883,7 @@ export default function BloomscrollScene({ children }) {
     })
     const gardenResizer = new ResizeObserver(() => layoutGarden())
     sheet.addEventListener("load", () => beds.forEach((b) => b.roses.forEach((rose) => rose.el && drawRose(rose))))
+    gardenApply.current = () => beds.forEach((b) => b.roses.forEach((rose) => [rose, rose.mate].forEach((r) => r?.el && drawRose(r))))
     layoutGarden()
     gardenWatch.observe(garden)
     gardenWatch.observe(scene)
@@ -978,6 +933,7 @@ export default function BloomscrollScene({ children }) {
       window.removeEventListener("pointermove", onPointerMove)
       document.removeEventListener("pointerleave", onPointerLeave)
       window.removeEventListener("scroll", readStick)
+      gardenApply.current = null
     }
   }, [])
 
