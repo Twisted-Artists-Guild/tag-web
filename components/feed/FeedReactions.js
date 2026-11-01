@@ -16,20 +16,29 @@ import { IoAdd } from 'react-icons/io5';
 export default function FeedReactions({ impressions, loading, onToggle, currentUser }) {
     const router = useRouter();
     const [open, setOpen] = useState(false);
+    const [busy, setBusy] = useState(false);
     const [prompt, setPrompt] = useState(false);
     const [feedback, setFeedback] = useState(null);
     const timers = useRef([]);
+    const pending = useRef(false);
+    const addRef = useRef(null);
 
     useEffect(() => () => timers.current.forEach(clearTimeout), []);
 
     const later = (fn, ms) => { timers.current.push(setTimeout(fn, ms)); };
     const flash = (message) => { setFeedback(message); later(() => setFeedback(null), 2000); };
 
-    if (loading) return <div className="tag-bs-post__wait">Loading reactions...</div>;
-    if (!impressions || impressions.length === 0) return null;
+    if (!impressions || impressions.length === 0) {
+        return loading ? <div className="tag-bs-post__wait">Loading reactions...</div> : null;
+    }
 
     const ordered = [...impressions].sort((a, b) => (a.displayOrder || 0) - (b.displayOrder || 0));
     const used = ordered.filter((imp) => (imp.count || 0) > 0);
+
+    const close = () => {
+        setOpen(false);
+        addRef.current?.focus();
+    };
 
     const react = async (impression) => {
         if (!currentUser) {
@@ -37,27 +46,35 @@ export default function FeedReactions({ impressions, loading, onToggle, currentU
             later(() => setPrompt(false), 2500);
             return;
         }
-        setOpen(false);
-        const result = await onToggle(impression.id, currentUser.id);
-        if (result?.success) flash(`${impression.emoji} ${result.removed ? 'removed' : 'added'}!`);
-        else if (result?.error) flash(`Error: ${result.error}`);
+        if (pending.current) return;
+        pending.current = true;
+        setBusy(true);
+        if (open) close();
+        try {
+            const result = await onToggle(impression.id, currentUser.id);
+            if (result?.success) flash(`${impression.emoji} ${result.removed ? 'removed' : 'added'}!`);
+            else if (result?.error) flash(`Error: ${result.error}`);
+        } finally {
+            pending.current = false;
+            setBusy(false);
+        }
     };
 
     return (
-        <div className="tag-bs-post__reacts">
+        <div className="tag-bs-post__reacts" onKeyDown={(e) => { if (e.key === 'Escape' && open) close(); }}>
             {used.map((imp) => (
-                <button key={imp.id} type="button" className="tag-bs-post__react" aria-label={`${imp.label || imp.name} ${imp.count}`} onClick={() => react(imp)}>
+                <button key={imp.id} type="button" className="tag-bs-post__react" disabled={busy} aria-label={`${imp.label || imp.name} ${imp.count}`} onClick={() => react(imp)}>
                     <span className="tag-bs-post__emoji">{imp.emoji}</span>
                     <span className="tag-bs-post__count">{imp.count}</span>
                 </button>
             ))}
-            <button type="button" className="tag-bs-post__react tag-bs-post__react--add" aria-expanded={open} aria-label={used.length ? 'Add a reaction' : undefined} onClick={() => setOpen(!open)}>
+            <button ref={addRef} type="button" className="tag-bs-post__react tag-bs-post__react--add" aria-expanded={open} aria-label={used.length ? 'Add a reaction' : undefined} onClick={() => setOpen(!open)}>
                 <IoAdd aria-hidden="true" />
                 {!used.length && <span>React</span>}
             </button>
             <div className="tag-bs-post__palette" hidden={!open}>
                 {ordered.map((imp) => (
-                    <button key={imp.id} type="button" className="tag-bs-post__pick" aria-label={`React ${imp.label || imp.name}`} onClick={() => react(imp)}>
+                    <button key={imp.id} type="button" className="tag-bs-post__pick" disabled={busy} aria-label={`React ${imp.label || imp.name}`} onClick={() => react(imp)}>
                         {imp.emoji}
                     </button>
                 ))}

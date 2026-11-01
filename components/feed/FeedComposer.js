@@ -58,7 +58,7 @@ export default function FeedComposer({ session, onPostCreated }) {
     };
 
     return (
-        <div className="tag-bs-compose">
+        <div className="tag-bs-compose" data-theme="tag-dark" data-mode="dark">
             <div>
                 {!showCompose ? (
                     <button

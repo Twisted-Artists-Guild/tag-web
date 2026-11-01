@@ -47,7 +47,7 @@ export function paintRose(cv, rose, sheet, dpr, sepalFill) {
   const art = ROSES[rose.art], c = cv.getContext("2d"), [cx, cy] = art.c, p = rose.p
   c.setTransform(1, 0, 0, 1, 0, 0)
   c.clearRect(0, 0, cv.width, cv.height)
-  if (!sheet.complete) return
+  if (!sheet.complete || !sheet.naturalWidth) return
   if (!sepal) sepal = new Path2D(SEPAL)
   const k = (rose.size * dpr) / Math.max(art.w, art.h)
   c.translate(cv.width / 2, cv.height / 2)

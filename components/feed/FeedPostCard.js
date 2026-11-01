@@ -88,7 +88,7 @@ export default function FeedPostCard({ post, showIdentityGlow = true }) {
     if (postDeleted) return null;
 
     return (
-        <article className="tag-bs-post" data-vine-post={post.feedPostID}>
+        <article className="tag-bs-post" data-theme="tag-dark" data-mode="dark" data-vine-post={post.feedPostID}>
             {/* Author row */}
             <header className="tag-bs-post__head">
                 <div

@@ -27,6 +27,11 @@ const CHUNK = 600
 const clamp = (x) => Math.max(0, Math.min(1, x))
 const pick = (rnd, list) => list[Math.floor(rnd() * list.length)]
 const fixed = (q) => `${q[0].toFixed(1)},${q[1].toFixed(1)}`
+const reach = (name, dirDeg, scale) => {
+  const s = SPRIGS[name], w = (s.w * scale) / 2, h = s.h * scale, a = ((dirDeg - (s.up ? -90 : 90)) * Math.PI) / 180
+  const ys = [[-w, 0], [w, 0], [-w, s.up ? -h : h], [w, s.up ? -h : h]].map(([x, y]) => x * Math.sin(a) + y * Math.cos(a))
+  return [Math.min(...ys), Math.max(...ys)]
+}
 
 function trace(pts) {
   const segs = []
@@ -113,7 +118,8 @@ export default function BloomscrollVine({ children }) {
     sheet.src = `${IMG}${ROSE_SHEET}?${ART_V}`
     const svg = document.createElementNS(NS, "svg")
     svg.setAttribute("class", "tag-bs-vine__svg")
-    const blooms = new Map(), sprigs = new Map(), faces = new Map()
+    const blooms = new Map(), sprigs = new Map(), faces = new Map(), waiting = new Set()
+    const phoneWidth = matchMedia("(max-width: 600px)")
     let roses = [], seen = new Set(), pending = 0, raf = 0, built = null
 
     const paint = (rose) => {
@@ -190,7 +196,10 @@ export default function BloomscrollVine({ children }) {
       for (const e of entries) {
         if (!e.isIntersecting) continue
         const bloom = blooms.get(e.target.dataset.vinePost)
-        if (bloom && bloom.p < 1 && bloom.t0 === undefined) bloom.t0 = now
+        if (bloom && bloom.p < 1 && bloom.t0 === undefined) {
+          if (sheet.complete && sheet.naturalWidth) bloom.t0 = now
+          else waiting.add(bloom)
+        }
         watch.unobserve(e.target)
       }
       if (!raf) raf = requestAnimationFrame(tick)
@@ -205,7 +214,7 @@ export default function BloomscrollVine({ children }) {
       const cards = [...list.querySelectorAll(":scope > [data-vine-post]")]
       if (cards.length) {
         if (svg.parentNode !== back) back.prepend(svg)
-        const box = back.getBoundingClientRect(), W = box.width, phone = W < 560
+        const box = back.getBoundingClientRect(), W = box.width, phone = phoneWidth.matches
         const from = Math.floor((-box.top - innerHeight * 2) / CHUNK) * CHUNK, to = Math.ceil((-box.top + innerHeight * 3) / CHUNK) * CHUNK
         built = { top: box.top + window.scrollY, from, to, height: box.height }
         const geo = cards.map((el) => {
@@ -223,7 +232,7 @@ export default function BloomscrollVine({ children }) {
           if (next) pts.push([W * (0.42 + crossRnd() * 0.16), (c.y + c.h + next.y) / 2])
           else pts.push([i % 2 ? c.x + c.w - 24 : c.x + 24, c.y + c.h - 18])
         })
-        const line = trace(pts)
+        const line = trace(pts), top = geo[0].y, bottom = geo[geo.length - 1].y + geo[geo.length - 1].h
         svg.setAttribute("width", String(W))
         svg.setAttribute("height", String(box.height))
         stem(svg, line, phone ? 0.8 : 1.1, barkRnd, from, to)
@@ -232,7 +241,8 @@ export default function BloomscrollVine({ children }) {
           const [x, y] = line.at(s), ang = (line.heading(s) * 180) / Math.PI, dir = k % 2 ? ang - 75 : ang + 75
           const name = pick(leafRnd, dir > 0 && dir < 180 ? HANGING : RISING)
           const turn = dir + (leafRnd() - 0.5) * 34, scale = sc * (0.75 + leafRnd() * 0.5), flip = leafRnd() < 0.5
-          if (y > from && y < to) sprig(back, `b${k}`, k + 1, name, x, y, turn, scale, flip)
+          const [up, down] = reach(name, turn, scale)
+          if (y > from && y < to && y + up >= top && y + down <= bottom) sprig(back, `b${k}`, k + 1, name, x, y, turn, scale, flip)
         }
         geo.forEach((c, i) => {
           const right = i % 2, x = right ? c.x + c.w + out : c.x - out, y = c.y - out
@@ -257,7 +267,13 @@ export default function BloomscrollVine({ children }) {
       const view = window.scrollY - built.top
       if ((built.from > 0 && view - innerHeight < built.from) || (built.to < built.height && view + innerHeight * 2 > built.to)) schedule()
     }
-    const repaint = () => roses.forEach(paint)
+    const repaint = () => {
+      const now = performance.now()
+      waiting.forEach((bloom) => { bloom.t0 = now })
+      waiting.clear()
+      roses.forEach(paint)
+      if (!raf && roses.some((r) => { const b = blooms.get(r.id); return b.t0 !== undefined && b.p < 1 })) raf = requestAnimationFrame(tick)
+    }
     const sizer = new ResizeObserver(schedule)
     const lister = new MutationObserver(schedule)
     sizer.observe(root)

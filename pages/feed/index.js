@@ -177,7 +177,7 @@ export default function BloomscrollFeed() {
                         {loading ? (
                             <div className="flex justify-center py-12"><span className="loading loading-spinner loading-lg text-primary"></span></div>
                         ) : posts.length === 0 ? (
-                            <div className="tag-bs-post tag-bs-post--empty">
+                            <div className="tag-bs-post tag-bs-post--empty" data-theme="tag-dark" data-mode="dark">
                                 <IoFlowerOutline aria-hidden="true" />
                                 <p>The feed is quiet... be the first to bloom!</p>
                             </div>
