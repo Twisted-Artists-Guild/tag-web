@@ -88,7 +88,7 @@ export default function FeedPostCard({ post, showIdentityGlow = true }) {
     if (postDeleted) return null;
 
     return (
-        <article className="tag-bs-post" data-theme="tag-dark" data-mode="dark" data-post-id={post.feedPostID}>
+        <article className="tag-bs-post" data-theme="tag-dark" data-mode="dark" data-post-id={post.feedPostID} data-post-art={post.pictureURL || post.sharedEntityPreview ? "1" : undefined}>
             {/* Author row */}
             <header className="tag-bs-post__head">
                 <div

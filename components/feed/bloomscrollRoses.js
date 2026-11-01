@@ -28,11 +28,11 @@ export const ROSES = [
 const clamp = (x) => Math.max(0, Math.min(1, x))
 const ease = (x) => x * x * x * (x * (x * 6 - 15) + 10)
 export const seeded = (seed) => () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647 }
-export const deck = (rnd) => {
+export const deck = (rnd, items = ROSES.map((_, i) => i)) => {
   let pile = [], last = -1
   return () => {
     if (!pile.length) {
-      pile = ROSES.map((_, i) => i)
+      pile = [...items]
       for (let i = pile.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [pile[i], pile[j]] = [pile[j], pile[i]] }
       if (pile[pile.length - 1] === last) [pile[0], pile[pile.length - 1]] = [pile[pile.length - 1], pile[0]]
     }

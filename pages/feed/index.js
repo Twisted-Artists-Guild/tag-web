@@ -15,7 +15,7 @@ import { useRouter } from 'next/router';
 import Link from 'next/link';
 import TagSEO from '@/components/TagSEO';
 import BloomscrollScene from '@/components/feed/BloomscrollScene';
-import FeedRoses from '@/components/feed/FeedRoses';
+import FeedRoses, { useRoseOptions } from '@/components/feed/FeedRoses';
 import FeedPostCard from '@/components/feed/FeedPostCard';
 import FeedComposer from '@/components/feed/FeedComposer';
 import {
@@ -81,6 +81,7 @@ export default function BloomscrollFeed() {
     const { data: session } = useSession();
     const router = useRouter();
     const { post: singlePostId } = router.query;
+    const roseOptions = useRoseOptions();
 
     const [posts, setPosts] = useState([]);
     const [page, setPage] = useState(1);
@@ -194,7 +195,7 @@ export default function BloomscrollFeed() {
                 )}
 
                 {/* Feed Posts */}
-                <FeedRoses>{postList}</FeedRoses>
+                <FeedRoses {...roseOptions}>{postList}</FeedRoses>
             </div>
         </BloomscrollScene>
     );
