@@ -11,7 +11,6 @@
 
 import { useEffect, useRef } from "react"
 import { ART_V, BLOOM_MS, IMG, ROSE_SHEET, deck, paintRose, seeded } from "@/components/feed/bloomscrollRoses"
-import { SWAY, variantRoutes } from "@/components/feed/bloomscrollVineVariants"
 
 const NS = "http://www.w3.org/2000/svg"
 const SPRIGS = {
@@ -34,9 +33,7 @@ const reach = (name, dirDeg, scale) => {
   return [Math.min(...ys), Math.max(...ys)]
 }
 
-function routes(geo, W, edge, crossRnd, mode, sway) {
-  const variant = variantRoutes(geo, W, edge, mode, sway)
-  if (variant) return variant
+function routes(geo, W, edge, crossRnd) {
   const first = geo[0], n = geo.length
   const tuck = (c, right, y) => [right ? c.x + c.w - 24 : c.x + 24, y]
   const gap = (i) => (geo[i].y + geo[i].h + geo[i + 1].y) / 2
@@ -120,7 +117,7 @@ function thorns(svg, line, every, weight, rnd, from, to) {
   svg.insertAdjacentHTML("beforeend", out)
 }
 
-export default function BloomscrollVine({ children, mode = "weave" }) {
+export default function BloomscrollVine({ children }) {
   const rootRef = useRef(null)
 
   useEffect(() => {
@@ -242,7 +239,7 @@ export default function BloomscrollVine({ children, mode = "weave" }) {
         const crossRnd = seeded(seed + 1), barkRnd = seeded(seed + 2), thornRnd = seeded(seed + 3), leafRnd = seeded(seed + 4), cornerRnd = seeded(seed + 5), roseRnd = seeded(seed + 6)
         const variety = deck(seeded(seed + 7))
         const edge = phone ? 9 : 14, sc = phone ? 0.34 : 0.52, size = phone ? 40 : 52, out = phone ? 9 : 13
-        const plan = routes(geo, W, edge, crossRnd, mode, phone ? SWAY * 0.55 : SWAY), top = geo[0].y, bottom = geo[geo.length - 1].y + geo[geo.length - 1].h
+        const plan = routes(geo, W, edge, crossRnd), top = geo[0].y, bottom = geo[geo.length - 1].y + geo[geo.length - 1].h
         svg.setAttribute("width", String(W))
         svg.setAttribute("height", String(box.height))
         plan.paths.forEach((pts, p) => {
@@ -308,7 +305,7 @@ export default function BloomscrollVine({ children, mode = "weave" }) {
       back.replaceChildren()
       front.replaceChildren()
     }
-  }, [mode])
+  }, [])
 
   return (
     <div className="tag-bs-vine" ref={rootRef}>
