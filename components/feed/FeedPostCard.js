@@ -88,12 +88,12 @@ export default function FeedPostCard({ post, showIdentityGlow = true }) {
     if (postDeleted) return null;
 
     return (
-        <article className="tag-bs-post" data-theme="tag-dark" data-mode="dark" data-vine-post={post.feedPostID}>
+        <article className="tag-bs-post" data-theme="tag-dark" data-mode="dark" data-post-id={post.feedPostID}>
             {/* Author row */}
             <header className="tag-bs-post__head">
                 <div
                     className="tag-bs-post__avatar"
-                    data-vine-avatar
+                    data-post-avatar
                     style={showIdentityGlow ? getIdentityGlowStyle({
                         type: post.authorEntityName ? "artist" : "user",
                         id: post.authorUserID || post.authorEntityName,
@@ -130,7 +130,7 @@ export default function FeedPostCard({ post, showIdentityGlow = true }) {
                         <IoTrashOutline />
                     </button>
                 )}
-                <ReportButton targetType="FeedPost" targetId={post.feedPostID} targetURL={'/feed?post=' + post.feedPostID} className="tag-bs-vine__flag tag-bs-post__flag" />
+                <ReportButton targetType="FeedPost" targetId={post.feedPostID} targetURL={'/feed?post=' + post.feedPostID} className="tag-bs-post__flag" />
             </header>
 
             {/* Body */}

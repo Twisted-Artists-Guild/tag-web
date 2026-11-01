@@ -15,7 +15,7 @@ import { useRouter } from 'next/router';
 import Link from 'next/link';
 import TagSEO from '@/components/TagSEO';
 import BloomscrollScene from '@/components/feed/BloomscrollScene';
-import BloomscrollVine from '@/components/feed/BloomscrollVine';
+import FeedRoses from '@/components/feed/FeedRoses';
 import FeedPostCard from '@/components/feed/FeedPostCard';
 import FeedComposer from '@/components/feed/FeedComposer';
 import {
@@ -149,7 +149,7 @@ export default function BloomscrollFeed() {
     }
 
     const postList = (
-        <div className="tag-bs-vine__list">
+        <div className="tag-bs-feed__list">
             {loading ? (
                 <div className="flex justify-center py-12"><span className="loading loading-spinner loading-lg text-primary"></span></div>
             ) : posts.length === 0 ? (
@@ -194,7 +194,7 @@ export default function BloomscrollFeed() {
                 )}
 
                 {/* Feed Posts */}
-                <BloomscrollVine>{postList}</BloomscrollVine>
+                <FeedRoses>{postList}</FeedRoses>
             </div>
         </BloomscrollScene>
     );
