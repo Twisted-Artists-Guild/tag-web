@@ -172,7 +172,7 @@ export default function BloomscrollFeed() {
     );
 
     return (
-        <BloomscrollScene>
+        <BloomscrollScene {...roseOptions}>
             <TagSEO metadataProp={{ title: "Bloomscroll", description: "Your creative social feed on TAG" }} canonicalSlug="feed" />
             <div className="container mx-auto pb-8 max-w-[760px] tag-bs-feed__column">
                 <div className="tag-bs-sort" role="group" aria-label="Sort posts">

@@ -14,7 +14,7 @@
 import NextImage from "next/image"
 import { useEffect, useRef } from "react"
 import { BLOOMSCROLL_LOGO } from "@/components/Header/nav-links"
-import { ART_V, BLOOM_MS, IMG, ROSE_SHEET, deck, paintRose, seeded } from "@/components/feed/bloomscrollRoses"
+import { ART_V, BLOOM_MS, IMG, ROSES, ROSE_SHEET, TINTS, WHITE_ROSES, deck, paintRose, seeded, tintCanvas } from "@/components/feed/bloomscrollRoses"
 
 const MOON = "moon.webp"
 const WIDE_ART = {
@@ -105,10 +105,17 @@ function radialSprite(size, stops) {
 
 /**
  * The Bloomscroll festival scene at the top of the feed.
- * @param {{ children: React.ReactNode }} props the feed goes in children
+ * @param {{ children: React.ReactNode, flowers?: string, colour?: string }} props the feed goes in children
  */
-export default function BloomscrollScene({ children }) {
+export default function BloomscrollScene({ children, flowers = "normal", colour = "soft" }) {
   const rootRef = useRef(null)
+  const gardenPrefs = useRef({ flowers, colour })
+  const gardenApply = useRef(null)
+
+  useEffect(() => {
+    gardenPrefs.current = { flowers, colour }
+    gardenApply.current?.()
+  }, [flowers, colour])
 
   useEffect(() => {
     const root = rootRef.current
@@ -747,8 +754,15 @@ export default function BloomscrollScene({ children }) {
     })
 
     function drawRose(rose) {
-      paintRose(rose.el, rose, sheet, bed.dpr, sepalFill)
+      const { colour } = gardenPrefs.current, tint = colour === "full" && TINTS[rose.seed % TINTS.length]
+      paintRose(rose.el, colour === "calm" && ROSES[rose.art].teal ? { ...rose, art: WHITE_ROSES[rose.seed % WHITE_ROSES.length] } : rose, sheet, bed.dpr, sepalFill)
+      if (tint && sheet.complete && sheet.naturalWidth) tintCanvas(rose.el, `rgb(${rgb(tint)})`)
     }
+
+    const mateOf = (r) => r.mate || (r.mate = {
+      y: r.y + 29, fx: r.fx > 0.24 ? r.fx - 0.12 : r.fx + 0.14, size: r.size * 0.78, seed: r.seed + 1, bud: false, jitter: r.jitter + 180,
+      el: null, t0: undefined, art: (r.art + 2) % ROSES.length, tilt: -r.tilt, spin: -r.spin, p: reduced.matches ? 1 : 0,
+    })
 
     function sprout(b, rose) {
       const cv = document.createElement("canvas"), box = rose.size * 1.3, x = rose.fx * bed.w
@@ -839,19 +853,24 @@ export default function BloomscrollScene({ children }) {
       const shown = pathAt ? g * smoothstep(0, PATH_FADE_MS, now - pathAt) : 0
       path.style.opacity = litter[0].style.opacity = litter[1].style.opacity = shown.toFixed(3)
       const locked = window.scrollY >= bed.L - 1, vh = innerHeight, top = garden.getBoundingClientRect().top
+      const { flowers } = gardenPrefs.current
       for (const b of beds) {
-        for (const rose of b.roses) {
-          const y = top + rose.y
-          if (y < -vh || y > vh * 2) {
-            if (rose.el) { rose.el.remove(); rose.el = null }
-            continue
+        for (let i = 0; i < b.roses.length; i++) {
+          const main = b.roses[i], skip = flowers === "off" || (flowers === "few" && i % 3 !== 0)
+          if (flowers !== "lots" && main.mate?.el) { main.mate.el.remove(); main.mate.el = null }
+          for (const rose of flowers === "lots" ? [main, mateOf(main)] : [main]) {
+            const y = top + rose.y
+            if (skip || y < -vh || y > vh * 2) {
+              if (rose.el) { rose.el.remove(); rose.el = null }
+              continue
+            }
+            if (!rose.el) sprout(b, rose)
+            if (rose.p >= 1) continue
+            if (rose.t0 === undefined && locked && !rose.bud && y < vh * BLOOM_LINE) rose.t0 = now + rose.jitter
+            if (rose.t0 === undefined) continue
+            rose.p = clamp((now - rose.t0) / BLOOM_MS)
+            drawRose(rose)
           }
-          if (!rose.el) sprout(b, rose)
-          if (rose.p >= 1) continue
-          if (rose.t0 === undefined && locked && !rose.bud && y < vh * BLOOM_LINE) rose.t0 = now + rose.jitter
-          if (rose.t0 === undefined) continue
-          rose.p = clamp((now - rose.t0) / BLOOM_MS)
-          drawRose(rose)
         }
       }
       gardenRaf = gardenOn ? requestAnimationFrame(tend) : 0
@@ -864,6 +883,7 @@ export default function BloomscrollScene({ children }) {
     })
     const gardenResizer = new ResizeObserver(() => layoutGarden())
     sheet.addEventListener("load", () => beds.forEach((b) => b.roses.forEach((rose) => rose.el && drawRose(rose))))
+    gardenApply.current = () => beds.forEach((b) => b.roses.forEach((rose) => [rose, rose.mate].forEach((r) => r?.el && drawRose(r))))
     layoutGarden()
     gardenWatch.observe(garden)
     gardenWatch.observe(scene)
@@ -913,6 +933,7 @@ export default function BloomscrollScene({ children }) {
       window.removeEventListener("pointermove", onPointerMove)
       document.removeEventListener("pointerleave", onPointerLeave)
       window.removeEventListener("scroll", readStick)
+      gardenApply.current = null
     }
   }, [])
 

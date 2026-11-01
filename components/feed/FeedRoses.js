@@ -11,7 +11,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react"
 import { usePageOptions } from "@/components/Header/pageOptions"
-import { ART_V, BLOOM_MS, IMG, ROSES, ROSE_SHEET, deck, paintRose, seeded } from "@/components/feed/bloomscrollRoses"
+import { ART_V, BLOOM_MS, IMG, ROSE_SHEET, TINTS, WHITE_ROSES, deck, paintRose, seeded, tintCanvas } from "@/components/feed/bloomscrollRoses"
 
 const CHUNK = 600
 const STANDOUT_GAP = 4
@@ -19,8 +19,6 @@ const FLOWERS = [{ value: "off", label: "Off" }, { value: "few", label: "Few" },
 const COLOURS = [{ value: "calm", label: "Calm" }, { value: "soft", label: "Soft" }, { value: "full", label: "Full" }]
 const DEFAULTS = { flowers: "normal", colour: "soft" }
 const KEYS = { flowers: "tag-bs-flowers", colour: "tag-bs-colour" }
-const WHITE = ROSES.map((r, i) => (r.teal ? -1 : i)).filter((i) => i >= 0)
-const TINTS = [null, "window", "violet", "moon"]
 const clamp = (x) => Math.max(0, Math.min(1, x))
 
 const stored = () => {
@@ -82,16 +80,7 @@ export default function FeedRoses({ children, flowers = DEFAULTS.flowers, colour
 
     const paint = (rose) => {
       paintRose(rose.el, rose, sheet, dpr, sepalFill)
-      if (rose.tint && sheet.complete && sheet.naturalWidth) {
-        const c = rose.el.getContext("2d")
-        c.setTransform(1, 0, 0, 1, 0, 0)
-        c.globalCompositeOperation = "source-atop"
-        c.globalAlpha = 0.42
-        c.fillStyle = rose.tint
-        c.fillRect(0, 0, rose.el.width, rose.el.height)
-        c.globalCompositeOperation = "source-over"
-        c.globalAlpha = 1
-      }
+      if (rose.tint && sheet.complete && sheet.naturalWidth) tintCanvas(rose.el, rose.tint)
       if (rose.p >= 1) rose.el.dataset.open = "1"
     }
 
@@ -171,7 +160,7 @@ export default function FeedRoses({ children, flowers = DEFAULTS.flowers, colour
         built = { top: box.top + window.scrollY, from, to, height: box.height }
         const { flowers, colour } = prefs.current
         const seed = (Number(cards[0].dataset.postId) || 1) * 7
-        const pool = colour === "calm" ? WHITE : undefined, roseRnd = seeded(seed + 6), variety = deck(seeded(seed + 7), pool), second = deck(seeded(seed + 8), pool)
+        const pool = colour === "calm" ? WHITE_ROSES : undefined, roseRnd = seeded(seed + 6), variety = deck(seeded(seed + 7), pool), second = deck(seeded(seed + 8), pool)
         const size = phone ? 32 : 40, out = phone ? 7 : 10, big = phone ? 46 : 58, bigOut = phone ? 11 : 15
         let lastStandout = -STANDOUT_GAP
         cards.forEach((el, i) => {

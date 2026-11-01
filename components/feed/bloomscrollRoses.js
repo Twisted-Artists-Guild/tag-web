@@ -41,6 +41,20 @@ export const deck = (rnd, items = ROSES.map((_, i) => i)) => {
   }
 }
 
+export const WHITE_ROSES = ROSES.map((r, i) => (r.teal ? -1 : i)).filter((i) => i >= 0)
+export const TINTS = [null, "window", "violet", "moon"]
+
+export function tintCanvas(cv, fill) {
+  const c = cv.getContext("2d")
+  c.setTransform(1, 0, 0, 1, 0, 0)
+  c.globalCompositeOperation = "source-atop"
+  c.globalAlpha = 0.42
+  c.fillStyle = fill
+  c.fillRect(0, 0, cv.width, cv.height)
+  c.globalCompositeOperation = "source-over"
+  c.globalAlpha = 1
+}
+
 let sepal = null
 
 export function paintRose(cv, rose, sheet, dpr, sepalFill) {
