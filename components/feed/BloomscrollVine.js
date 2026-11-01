@@ -11,6 +11,7 @@
 
 import { useEffect, useRef } from "react"
 import { ART_V, BLOOM_MS, IMG, ROSE_SHEET, deck, paintRose, seeded } from "@/components/feed/bloomscrollRoses"
+import { SWAY, variantRoutes } from "@/components/feed/bloomscrollVineVariants"
 
 const NS = "http://www.w3.org/2000/svg"
 const SPRIGS = {
@@ -31,6 +32,22 @@ const reach = (name, dirDeg, scale) => {
   const s = SPRIGS[name], w = (s.w * scale) / 2, h = s.h * scale, a = ((dirDeg - (s.up ? -90 : 90)) * Math.PI) / 180
   const ys = [[-w, 0], [w, 0], [-w, s.up ? -h : h], [w, s.up ? -h : h]].map(([x, y]) => x * Math.sin(a) + y * Math.cos(a))
   return [Math.min(...ys), Math.max(...ys)]
+}
+
+function routes(geo, W, edge, crossRnd, mode, sway) {
+  const variant = variantRoutes(geo, W, edge, mode, sway)
+  if (variant) return variant
+  const first = geo[0], n = geo.length
+  const tuck = (c, right, y) => [right ? c.x + c.w - 24 : c.x + 24, y]
+  const gap = (i) => (geo[i].y + geo[i].h + geo[i + 1].y) / 2
+  const pts = [tuck(first, 0, first.y + 18)]
+  geo.forEach((c, i) => {
+    const side = i % 2 ? W - edge : edge
+    pts.push([side, c.y + c.h * 0.22], [side + (i % 2 ? 2 : -2), c.y + c.h * 0.7])
+    if (i < n - 1) pts.push([W * (0.42 + crossRnd() * 0.16), gap(i)])
+    else pts.push(tuck(c, i % 2, c.y + c.h - 18))
+  })
+  return { paths: [pts], sides: geo.map((_, i) => i % 2), roses: geo.map(() => true) }
 }
 
 function trace(pts) {
@@ -103,7 +120,7 @@ function thorns(svg, line, every, weight, rnd, from, to) {
   svg.insertAdjacentHTML("beforeend", out)
 }
 
-export default function BloomscrollVine({ children }) {
+export default function BloomscrollVine({ children, mode = "weave" }) {
   const rootRef = useRef(null)
 
   useEffect(() => {
@@ -225,30 +242,28 @@ export default function BloomscrollVine({ children }) {
         const crossRnd = seeded(seed + 1), barkRnd = seeded(seed + 2), thornRnd = seeded(seed + 3), leafRnd = seeded(seed + 4), cornerRnd = seeded(seed + 5), roseRnd = seeded(seed + 6)
         const variety = deck(seeded(seed + 7))
         const edge = phone ? 9 : 14, sc = phone ? 0.34 : 0.52, size = phone ? 40 : 52, out = phone ? 9 : 13
-        const pts = [[geo[0].x + 24, geo[0].y + 18]]
-        geo.forEach((c, i) => {
-          const side = i % 2 ? W - edge : edge, next = geo[i + 1]
-          pts.push([side, c.y + c.h * 0.22], [side + (i % 2 ? 2 : -2), c.y + c.h * 0.7])
-          if (next) pts.push([W * (0.42 + crossRnd() * 0.16), (c.y + c.h + next.y) / 2])
-          else pts.push([i % 2 ? c.x + c.w - 24 : c.x + 24, c.y + c.h - 18])
-        })
-        const line = trace(pts), top = geo[0].y, bottom = geo[geo.length - 1].y + geo[geo.length - 1].h
+        const plan = routes(geo, W, edge, crossRnd, mode, phone ? SWAY * 0.55 : SWAY), top = geo[0].y, bottom = geo[geo.length - 1].y + geo[geo.length - 1].h
         svg.setAttribute("width", String(W))
         svg.setAttribute("height", String(box.height))
-        stem(svg, line, phone ? 0.8 : 1.1, barkRnd, from, to)
-        thorns(svg, line, 70, phone ? 0.8 : 1, thornRnd, from, to)
-        for (let s = 24, k = 0; s < line.len; s += (phone ? 40 : 32) + leafRnd() * 26, k++) {
-          const [x, y] = line.at(s), ang = (line.heading(s) * 180) / Math.PI, dir = k % 2 ? ang - 75 : ang + 75
-          const name = pick(leafRnd, dir > 0 && dir < 180 ? HANGING : RISING)
-          const turn = dir + (leafRnd() - 0.5) * 34, scale = sc * (0.75 + leafRnd() * 0.5), flip = leafRnd() < 0.5
-          const [up, down] = reach(name, turn, scale)
-          if (y > from && y < to && y + up >= top && y + down <= bottom) sprig(back, `b${k}`, k + 1, name, x, y, turn, scale, flip)
-        }
+        plan.paths.forEach((pts, p) => {
+          const line = trace(pts)
+          const bark = p ? seeded(seed + 21) : barkRnd, thorn = p ? seeded(seed + 22) : thornRnd, leaf = p ? seeded(seed + 23) : leafRnd
+          stem(svg, line, phone ? 0.8 : 1.1, bark, from, to)
+          thorns(svg, line, 70, phone ? 0.8 : 1, thorn, from, to)
+          for (let s = 24, k = 0; s < line.len; s += (phone ? 40 : 32) + leaf() * 26, k++) {
+            const [x, y] = line.at(s), ang = (line.heading(s) * 180) / Math.PI, dir = k % 2 ? ang - 75 : ang + 75
+            const name = pick(leaf, dir > 0 && dir < 180 ? HANGING : RISING)
+            const turn = dir + (leaf() - 0.5) * 34, scale = sc * (0.75 + leaf() * 0.5), flip = leaf() < 0.5
+            const [up, down] = reach(name, turn, scale)
+            if (y > from && y < to && y + up >= top && y + down <= bottom) sprig(back, `${p ? "c" : "b"}${k}`, k + 1, name, x, y, turn, scale, flip)
+          }
+        })
         geo.forEach((c, i) => {
-          const right = i % 2, x = right ? c.x + c.w + out : c.x - out, y = c.y - out
+          const right = plan.sides[i], x = right ? c.x + c.w + out : c.x - out, y = c.y - out
           const hang = pick(cornerRnd, ["hang-a", "hang-b"]), rise = pick(cornerRnd, ["bud-stem", "spray", "fern-b"])
           if (!blooms.has(c.id)) blooms.set(c.id, { p: reduced ? 1 : 0 })
           const bloom = blooms.get(c.id), seedN = Math.floor(roseRnd() * 1000), art = variety()
+          if (!plan.roses[i]) return
           if (watch && bloom.p < 1 && bloom.t0 === undefined) watch.observe(c.el)
           if (c.y + c.h < from || c.y > to) return
           sprig(front, `h${i}`, i * 3 + 1, hang, x + (right ? 8 : -8), y + 2, right ? 70 : 110, sc * 0.8, !right)
@@ -293,7 +308,7 @@ export default function BloomscrollVine({ children }) {
       back.replaceChildren()
       front.replaceChildren()
     }
-  }, [])
+  }, [mode])
 
   return (
     <div className="tag-bs-vine" ref={rootRef}>

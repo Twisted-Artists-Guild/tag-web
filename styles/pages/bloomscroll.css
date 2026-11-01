@@ -479,7 +479,12 @@
   }
 
   .tag-bs-vine {
+    --tag-bs-vine-opacity: 1;
     position: relative;
+  }
+
+  .tag-bs-vine__layer--back {
+    opacity: var(--tag-bs-vine-opacity);
   }
 
   .tag-bs-vine__list {
