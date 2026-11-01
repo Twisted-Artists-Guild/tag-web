@@ -78,6 +78,10 @@
   --tag-bs-sepal-rgb: 31, 74, 60;
   --tag-bs-path-shade-rgb: 30, 38, 28;
   --tag-bs-stem-rgb: 12, 27, 24;
+  --tag-bs-paper-rgb: 224, 212, 186;
+  --tag-bs-paper-edge-rgb: 196, 179, 146;
+  --tag-bs-ink-rgb: 40, 31, 46;
+  --tag-bs-ink-soft-rgb: 104, 88, 98;
 
   /* status */
   --tag-info: #8f72ff;
@@ -192,6 +196,37 @@ html[data-mode="light"] [data-mode="dark"] {
 
 html[data-mode="light"][data-palette="7a"] [data-mode="dark"] {
   --tag-acc-text: #ff4fd8;
+}
+
+html:not([data-mode="light"]) [data-mode="light"] {
+  --tag-bg: #f7f5fc;
+  --tag-bg-2: #efecf7;
+  --tag-bg-3: #e7e3f2;
+  --tag-surface: #ffffff;
+  --tag-surface-2: #f3f0fa;
+  --tag-line: rgba(29, 26, 36, 0.1);
+  --tag-line-2: rgba(29, 26, 36, 0.16);
+  --tag-text: #1d1a24;
+  --tag-text-2: #3f3a4d;
+  --tag-muted: #5d586b;
+  --tag-text-strong: #121016;
+  --tag-indigo-soft: #5b2ff0;
+  --tag-tint-1: rgba(29, 26, 36, 0.04);
+  --tag-tint-2: rgba(29, 26, 36, 0.07);
+  --tag-edge-mid: rgba(29, 26, 36, 0.07);
+  --tag-band: rgba(98, 51, 255, 0.035);
+  --tag-glass: rgba(247, 245, 252, 0.8);
+  --tag-panel: rgba(250, 249, 253, 0.97);
+  --tag-panel-foot: rgba(239, 236, 247, 0.85);
+  --tag-scrim: rgba(29, 26, 36, 0.35);
+  --tag-mark-start: #1d1a24;
+  --tag-acc-text: #4a6600;
+  --tag-grad-text: linear-gradient(100deg, #1d1a24 0%, #4a22e0 50%, var(--tag-acc-text) 100%);
+  color-scheme: light;
+}
+
+html:not([data-mode="light"])[data-palette="7a"] [data-mode="light"] {
+  --tag-acc-text: #b0128c;
 }
 
 /* Tailwind's font-sans utility uses the brand body font */
