@@ -14,7 +14,7 @@ import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 import Link from 'next/link';
 import ReportButton from '@/components/moderation/ReportButton';
-import ImpressionReactions from '@/components/social/ImpressionReactions';
+import FeedReactions from '@/components/feed/FeedReactions';
 import { useImpressions, ImpressionTargetType } from '@/hooks/useImpressions';
 import { useComments, CommentTargetType } from '@/hooks/useComments';
 import { useCommentCount } from '@/hooks/useCommentCount';
@@ -88,107 +88,98 @@ export default function FeedPostCard({ post, showIdentityGlow = true }) {
     if (postDeleted) return null;
 
     return (
-        <article className="card bg-base-100 shadow-sm border border-base-300" data-vine-post={post.feedPostID}>
-            <div className="card-body p-4 gap-3">
-                {/* Author row */}
-                <div className="flex items-center gap-3">
-                    <div className="avatar" data-vine-avatar>
-                        <div
-                            className={`w-10 rounded-full bg-base-300 overflow-hidden border ${showIdentityGlow ? "" : "border-base-300"}`}
-                            style={showIdentityGlow ? getIdentityGlowStyle({
-                                type: post.authorEntityName ? "artist" : "user",
-                                id: post.authorUserID || post.authorEntityName,
-                            }) : undefined}
-                        >
-                            <Image
-                                src={post.authorImage || '/blank_image.png'}
-                                alt={post.authorName || 'User'}
-                                width={40} height={40}
-                                className="object-cover"
-                            />
-                        </div>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1.5">
-                            <span className="font-bold text-sm truncate">{post.authorName || 'Anonymous'}</span>
-                            {post.authorEntityName && (
-                                <Link href={post.authorEntityPath || '#'} className="badge badge-sm badge-primary badge-outline gap-1 truncate">
-                                    <EntityIcon className="text-xs" /> {post.authorEntityName}
-                                </Link>
-                            )}
-                        </div>
-                        <p className="text-xs text-base-content/50" suppressHydrationWarning>
-                            {timeAgo(post.createdAt)}
-                            {post.isSuggestedPost && <span className="ml-1 badge badge-xs badge-ghost gap-0.5"><IoSparklesOutline /> First post</span>}
-                        </p>
-                    </div>
-                    {session?.user && parseInt(session.user.id) === post.authorUserID && (
-                        <button
-                            className="btn btn-ghost btn-xs text-error"
-                            onClick={handleDeletePost}
-                            title="Delete post"
-                        >
-                            <IoTrashOutline />
-                        </button>
+        <article className="tag-bs-post" data-vine-post={post.feedPostID}>
+            {/* Author row */}
+            <header className="tag-bs-post__head">
+                <div
+                    className="tag-bs-post__avatar"
+                    data-vine-avatar
+                    style={showIdentityGlow ? getIdentityGlowStyle({
+                        type: post.authorEntityName ? "artist" : "user",
+                        id: post.authorUserID || post.authorEntityName,
+                    }) : undefined}
+                >
+                    {post.authorImage ? (
+                        <Image src={post.authorImage} alt={post.authorName || 'User'} width={42} height={42} />
+                    ) : (
+                        <span role="img" aria-label={post.authorName || 'User'}>{(post.authorName || 'A').trim().charAt(0).toUpperCase()}</span>
                     )}
-                    <ReportButton targetType="FeedPost" targetId={post.feedPostID} targetURL={'/feed?post=' + post.feedPostID} className="tag-bs-vine__flag" />
                 </div>
-
-                {/* Body */}
-                {post.body && (
-                    <div className="text-sm text-base-content whitespace-pre-wrap leading-relaxed">
-                        {post.body_Plaintext || post.body}
-                    </div>
-                )}
-
-                {/* Attached image */}
-                {post.pictureURL && (
-                    <div className="relative w-full aspect-video rounded-box overflow-hidden bg-base-300">
-                        <Image src={post.pictureURL} alt="Post image" fill className="object-cover" />
-                    </div>
-                )}
-
-                {/* Shared entity preview */}
-                <SharedPreview preview={post.sharedEntityPreview} />
-
-                {/* Reactions */}
-                <div className="pt-1">
-                    {!impressionsLoading && impressions && impressions.length > 0 ? (
-                        <ImpressionReactions
-                            impressions={impressions}
-                            currentUser={session?.user || null}
-                            onToggle={toggleReaction}
-                            readOnly={false}
-                            size="sm"
-                            showDetails={false}
-                            targetId={post.feedPostID}
-                            targetType="feedpost"
-                        />
-                    ) : impressionsLoading ? (
-                        <div className="text-xs text-base-content/50">Loading reactions...</div>
-                    ) : null}
+                <div className="tag-bs-post__who">
+                    <span className="tag-bs-post__name">
+                        {post.authorName || 'Anonymous'}
+                        {post.authorEntityName && (
+                            <Link href={post.authorEntityPath || '#'} className="tag-bs-post__entity">
+                                <EntityIcon aria-hidden="true" /> {post.authorEntityName}
+                            </Link>
+                        )}
+                    </span>
+                    <p className="tag-bs-post__date" suppressHydrationWarning>
+                        {timeAgo(post.createdAt)}
+                        {post.isSuggestedPost && <span className="tag-bs-post__first"><IoSparklesOutline aria-hidden="true" /> First post</span>}
+                    </p>
                 </div>
-
-                {/* Action bar */}
-                <div className="flex items-center gap-2 pt-1 border-t border-base-200">
+                {session?.user && parseInt(session.user.id) === post.authorUserID && (
                     <button
-                        className="btn btn-ghost btn-xs gap-1"
-                        onClick={() => setShowComments(!showComments)}
+                        type="button"
+                        className="tag-bs-post__icon tag-bs-post__icon--delete"
+                        onClick={handleDeletePost}
+                        title="Delete post"
+                        aria-label="Delete post"
                     >
-                        <IoChatbubbleOutline />
-                        {displayCount} comment{displayCount !== 1 ? 's' : ''}
+                        <IoTrashOutline />
                     </button>
-                    <span className="flex-1"></span>
-                    <div className="relative">
-                        <button className="btn btn-ghost btn-xs gap-1" onClick={() => setShowShare(!showShare)}>
-                            <IoShareSocialOutline /> Share
-                        </button>
-                        {showShare && <SharePopover post={post} onClose={() => setShowShare(false)} />}
-                    </div>
-                </div>
+                )}
+                <ReportButton targetType="FeedPost" targetId={post.feedPostID} targetURL={'/feed?post=' + post.feedPostID} className="tag-bs-vine__flag tag-bs-post__flag" />
+            </header>
 
-                {/* Comments Section */}
-                {showComments && (
+            {/* Body */}
+            {post.body && (
+                <div className="tag-bs-post__body">
+                    {post.body_Plaintext || post.body}
+                </div>
+            )}
+
+            {/* Attached image */}
+            {post.pictureURL && (
+                <div className="tag-bs-post__media">
+                    <Image src={post.pictureURL} alt="Post image" fill className="object-cover" />
+                </div>
+            )}
+
+            {/* Shared entity preview */}
+            <SharedPreview preview={post.sharedEntityPreview} />
+
+            {/* Reactions */}
+            <FeedReactions
+                impressions={impressions}
+                loading={impressionsLoading}
+                onToggle={toggleReaction}
+                currentUser={session?.user || null}
+            />
+
+            {/* Action bar */}
+            <footer className="tag-bs-post__foot">
+                <button
+                    type="button"
+                    className="tag-bs-post__act"
+                    aria-expanded={showComments}
+                    onClick={() => setShowComments(!showComments)}
+                >
+                    <IoChatbubbleOutline aria-hidden="true" />
+                    {displayCount} comment{displayCount !== 1 ? 's' : ''}
+                </button>
+                <div className="tag-bs-post__share-wrap">
+                    <button type="button" className="tag-bs-post__act" aria-expanded={showShare} onClick={() => setShowShare(!showShare)}>
+                        <IoShareSocialOutline aria-hidden="true" /> Share
+                    </button>
+                    {showShare && <SharePopover post={post} onClose={() => setShowShare(false)} />}
+                </div>
+            </footer>
+
+            {/* Comments Section */}
+            {showComments && (
+                <div className="tag-bs-post__comments">
                     <FeedPostComments
                         comments={comments}
                         commentsLoading={commentsLoading}
@@ -197,8 +188,8 @@ export default function FeedPostCard({ post, showIdentityGlow = true }) {
                         deleteComment={deleteComment}
                         refetchCount={refetchCount}
                     />
-                )}
-            </div>
+                </div>
+            )}
         </article>
     );
 }

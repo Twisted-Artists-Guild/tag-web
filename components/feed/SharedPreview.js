@@ -53,26 +53,24 @@ export default function SharedPreview({ preview }) {
     const image = resolvePreviewImage(item);
 
     return (
-        <Link href={href} className="block mt-3 rounded-box border border-base-300 bg-base-200 overflow-hidden hover:shadow-md transition-shadow">
-            <div className="flex gap-3 p-3">
-                {image && (
-                    <div className="relative w-16 h-16 rounded overflow-hidden flex-shrink-0 bg-base-300">
-                        <Image src={image} alt={item.title || ''} fill className="object-cover" />
-                    </div>
-                )}
-                <div className="flex-1 min-w-0">
-                    <div className="flex min-w-0 items-center gap-1.5">
-                        {brandLogo ? <Image src={brandLogo} alt="" width={20} height={20} className="h-5 w-5 shrink-0 rounded object-contain bg-base-100" /> : null}
-                        <p className="font-bold text-sm text-primary truncate">{item.title || 'Untitled'}</p>
-                    </div>
-                    {item.byline && <p className="text-xs text-base-content/60 truncate">{item.byline}</p>}
-                    {item.artistName && <p className="text-xs text-base-content/60">by {item.artistName}</p>}
-                    {item.venue && <p className="text-xs text-base-content/60">{item.venue}</p>}
-                    {item.price != null && <p className="text-xs font-mono text-success">${Number(item.price).toFixed(2)}</p>}
-                    {item.startTime && <p className="text-xs text-base-content/50">{new Date(item.startTime).toLocaleDateString('en-US', longDateOptions)}</p>}
-                </div>
-                <span className="badge badge-xs badge-outline self-start">{typeLabel}</span>
-            </div>
+        <Link href={href} className="tag-bs-post__share">
+            {image && (
+                <span className="tag-bs-post__share-pic">
+                    <Image src={image} alt={item.title || ''} fill className="object-cover" />
+                </span>
+            )}
+            <span className="tag-bs-post__share-text">
+                <span className="tag-bs-post__share-title">
+                    {brandLogo ? <Image src={brandLogo} alt="" width={20} height={20} className="tag-bs-post__share-logo" /> : null}
+                    <span>{item.title || 'Untitled'}</span>
+                </span>
+                {item.byline && <span className="tag-bs-post__share-by">{item.byline}</span>}
+                {item.artistName && <span className="tag-bs-post__share-by">by {item.artistName}</span>}
+                {item.venue && <span className="tag-bs-post__share-by">{item.venue}</span>}
+                {item.price != null && <span className="tag-bs-post__share-price">${Number(item.price).toFixed(2)}</span>}
+                {item.startTime && <span className="tag-bs-post__share-by">{new Date(item.startTime).toLocaleDateString('en-US', longDateOptions)}</span>}
+            </span>
+            <span className="tag-bs-post__share-type">{typeLabel}</span>
         </Link>
     );
 }

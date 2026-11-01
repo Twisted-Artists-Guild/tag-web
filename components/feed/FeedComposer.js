@@ -58,8 +58,8 @@ export default function FeedComposer({ session, onPostCreated }) {
     };
 
     return (
-        <div className="card bg-base-100 shadow-sm border border-base-300 mb-6">
-            <div className="card-body p-4">
+        <div className="tag-bs-compose">
+            <div>
                 {!showCompose ? (
                     <button
                         className="btn btn-ghost justify-start text-base-content/40 w-full text-left"
