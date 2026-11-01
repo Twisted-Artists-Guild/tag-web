@@ -19,7 +19,7 @@ const SHARE_TYPES = [
     { type: 'Event', label: 'Share an Event' },
 ];
 
-export default function FeedComposer({ session, onPostCreated, paper = false }) {
+export default function FeedComposer({ session, onPostCreated }) {
     const [showCompose, setShowCompose] = useState(false);
     const [composeBody, setComposeBody] = useState('');
     const [shareType, setShareType] = useState(null);
@@ -58,7 +58,7 @@ export default function FeedComposer({ session, onPostCreated, paper = false }) 
     };
 
     return (
-        <div className="tag-bs-compose" data-theme={paper ? "tag-light" : "tag-dark"} data-mode={paper ? "light" : "dark"}>
+        <div className="tag-bs-compose" data-theme="tag-dark" data-mode="dark">
             <div>
                 {!showCompose ? (
                     <button

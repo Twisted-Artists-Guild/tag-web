@@ -12,7 +12,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
-import { Fraunces } from 'next/font/google';
 import Link from 'next/link';
 import TagSEO from '@/components/TagSEO';
 import BloomscrollScene from '@/components/feed/BloomscrollScene';
@@ -24,8 +23,6 @@ import {
     IoFlowerOutline,
     IoArrowBackOutline,
 } from 'react-icons/io5';
-
-const journal = Fraunces({ subsets: ['latin'], style: ['normal', 'italic'], weight: ['400', '500', '600'], variable: '--tag-bs-font-journal', display: 'swap', preload: false });
 
 const ALGORITHMS = [
     { key: 'latest', label: 'Latest' },
@@ -85,7 +82,6 @@ export default function BloomscrollFeed() {
     const { data: session } = useSession();
     const router = useRouter();
     const { post: singlePostId } = router.query;
-    const torn = router.query.look === 'torn';
     const vineMode = VINE_MODES.includes(router.query.vine) ? router.query.vine : 'weave';
 
     const [posts, setPosts] = useState([]);
@@ -159,12 +155,12 @@ export default function BloomscrollFeed() {
             {loading ? (
                 <div className="flex justify-center py-12"><span className="loading loading-spinner loading-lg text-primary"></span></div>
             ) : posts.length === 0 ? (
-                <div className="tag-bs-post tag-bs-post--empty" data-theme={torn ? "tag-light" : "tag-dark"} data-mode={torn ? "light" : "dark"}>
+                <div className="tag-bs-post tag-bs-post--empty" data-theme="tag-dark" data-mode="dark">
                     <IoFlowerOutline aria-hidden="true" />
                     <p>The feed is quiet... be the first to bloom!</p>
                 </div>
             ) : posts.map(post => (
-                <FeedPostCard key={post.feedPostID} post={post} showIdentityGlow={false} paper={torn} />
+                <FeedPostCard key={post.feedPostID} post={post} showIdentityGlow={false} />
             ))}
 
             {/* Infinite scroll sentinel */}
@@ -179,7 +175,7 @@ export default function BloomscrollFeed() {
     return (
         <BloomscrollScene>
             <TagSEO metadataProp={{ title: "Bloomscroll", description: "Your creative social feed on TAG" }} canonicalSlug="feed" />
-            <div className={'container mx-auto pb-8 max-w-[760px] tag-bs-feed__column' + (torn ? ' tag-bs-feed__column--torn ' + journal.variable : '')}>
+            <div className="container mx-auto pb-8 max-w-[760px] tag-bs-feed__column">
                 <div className="tag-bs-sort" role="group" aria-label="Sort posts">
                     {ALGORITHMS.map(algo => (
                         <button
@@ -196,11 +192,11 @@ export default function BloomscrollFeed() {
 
                 {/* Compose */}
                 {session?.user && (
-                    <FeedComposer session={session} onPostCreated={handlePostCreated} paper={torn} />
+                    <FeedComposer session={session} onPostCreated={handlePostCreated} />
                 )}
 
                 {/* Feed Posts */}
-                {torn ? postList : <BloomscrollVine mode={vineMode}>{postList}</BloomscrollVine>}
+                <BloomscrollVine mode={vineMode}>{postList}</BloomscrollVine>
             </div>
         </BloomscrollScene>
     );

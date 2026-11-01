@@ -44,7 +44,7 @@ const ENTITY_ICONS = {
     Listing: IoImageOutline,
 };
 
-export default function FeedPostCard({ post, showIdentityGlow = true, paper = false }) {
+export default function FeedPostCard({ post, showIdentityGlow = true }) {
     const { data: session } = useSession();
     const [showShare, setShowShare] = useState(false);
     const [showComments, setShowComments] = useState(false);
@@ -88,7 +88,7 @@ export default function FeedPostCard({ post, showIdentityGlow = true, paper = fa
     if (postDeleted) return null;
 
     return (
-        <article className="tag-bs-post" data-theme={paper ? "tag-light" : "tag-dark"} data-mode={paper ? "light" : "dark"} data-vine-post={post.feedPostID}>
+        <article className="tag-bs-post" data-theme="tag-dark" data-mode="dark" data-vine-post={post.feedPostID}>
             {/* Author row */}
             <header className="tag-bs-post__head">
                 <div
