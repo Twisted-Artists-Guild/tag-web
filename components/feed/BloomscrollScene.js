@@ -65,12 +65,12 @@ const PROP_LIGHTS = {
   },
   van: {
     bulbs: [[0.06,0.219],[0.114,0.242],[0.172,0.254],[0.226,0.254],[0.263,0.249],[0.323,0.235],[0.389,0.209],[0.457,0.176]],
-    lamps: [[0.26,0.445]], fires: [[0.44,0.5]],
+    lamps: [[0.26,0.445]], fires: [[0.452,0.52]], ovens: [[0.452,0.565,0.095]],
   },
 }
 const SUN_AT = { wide: [0.5395, 0.5715, 0.07], phone: [0.56, 0.72, 0.186] }
 const SUNSET_HAZE = 0.35
-const PROP_GLOW = { bulb: 0.3, lamp: 0.6, fire: 0.75 }
+const PROP_GLOW = { bulb: 0.3, lamp: 0.6, fire: 0.75, pad: 0.4 }
 
 const LIFE = {
   phone: {
@@ -191,15 +191,71 @@ export default function BloomscrollScene({ children, flowers = "normal", colour 
       })
     }
 
-    const propBox = new Map()
+    const propGlows = [...root.querySelectorAll("[data-glow]")].map((cv) => ({ cv, ctx: cv.getContext("2d"), el: props.find((el) => el.dataset.prop === cv.dataset.glow), box: null }))
     function measureProps() {
-      propBox.clear()
-      const bw = backdrop.clientWidth, bh = backdrop.clientHeight
-      props.forEach((el) => {
-        if (!PROP_LIGHTS[el.dataset.prop] || !el.hasAttribute("data-on") || !el.offsetWidth) return
-        const shift = parseFloat(el.style.translate) || 0
-        propBox.set(el.dataset.prop, { u: (el.offsetLeft - el.offsetWidth / 2 + shift) / bw, v: el.offsetTop / bh, uw: el.offsetWidth / bw, vh: el.offsetHeight / bh })
+      const dpr = Math.min(devicePixelRatio || 1, 2)
+      propGlows.forEach((g) => {
+        const { cv, el } = g, on = el.hasAttribute("data-on") && el.offsetWidth > 0
+        cv.toggleAttribute("data-on", on)
+        g.box = null
+        if (!on) return
+        const w = el.offsetWidth, h = el.offsetHeight, pad = h * PROP_GLOW.pad
+        const left = el.offsetLeft - w / 2 + (parseFloat(el.style.translate) || 0) - pad, top = el.offsetTop - pad
+        Object.assign(cv.style, { left: left + "px", top: top + "px", width: w + pad * 2 + "px", height: h + pad * 2 + "px" })
+        cv.width = Math.round((w + pad * 2) * dpr)
+        cv.height = Math.round((h + pad * 2) * dpr)
+        g.box = { x: pad * dpr, y: pad * dpr, w: w * dpr, h: h * dpr }
       })
+    }
+
+    const ovenEmbers = []
+    let ovenLast = 0
+    function drawOven(c, x, base, mw, t, dt, appear) {
+      const fR = mw * 0.32
+      for (const [k, [off, hgt, wid]] of [[0, 1.6, 0.55], [-0.45, 1.1, 0.36], [0.45, 1.15, 0.36]].entries()) {
+        const sway = Math.sin(t / (160 + k * 37) + k) * fR * 0.2 + Math.sin(t / 67 + k * 3) * fR * 0.07
+        const h = fR * hgt * (0.8 + 0.2 * Math.sin(t / (85 + k * 23) + k * 1.3)), w = fR * wid, bx = x + off * fR
+        const g = c.createLinearGradient(bx, base, bx, base - h)
+        flameStops.forEach(([at, colour]) => g.addColorStop(at, colour))
+        c.globalAlpha = 0.55 * appear
+        c.fillStyle = g
+        c.beginPath()
+        c.moveTo(bx - w, base)
+        c.bezierCurveTo(bx - w * 1.1, base - h * 0.45, bx + sway - w * 0.4, base - h * 0.7, bx + sway, base - h)
+        c.bezierCurveTo(bx + sway + w * 0.4, base - h * 0.7, bx + w * 1.1, base - h * 0.45, bx + w, base)
+        c.closePath()
+        c.fill()
+      }
+      if (Math.random() < dt * 7) ovenEmbers.push({ x: x + (Math.random() - 0.5) * mw * 0.6, y: base - mw * 0.05, vx: (Math.random() - 0.5) * mw * 0.15, vy: -mw * (0.3 + Math.random() * 0.25), life: 1 })
+      for (let i = ovenEmbers.length - 1; i >= 0; i--) {
+        const e = ovenEmbers[i]
+        e.x += (e.vx + Math.sin(t / 240 + i) * mw * 0.08) * dt
+        e.y += e.vy * dt
+        e.life -= dt * 0.9
+        if (e.life <= 0) { ovenEmbers.splice(i, 1); continue }
+        c.globalAlpha = e.life * appear
+        const size = mw * 0.14
+        c.drawImage(warmSprite, e.x - size / 2, e.y - size / 2, size, size)
+      }
+    }
+
+    function drawPropGlows(t, appear) {
+      const dt = Math.min(64, t - (ovenLast || t)) / 1000
+      ovenLast = t
+      for (const { ctx: c, cv, box: r, el } of propGlows) {
+        if (!r) continue
+        c.clearRect(0, 0, cv.width, cv.height)
+        if (reduced.matches || appear <= 0) continue
+        const P = PROP_LIGHTS[el.dataset.prop], px = (fx) => r.x + fx * r.w, py = (fy) => r.y + fy * r.h
+        const sprite = (x, y, size, alpha) => { c.globalAlpha = Math.max(0, Math.min(1, alpha)) * appear; c.drawImage(warmSprite, x - size / 2, y - size / 2, size, size) }
+        c.globalCompositeOperation = "lighter"
+        P.bulbs.forEach(([fx, fy], i) => sprite(px(fx), py(fy), r.h * PROP_GLOW.bulb, 0.25 + 0.75 * Math.pow(0.5 + 0.5 * Math.sin(t / 380 - fx * 30 + (i % 3) * 2.1), 2)))
+        P.lamps.forEach(([fx, fy], i) => sprite(px(fx), py(fy), r.h * PROP_GLOW.lamp, 0.5 + 0.12 * Math.sin(t / 900 + i * 1.7)))
+        P.fires.forEach(([fx, fy], i) => sprite(px(fx), py(fy), r.h * PROP_GLOW.fire, 0.55 + 0.2 * Math.sin(t / 83 + i) * Math.sin(t / 211 + i)))
+        P.ovens?.forEach(([fx, fy, fw]) => drawOven(c, px(fx), py(fy), fw * r.w, t, dt, appear))
+        c.globalCompositeOperation = "source-over"
+        c.globalAlpha = 1
+      }
     }
     props.forEach((el) => el.addEventListener("load", measureProps))
 
@@ -642,14 +698,6 @@ export default function BloomscrollScene({ children, flowers = "normal", colour 
         const [x, y] = at(e.x, e.y)
         sprite(x, y, unit * (e.big ? 0.014 : 0.01), e.life)
       }
-      for (const [name, P] of Object.entries(PROP_LIGHTS)) {
-        const r = propBox.get(name)
-        if (!r) continue
-        const px = (fx) => (r.u + fx * r.uw) * cw, py = (fy) => (r.v + fy * r.vh) * ch, size = r.vh * ch
-        P.bulbs.forEach(([fx, fy], i) => sprite(px(fx), py(fy), size * PROP_GLOW.bulb, 0.25 + 0.75 * Math.pow(0.5 + 0.5 * Math.sin(t / 380 - fx * 30 + (i % 3) * 2.1), 2)))
-        P.lamps.forEach(([fx, fy], i) => sprite(px(fx), py(fy), size * PROP_GLOW.lamp, 0.5 + 0.12 * Math.sin(t / 900 + i * 1.7)))
-        P.fires.forEach(([fx, fy], i) => sprite(px(fx), py(fy), size * PROP_GLOW.fire, 0.55 + 0.2 * Math.sin(t / 83 + i) * Math.sin(t / 211 + i)))
-      }
       L.hoops.forEach(([u, v, r], hi) => {
         const [x, y] = at(u, v)
         for (let k = 0; k < 4; k++) {
@@ -780,6 +828,7 @@ export default function BloomscrollScene({ children, flowers = "normal", colour 
       if (!sunset) {
         drawFlies(now, dt, y, mx, smoothstep(1700, 2500, since))
         drawLife(now, dt, smoothstep(1500, 2100, since))
+        drawPropGlows(now, smoothstep(1500, 2100, since))
       }
       drawWheel(still ? 0 : now, 1)
       if (!sunset) drawCrowd(now)
@@ -1059,8 +1108,10 @@ export default function BloomscrollScene({ children, flowers = "normal", colour 
               <canvas data-part="wheel" />
               <div className="tag-bs__prop tag-bs__prop--shadow" data-prop="shadow" data-shift="l" />
               <img className="tag-bs__prop tag-bs__prop--market" data-prop="market" data-shift="l" alt="" />
+              <canvas className="tag-bs__prop-glow" data-glow="market" />
               <img className="tag-bs__half-l" data-fest="fest" data-half="l" alt="" width={1584} height={672} />
               <img className="tag-bs__prop tag-bs__prop--van" data-prop="van" data-shift="r" alt="" />
+              <canvas className="tag-bs__prop-glow" data-glow="van" />
               <img className="tag-bs__prop tag-bs__prop--queue" data-prop="queue" data-shift="r" alt="" />
               <img className="tag-bs__half-r" data-fest="fest" data-half="r" data-side="right" alt="" width={1584} height={672} />
               <img className="tag-bs__prop tag-bs__prop--truck" data-prop="truck" data-shift="l" alt="" />

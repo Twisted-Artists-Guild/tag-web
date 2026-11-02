@@ -371,21 +371,27 @@
   }
 
   .tag-bs__layer > .tag-bs__prop--queue {
-    left: 52.5%;
-    bottom: 24.5%;
-    height: 10.6%;
+    left: 51.5%;
+    bottom: 25.5%;
+    height: 9.06%;
   }
 
-  .tag-bloomscroll[data-sky="night"] .tag-bs:not(.tag-bs--phone) .tag-bs__layer > .tag-bs__prop--market {
-    left: 47%;
-    bottom: 26.5%;
-    height: 15.2%;
+  .tag-bs__layer > .tag-bs__prop-glow {
+    position: absolute;
+    inset: auto;
+    display: none;
+    mix-blend-mode: screen;
+    pointer-events: none;
+  }
+
+  .tag-bloomscroll[data-sky="night"] .tag-bs__layer > .tag-bs__prop-glow[data-on] {
+    display: block;
   }
 
   .tag-bs__layer > .tag-bs__prop--truck {
-    left: 37%;
-    bottom: 22.5%;
-    height: 25.36%;
+    left: 39.5%;
+    bottom: 24.5%;
+    height: 20.53%;
   }
 
   .tag-bs__layer > .tag-bs__prop--walkers {
