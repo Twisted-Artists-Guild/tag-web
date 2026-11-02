@@ -324,6 +324,138 @@
 
   .tag-bloomscroll {
     position: relative;
+    background: none;
+  }
+
+  html[data-mode="light"] .tag-bloomscroll {
+    background: var(--tag-bg);
+  }
+
+  .tag-bs__layer > .tag-bs__prop {
+    position: absolute;
+    inset: auto;
+    display: none;
+    width: auto;
+    max-width: none;
+    transform: translateX(-50%);
+    pointer-events: none;
+  }
+
+  .tag-bs__layer > .tag-bs__prop[data-on] {
+    display: block;
+  }
+
+  .tag-bloomscroll[data-sky="night"] .tag-bs__layer > .tag-bs__prop {
+    filter: brightness(0.7) saturate(0.9);
+  }
+
+  .tag-bs__layer > .tag-bs__prop--shadow {
+    left: 17.2%;
+    bottom: 27%;
+    width: 33%;
+    height: 3.6%;
+    background: radial-gradient(closest-side, rgba(var(--tag-bs-sunset-shade-rgb), 0.62), rgba(var(--tag-bs-sunset-shade-rgb), 0.32) 55%, rgba(var(--tag-bs-sunset-shade-rgb), 0));
+  }
+
+  .tag-bs__layer > .tag-bs__prop--market {
+    left: 29%;
+    bottom: 29.1%;
+    height: 15.29%;
+    filter: brightness(0.9) saturate(0.9);
+  }
+
+  .tag-bs__layer > .tag-bs__prop--van {
+    left: 60%;
+    bottom: 25%;
+    height: 18.4%;
+  }
+
+  .tag-bs__layer > .tag-bs__prop--queue {
+    left: 51.5%;
+    bottom: 25.5%;
+    height: 9.06%;
+    transform: translateX(-50%) scaleX(-1);
+  }
+
+  .tag-bs__layer > .tag-bs__prop-glow {
+    position: absolute;
+    inset: auto;
+    display: none;
+    mix-blend-mode: screen;
+    pointer-events: none;
+  }
+
+  .tag-bs__layer > .tag-bs__prop-glow[data-on] {
+    display: block;
+  }
+
+  .tag-bs__layer > .tag-bs__prop--truck {
+    left: 39.5%;
+    bottom: 24.5%;
+    height: 20.53%;
+  }
+
+  .tag-bs__layer > .tag-bs__prop--walkers {
+    left: 54.7%;
+    bottom: 20%;
+    height: 17.94%;
+  }
+
+  .tag-bs__layer > .tag-bs__prop--picnic {
+    left: 22.5%;
+    bottom: 14%;
+    height: 22.72%;
+  }
+
+  .tag-bs--phone .tag-bs__layer > .tag-bs__prop--shadow {
+    left: 19.5%;
+    bottom: 16.5%;
+    width: 38%;
+    height: 3%;
+  }
+
+  .tag-bs--phone .tag-bs__layer > .tag-bs__prop--market {
+    left: 27%;
+    bottom: 18.4%;
+    height: 13.56%;
+  }
+
+  .tag-bs--phone .tag-bs__layer > .tag-bs__prop--van {
+    left: 64%;
+    bottom: 13.5%;
+    height: 19.52%;
+  }
+
+  .tag-bs--phone .tag-bs__layer > .tag-bs__prop--walkers {
+    left: 60%;
+    bottom: 6%;
+    height: 18.32%;
+  }
+
+  .tag-bs--phone .tag-bs__layer > .tag-bs__prop--picnic {
+    left: 21%;
+    bottom: 9%;
+    height: 13.59%;
+  }
+
+  .tag-bloomscroll[data-sky="sunset"] :is(.tag-bs__glow, .tag-bs__life, [data-part="crowd"], .tag-bs__flies, .tag-bs-garden__flies) {
+    visibility: hidden;
+  }
+
+  .tag-bloomscroll[data-sky="sunset"] .tag-bs__moon::before {
+    display: none;
+  }
+
+  .tag-bloomscroll[data-sky="sunset"] .tag-bs__clouds {
+    filter: sepia(0.6) saturate(1.6) hue-rotate(-18deg) brightness(1.12);
+  }
+
+  .tag-bloomscroll[data-sky="sunset"] :is(.tag-bs__far-tall, .tag-bs__backdrop, .tag-bs__ground) {
+    filter: sepia(0.32) saturate(1.18) hue-rotate(-10deg) brightness(1.04);
+  }
+
+  .tag-bloomscroll[data-sky="sunset"] :is(.tag-bs__near, .tag-bs-garden) {
+    filter: sepia(0.28) saturate(1.05) hue-rotate(-12deg) brightness(0.86);
   }
 
   .tag-bs-garden {
