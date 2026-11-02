@@ -385,7 +385,7 @@
     pointer-events: none;
   }
 
-  .tag-bloomscroll[data-sky="night"] .tag-bs__layer > .tag-bs__prop-glow[data-on] {
+  .tag-bs__layer > .tag-bs__prop-glow[data-on] {
     display: block;
   }
 

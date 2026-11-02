@@ -70,6 +70,9 @@ const PROP_LIGHTS = {
 }
 const SUN_AT = { wide: [0.5395, 0.5715, 0.07], phone: [0.56, 0.72, 0.186] }
 const SUNSET_HAZE = 0.35
+const SUNSET_LIGHTS = {
+  van: { bulbs: [], lamps: [], fires: [[0.452,0.54]], ovens: [[0.452,0.585,0.095]] },
+}
 const PROP_GLOW = { bulb: 0.3, lamp: 0.6, fire: 0.75, pad: 0.4 }
 
 const LIFE = {
@@ -195,7 +198,7 @@ export default function BloomscrollScene({ children, flowers = "normal", colour 
     function measureProps() {
       const dpr = Math.min(devicePixelRatio || 1, 2)
       propGlows.forEach((g) => {
-        const { cv, el } = g, on = el.hasAttribute("data-on") && el.offsetWidth > 0
+        const { cv, el } = g, on = el.hasAttribute("data-on") && el.offsetWidth > 0 && !!lightsFor(el)
         cv.toggleAttribute("data-on", on)
         g.box = null
         if (!on) return
@@ -239,6 +242,8 @@ export default function BloomscrollScene({ children, flowers = "normal", colour 
       }
     }
 
+    function lightsFor(el) { return (sunset ? SUNSET_LIGHTS : PROP_LIGHTS)[el.dataset.prop] }
+
     function drawPropGlows(t, appear) {
       const dt = Math.min(64, t - (ovenLast || t)) / 1000
       ovenLast = t
@@ -246,7 +251,7 @@ export default function BloomscrollScene({ children, flowers = "normal", colour 
         if (!r) continue
         c.clearRect(0, 0, cv.width, cv.height)
         if (reduced.matches || appear <= 0) continue
-        const P = PROP_LIGHTS[el.dataset.prop], px = (fx) => r.x + fx * r.w, py = (fy) => r.y + fy * r.h
+        const P = lightsFor(el), px = (fx) => r.x + fx * r.w, py = (fy) => r.y + fy * r.h
         const sprite = (x, y, size, alpha) => { c.globalAlpha = Math.max(0, Math.min(1, alpha)) * appear; c.drawImage(warmSprite, x - size / 2, y - size / 2, size, size) }
         c.globalCompositeOperation = "lighter"
         P.bulbs.forEach(([fx, fy], i) => sprite(px(fx), py(fy), r.h * PROP_GLOW.bulb, 0.25 + 0.75 * Math.pow(0.5 + 0.5 * Math.sin(t / 380 - fx * 30 + (i % 3) * 2.1), 2)))
@@ -828,8 +833,8 @@ export default function BloomscrollScene({ children, flowers = "normal", colour 
       if (!sunset) {
         drawFlies(now, dt, y, mx, smoothstep(1700, 2500, since))
         drawLife(now, dt, smoothstep(1500, 2100, since))
-        drawPropGlows(now, smoothstep(1500, 2100, since))
       }
+      drawPropGlows(now, smoothstep(1500, 2100, since))
       drawWheel(still ? 0 : now, 1)
       if (!sunset) drawCrowd(now)
 
