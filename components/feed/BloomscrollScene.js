@@ -57,7 +57,7 @@ const SUNSET_ART = {
 }
 const SUNSET_PROPS = { shadow: null, market: "prop-market.webp", van: "prop-van-day.webp", truck: "prop-truck.webp", walkers: "prop-walkers.webp", picnic: "prop-picnic.webp" }
 const NIGHT_PROPS = { market: "prop-market.webp", van: "prop-van.webp", truck: "prop-truck-night.webp", queue: "prop-queue.webp" }
-const PHONE_DROPS = ["truck", "queue"]
+const PHONE_DROPS = ["truck", "queue", "van"]
 const PROP_LIGHTS = {
   market: {
     bulbs: [[0.171,0.32],[0.407,0.32],[0.446,0.336],[0.486,0.342],[0.714,0.352],[0.756,0.38],[0.873,0.381],[0.926,0.368],[0.443,0.423],[0.487,0.417],[0.527,0.406],[0.801,0.396]],
