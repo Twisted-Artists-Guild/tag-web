@@ -18,14 +18,14 @@ import { ART_V, BLOOM_MS, IMG, ROSES, ROSE_SHEET, TINTS, WHITE_ROSES, deck, pain
 
 const MOON = "moon.webp"
 const WIDE_ART = {
-  sky: "sky.webp", far: "far-cut.webp", soft: "far-cut-blur.webp", clouds: "clouds.webp",
+  sky: "sky-night.webp", far: "far-cut.webp", soft: "far-cut-blur.webp", clouds: "clouds.webp",
   fest: "festival-wide.webp", lights: "glow-wide.webp", figures: "cast-wide.webp",
   fest2x: "festival-wide@2x.webp", figures2x: "cast-wide@2x.webp",
   near: "near.webp", tallL: "trees-tall-left.webp", tallR: "trees-tall-right.webp", flowers: "near-flowers.webp",
   tall: "far-portrait.webp", tallSoft: "far-portrait-blur.webp",
 }
 const PHONE_ART = {
-  sky: "p-sky.webp", far: "p-far-cut.webp", soft: "p-far-cut-blur.webp", clouds: "p-clouds.webp",
+  sky: "p-sky-night.webp", far: "p-far-cut.webp", soft: "p-far-cut-blur.webp", clouds: "p-clouds.webp",
   fest: "festival-phone.webp", lights: "glow-phone.webp", figures: "cast-phone.webp", flowers: "near-flowers.webp",
 }
 const FAR_LAG = 0.55
