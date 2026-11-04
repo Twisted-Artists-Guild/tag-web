@@ -11,7 +11,6 @@
 
 import NextAuth from "next-auth"
 import GoogleProvider from "next-auth/providers/google"
-import EmailProvider from "next-auth/providers/email"
 import AzureADProvider from "next-auth/providers/azure-ad"
 import RedditProvider from "next-auth/providers/reddit"
 import InstagramProvider from "next-auth/providers/instagram"
@@ -20,6 +19,7 @@ import PostgresAdapter from "@auth/pg-adapter"
 import { Pool } from "pg"
 import jwt from "jsonwebtoken"
 import config from "@/config"
+import { sendVerificationEmail } from "@/libs/azure-email"
 
 const pool = new Pool({
 	host: process.env.DATABASE_HOST,
@@ -80,10 +80,14 @@ export const authOptions = {
                 }
             },
         }),
-		EmailProvider({
-			server: process.env.EMAIL_SERVER,
-			from: config.mailgun.fromNoReply,
-		}),
+		{
+			id: "email",
+			type: "email",
+			name: "Email",
+			from: process.env.AZURE_COMMUNICATION_SERVICES_SENDER_ADDRESS,
+			maxAge: 24 * 60 * 60,
+			sendVerificationRequest: sendVerificationEmail,
+		},
 	],
 	adapter: PostgresAdapter(pool),
 	
@@ -108,7 +112,23 @@ export const authOptions = {
         },
     },
 
+	pages: {
+		verifyRequest: "/auth/verify-request",
+	},
+
 	callbacks: {
+		// Allow same-origin redirects only; send users to the home page
+		// when the target is the contact page or an auth route.
+		redirect: async ({ url, baseUrl }) => {
+			try {
+				const target = new URL(url, baseUrl)
+				if (target.origin !== new URL(baseUrl).origin) return baseUrl
+				if (target.pathname.startsWith("/contact") || target.pathname.startsWith("/api/auth")) return baseUrl
+				return target.toString()
+			} catch {
+				return baseUrl
+			}
+		},
 		jwt: async ({ token, user }) => {
 			const userId = user?.id || token.sub;
 			if (userId && !token.permissions) {
@@ -149,7 +169,7 @@ export const authOptions = {
 	},
 	theme: {
 		brandColor: config.colors.main,
-		logo: "/logoAndName.png",
+		logo: "/TAG%20OFFICIAL/LOGOS/TAG%20(FILLED).png",
 	},
 }
 

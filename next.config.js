@@ -87,18 +87,21 @@ const nextConfig = {
 
   // ADDED: Fallback rewrites for clean proxying to .NET without prefixes
   async rewrites() {
+    // Normalise so a trailing slash in DOTNET_API_URL does not produce "//" paths
+    const dotnetApiUrl = (process.env.DOTNET_API_URL || 'https://api.twistedartistsguild.com/api').replace(/\/+$/, '')
+    const dotnetRootUrl = dotnetApiUrl.replace(/\/api$/, '')
     return {
       fallback: [
         {
           // proxy for API routes
           source: '/api/:path*',
-          destination: `${process.env.DOTNET_API_URL || 'https://api.twistedartistsguild.com/api'}/:path*`,
+          destination: `${dotnetApiUrl}/:path*`,
         },
         {
           // proxy for SignalR WebSockets
           source: '/hubs/:path*',
           // Note: SignalR endpoints live at the root of .NET, not inside the /api/ folder controller route
-          destination: `${process.env.DOTNET_API_URL ? process.env.DOTNET_API_URL.replace('/api', '') : 'https://api.twistedartistsguild.com'}/hubs/:path*`,
+          destination: `${dotnetRootUrl}/hubs/:path*`,
         },
       ],
     }
