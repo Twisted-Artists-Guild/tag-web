@@ -78,8 +78,6 @@ const config = {
   mailgun: {
     // subdomain to use when sending emails, if you don't have a subdomain, just remove it. Highly recommended to have one (i.e. mg.yourdomain.com or mail.yourdomain.com)
     subdomain: "lc.twistedartistsguild.com",
-    // REQUIRED — Email 'From' field to be used when sending magic login links
-    fromNoReply: `TAG <noreply@twistedartistsguild.com>`,
     // REQUIRED — Email 'From' field to be used when sending other emails, like abandoned carts, updates etc..
     fromAdmin: `TAG Admin <admin@twistedartistsguild.com>`,
     // Email shown to customer if need support. Leave empty if not needed => if empty, set up Crisp above, otherwise you won't be able to offer customer support."
