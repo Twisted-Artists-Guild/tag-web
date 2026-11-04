@@ -11,6 +11,7 @@
 "use client"
 
 import { Fragment, useEffect, useId, useRef, useSyncExternalStore } from "react"
+import { usePageOptionsSlot } from "@/components/Header/pageOptions"
 
 export const PALETTES = ["orig", "7a"]
 export const MODES = ["dark", "light"]
@@ -51,6 +52,7 @@ const serverSnapshot = () => `${DEFAULT_PREFS.palette}|${DEFAULT_PREFS.mode}`
 export default function PalettePicker({ variant = "popover", isOpen = false, onToggle = () => {} }) {
   const idPrefix = useId().replace(/:/g, "")
   const [palette, mode] = useSyncExternalStore(subscribe, readSnapshot, serverSnapshot).split("|")
+  const pageGroups = usePageOptionsSlot() || []
   const wrapRef = useRef(null)
   const buttonRef = useRef(null)
   const popoverRef = useRef(null)
@@ -107,11 +109,15 @@ export default function PalettePicker({ variant = "popover", isOpen = false, onT
     },
   ]
 
-  const body = groups.map((group) => {
+  const body = [...groups, ...pageGroups.map((group, i) => ({ ...group, className: "tag-pal__seg tag-pal__seg--fit", first: i === 0 }))].map((group) => {
     const labelId = `${idPrefix}-${group.kind}`
 
     // Writes the choice to <html> (the store) and saves it on this device
     function select(value) {
+      if (group.select) {
+        group.select(value)
+        return
+      }
       const next = { palette, mode, [group.kind]: value }
       const root = document.documentElement
       root.setAttribute("data-palette", next.palette)
@@ -137,7 +143,7 @@ export default function PalettePicker({ variant = "popover", isOpen = false, onT
 
     return (
       <Fragment key={group.kind}>
-        {isPopover && group.kind === "mode" ? <div className="tag-pal__sep" /> : null}
+        {(isPopover && group.kind === "mode") || group.first ? <div className="tag-pal__sep" /> : null}
         {/* The inline (mobile menu) variant keeps the Mode title for screen readers only */}
         <p className={`tag-pal__title${!isPopover && group.kind === "mode" ? " sr-only" : ""}`} id={labelId}>{group.title}</p>
         <div className={group.className} role="radiogroup" aria-labelledby={labelId} onKeyDown={handleKeyDown}>
@@ -161,11 +167,11 @@ export default function PalettePicker({ variant = "popover", isOpen = false, onT
                       </svg>
                     </span>
                   </span>
-                ) : (
+                ) : MODE_ICONS[option.value] ? (
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                     {MODE_ICONS[option.value]}
                   </svg>
-                )}
+                ) : null}
                 {option.label}
               </button>
             )

@@ -14,19 +14,18 @@
 import NextImage from "next/image"
 import { useEffect, useRef } from "react"
 import { BLOOMSCROLL_LOGO } from "@/components/Header/nav-links"
+import { ART_V, BLOOM_MS, IMG, ROSES, ROSE_SHEET, TINTS, WHITE_ROSES, deck, paintRose, seeded, tintCanvas } from "@/components/feed/bloomscrollRoses"
 
-const IMG = "/images/bloomscroll/"
-const ART_V = "v=16"
 const MOON = "moon.webp"
 const WIDE_ART = {
-  sky: "sky.webp", far: "far-cut.webp", soft: "far-cut-blur.webp", clouds: "clouds.webp",
+  sky: "sky-night.webp", far: "far-cut.webp", soft: "far-cut-blur.webp", clouds: "clouds.webp",
   fest: "festival-wide.webp", lights: "glow-wide.webp", figures: "cast-wide.webp",
   fest2x: "festival-wide@2x.webp", figures2x: "cast-wide@2x.webp",
   near: "near.webp", tallL: "trees-tall-left.webp", tallR: "trees-tall-right.webp", flowers: "near-flowers.webp",
   tall: "far-portrait.webp", tallSoft: "far-portrait-blur.webp",
 }
 const PHONE_ART = {
-  sky: "p-sky.webp", far: "p-far-cut.webp", soft: "p-far-cut-blur.webp", clouds: "p-clouds.webp",
+  sky: "p-sky-night.webp", far: "p-far-cut.webp", soft: "p-far-cut-blur.webp", clouds: "p-clouds.webp",
   fest: "festival-phone.webp", lights: "glow-phone.webp", figures: "cast-phone.webp", flowers: "near-flowers.webp",
 }
 const FAR_LAG = 0.55
@@ -39,6 +38,42 @@ const FAR_TALL_ASPECT = 1024 / 1536
 const FAR_TALL_HILL = 0.743
 const PAINT_ASPECT = 1584 / 672
 const BEAT = 60000 / 124
+const BUSHES = ["hedge-1.webp", "hedge-2.webp", "hedge-3.webp", "hedge-4.webp", "hedge-5.webp"]
+const BUSH_ASPECT = 466 / 560
+const BUSH_MAX = 340
+const VINE_GUTTER = 120
+const VINE_W = 22
+const PATH_FADE_MS = 700
+const BLOOM_LINE = 0.84
+const GRASS = "path-grass.webp"
+const GROUNDS = ["path-ground-l.webp", "path-ground-r.webp"]
+const PATH = "path.webp"
+const LITTER = ["litter-l.webp", "litter-r.webp"]
+const FRINGE = ["fringe-l.webp", "fringe-r.webp"]
+const SUN = "sunset-sun.webp"
+const SUNSET_ART = {
+  wide: { sky: "sunset-sky-wide.webp", stage: "sunset-stage-wide.webp", tents: "sunset-tents-wide.webp", stage2x: "sunset-stage-wide@2x.webp", tents2x: "sunset-tents-wide@2x.webp" },
+  phone: { sky: "sunset-sky-phone.webp", stage: "sunset-stage-phone.webp", tents: "sunset-tents-phone.webp" },
+}
+const SUNSET_PROPS = { shadow: null, market: "prop-market.webp", van: "prop-van-day.webp", truck: "prop-truck.webp", walkers: "prop-walkers.webp", picnic: "prop-picnic.webp" }
+const NIGHT_PROPS = { market: "prop-market.webp", van: "prop-van.webp", truck: "prop-truck-night.webp", queue: "prop-queue.webp" }
+const PHONE_DROPS = ["truck", "queue", "van"]
+const PROP_LIGHTS = {
+  market: {
+    bulbs: [[0.171,0.32],[0.407,0.32],[0.446,0.336],[0.486,0.342],[0.714,0.352],[0.756,0.38],[0.873,0.381],[0.926,0.368],[0.443,0.423],[0.487,0.417],[0.527,0.406],[0.801,0.396]],
+    lamps: [[0.368,0.43],[0.674,0.396],[0.978,0.409]], fires: [],
+  },
+  van: {
+    bulbs: [[0.06,0.219],[0.114,0.242],[0.172,0.254],[0.226,0.254],[0.263,0.249],[0.323,0.235],[0.389,0.209],[0.457,0.176]],
+    lamps: [[0.26,0.445]], fires: [[0.452,0.52]], ovens: [[0.452,0.565,0.095]],
+  },
+}
+const SUN_AT = { wide: [0.5395, 0.5715, 0.07], phone: [0.56, 0.72, 0.186] }
+const SUNSET_HAZE = 0.35
+const SUNSET_LIGHTS = {
+  van: { bulbs: [], lamps: [], fires: [[0.452,0.54]], ovens: [[0.452,0.585,0.095]] },
+}
+const PROP_GLOW = { bulb: 0.3, lamp: 0.6, fire: 0.75, pad: 0.4 }
 
 const LIFE = {
   phone: {
@@ -94,10 +129,17 @@ function radialSprite(size, stops) {
 
 /**
  * The Bloomscroll festival scene at the top of the feed.
- * @param {{ children: React.ReactNode }} props the feed goes in children
+ * @param {{ children: React.ReactNode, flowers?: string, colour?: string }} props the feed goes in children
  */
-export default function BloomscrollScene({ children }) {
+export default function BloomscrollScene({ children, flowers = "normal", colour = "soft" }) {
   const rootRef = useRef(null)
+  const gardenPrefs = useRef({ flowers, colour })
+  const gardenApply = useRef(null)
+
+  useEffect(() => {
+    gardenPrefs.current = { flowers, colour }
+    gardenApply.current?.()
+  }, [flowers, colour])
 
   useEffect(() => {
     const root = rootRef.current
@@ -108,7 +150,7 @@ export default function BloomscrollScene({ children }) {
     const farTall = part("farTall"), farTallSoft = farTall.lastElementChild
     const glowLights = part("glowLights"), haze = part("haze"), mark = part("mark")
     const nearLeft = part("nearLeft"), nearRight = part("nearRight"), flowersL = part("flowersL"), flowersR = part("flowersR")
-    const festImgs = [...root.querySelectorAll("[data-fest]")]
+    const festImgs = [...root.querySelectorAll("[data-fest]")], props = [...root.querySelectorAll(".tag-bs__prop")], moonImg = moon.firstElementChild
     const reduced = matchMedia("(prefers-reduced-motion: reduce)")
     const finePointer = matchMedia("(hover: hover) and (pointer: fine)")
     const tokens = getComputedStyle(document.documentElement)
@@ -121,15 +163,120 @@ export default function BloomscrollScene({ children }) {
     const setSrc = (img, file) => { const src = `${IMG}${file}?${ART_V}`; if (img.getAttribute("src") !== src) img.setAttribute("src", src) }
     const figureSheet = new Image()
     const life = () => (phoneMode ? LIFE.phone : LIFE.wide)
+    const lightMode = () => document.documentElement.getAttribute("data-mode") === "light"
+    let sunset = lightMode(), sunX = 0, sunY = 0
+
+    function artFor(on) {
+      const W = scene.clientWidth, phone = W < PHONE_MAX, sharp = !phone && W * (devicePixelRatio || 1) > 2200
+      if (on) {
+        const S = phone ? SUNSET_ART.phone : SUNSET_ART.wide
+        return { sky: S.sky, l: sharp ? S.stage2x : S.stage, r: sharp ? S.tents2x : S.tents, moon: SUN, props: propsFor(SUNSET_PROPS, phone) }
+      }
+      const A = phone ? PHONE_ART : WIDE_ART, fest = sharp ? WIDE_ART.fest2x : A.fest
+      return { sky: A.sky, l: fest, r: fest, lights: A.lights, moon: MOON, figures: sharp ? WIDE_ART.figures2x : A.figures, props: propsFor(NIGHT_PROPS, phone) }
+    }
+    const propsFor = (set, phone) => Object.fromEntries(Object.entries(set).filter(([name]) => !(phone && PHONE_DROPS.includes(name))))
+
+    function dressArt() {
+      const art = artFor(sunset)
+      root.dataset.sky = sunset ? "sunset" : "night"
+      setSrc(sky, art.sky)
+      setSrc(moonImg, art.moon)
+      if (art.figures) setSrc(figureSheet, art.figures)
+      festImgs.forEach((img) => {
+        if (img.dataset.fest === "fest") setSrc(img, img.dataset.half === "l" ? art.l : art.r)
+        else if (art.lights) setSrc(img, art.lights)
+      })
+      props.forEach((el) => {
+        const name = el.dataset.prop, on = name in art.props
+        el.toggleAttribute("data-on", on)
+        if (on && art.props[name]) setSrc(el, art.props[name])
+      })
+    }
+
+    const propGlows = [...root.querySelectorAll("[data-glow]")].map((cv) => ({ cv, ctx: cv.getContext("2d"), el: props.find((el) => el.dataset.prop === cv.dataset.glow), box: null }))
+    function measureProps() {
+      const dpr = Math.min(devicePixelRatio || 1, 2)
+      propGlows.forEach((g) => {
+        const { cv, el } = g, on = el.hasAttribute("data-on") && el.offsetWidth > 0 && !!lightsFor(el)
+        cv.toggleAttribute("data-on", on)
+        g.box = null
+        if (!on) return
+        const w = el.offsetWidth, h = el.offsetHeight, pad = h * PROP_GLOW.pad
+        const left = el.offsetLeft - w / 2 + (parseFloat(el.style.translate) || 0) - pad, top = el.offsetTop - pad
+        Object.assign(cv.style, { left: left + "px", top: top + "px", width: w + pad * 2 + "px", height: h + pad * 2 + "px" })
+        cv.width = Math.round((w + pad * 2) * dpr)
+        cv.height = Math.round((h + pad * 2) * dpr)
+        g.box = { x: pad * dpr, y: pad * dpr, w: w * dpr, h: h * dpr }
+      })
+    }
+
+    const ovenEmbers = []
+    let ovenLast = 0
+    function drawOven(c, x, base, mw, t, dt, appear) {
+      const fR = mw * 0.32
+      for (const [k, [off, hgt, wid]] of [[0, 1.6, 0.55], [-0.45, 1.1, 0.36], [0.45, 1.15, 0.36]].entries()) {
+        const sway = Math.sin(t / (160 + k * 37) + k) * fR * 0.2 + Math.sin(t / 67 + k * 3) * fR * 0.07
+        const h = fR * hgt * (0.8 + 0.2 * Math.sin(t / (85 + k * 23) + k * 1.3)), w = fR * wid, bx = x + off * fR
+        const g = c.createLinearGradient(bx, base, bx, base - h)
+        flameStops.forEach(([at, colour]) => g.addColorStop(at, colour))
+        c.globalAlpha = 0.55 * appear
+        c.fillStyle = g
+        c.beginPath()
+        c.moveTo(bx - w, base)
+        c.bezierCurveTo(bx - w * 1.1, base - h * 0.45, bx + sway - w * 0.4, base - h * 0.7, bx + sway, base - h)
+        c.bezierCurveTo(bx + sway + w * 0.4, base - h * 0.7, bx + w * 1.1, base - h * 0.45, bx + w, base)
+        c.closePath()
+        c.fill()
+      }
+      if (Math.random() < dt * 7) ovenEmbers.push({ x: x + (Math.random() - 0.5) * mw * 0.6, y: base - mw * 0.05, vx: (Math.random() - 0.5) * mw * 0.15, vy: -mw * (0.3 + Math.random() * 0.25), life: 1 })
+      for (let i = ovenEmbers.length - 1; i >= 0; i--) {
+        const e = ovenEmbers[i]
+        e.x += (e.vx + Math.sin(t / 240 + i) * mw * 0.08) * dt
+        e.y += e.vy * dt
+        e.life -= dt * 0.9
+        if (e.life <= 0) { ovenEmbers.splice(i, 1); continue }
+        c.globalAlpha = e.life * appear
+        const size = mw * 0.14
+        c.drawImage(warmSprite, e.x - size / 2, e.y - size / 2, size, size)
+      }
+    }
+
+    function lightsFor(el) { return (sunset ? SUNSET_LIGHTS : PROP_LIGHTS)[el.dataset.prop] }
+
+    function drawPropGlows(t, appear) {
+      const dt = Math.min(64, t - (ovenLast || t)) / 1000
+      ovenLast = t
+      for (const { ctx: c, cv, box: r, el } of propGlows) {
+        if (!r) continue
+        c.clearRect(0, 0, cv.width, cv.height)
+        if (reduced.matches || appear <= 0) continue
+        const P = lightsFor(el), px = (fx) => r.x + fx * r.w, py = (fy) => r.y + fy * r.h
+        const sprite = (x, y, size, alpha) => { c.globalAlpha = Math.max(0, Math.min(1, alpha)) * appear; c.drawImage(warmSprite, x - size / 2, y - size / 2, size, size) }
+        c.globalCompositeOperation = "lighter"
+        P.bulbs.forEach(([fx, fy], i) => sprite(px(fx), py(fy), r.h * PROP_GLOW.bulb, 0.25 + 0.75 * Math.pow(0.5 + 0.5 * Math.sin(t / 380 - fx * 30 + (i % 3) * 2.1), 2)))
+        P.lamps.forEach(([fx, fy], i) => sprite(px(fx), py(fy), r.h * PROP_GLOW.lamp, 0.5 + 0.12 * Math.sin(t / 900 + i * 1.7)))
+        P.fires.forEach(([fx, fy], i) => sprite(px(fx), py(fy), r.h * PROP_GLOW.fire, 0.55 + 0.2 * Math.sin(t / 83 + i) * Math.sin(t / 211 + i)))
+        P.ovens?.forEach(([fx, fy, fw]) => drawOven(c, px(fx), py(fy), fw * r.w, t, dt, appear))
+        c.globalCompositeOperation = "source-over"
+        c.globalAlpha = 1
+      }
+    }
+    props.forEach((el) => el.addEventListener("load", measureProps))
+
+    function placeSun(left, top, bw, bh) {
+      const [u, v, size] = SUN_AT[phoneMode ? "phone" : "wide"]
+      moon.style.width = sunset ? bw * size + "px" : ""
+      sunX = left + bw * u
+      sunY = top + bh * v
+    }
 
     function layoutPhone(W, H, vis) {
-      setSrc(sky, PHONE_ART.sky)
       setSrc(farImg, PHONE_ART.far)
       setSrc(farSoft, PHONE_ART.soft)
       farImg.style.visibility = farSoft.style.visibility = ""
       farTall.style.display = "none"
       setSrc(clouds.firstElementChild, PHONE_ART.clouds)
-      setSrc(figureSheet, PHONE_ART.figures)
       const sk = sky.style
       sk.objectFit = sk.objectPosition = sk.backgroundColor = ""
       sk.left = sk.top = "0px"
@@ -145,11 +292,11 @@ export default function BloomscrollScene({ children }) {
       const horizon = H * 0.69
       const split = 55.5
       festImgs.forEach((img) => {
-        setSrc(img, PHONE_ART[img.dataset.fest])
         const right = img.dataset.side === "right"
         const clip = img.dataset.half === "l" ? `clip-path: inset(0 ${100 - split}% 0 0);` : img.dataset.half === "r" ? `clip-path: inset(0 0 0 ${split}%);` : ""
         img.style.cssText = `translate: 0 ${H * (right ? 0.04 : 0.08)}px;` + clip
       })
+      props.forEach((el) => { el.style.translate = "" })
       nearLeft.style.display = nearRight.style.display = "none"
       const nw = W * 1.16, nh = nw / NEAR_FULL_ASPECT, nl = -0.08 * W, nt = vis + 4 - nh
       nearHinge = W / 2 - nl
@@ -165,6 +312,7 @@ export default function BloomscrollScene({ children }) {
         st.height = nh + "px"
         st.transformOrigin = `${W / 2 - nl}px ${nh}px`
       }
+      placeSun(0, 0, W, H)
       const mw = moon.offsetWidth
       moonRest = Math.max(mw * 0.9, Math.min(horizon * 0.45, horizon - mw * 1.6))
       moonSunk = horizon + mw * 0.8
@@ -182,15 +330,13 @@ export default function BloomscrollScene({ children }) {
       const vis = H - overlap
       wrap.style.height = H + holdFor(H) + "px"
       sceneTop = wrap.getBoundingClientRect().top + window.scrollY
+      dressArt()
       if (phoneMode) { layoutPhone(W, H, vis); return }
-      setSrc(sky, WIDE_ART.sky)
       setSrc(farImg, WIDE_ART.far)
       setSrc(farSoft, WIDE_ART.soft)
       setSrc(clouds.firstElementChild, WIDE_ART.clouds)
-      const sharp = W * (devicePixelRatio || 1) > 2200
-      setSrc(figureSheet, sharp ? WIDE_ART.figures2x : WIDE_ART.figures)
       nearLeft.style.display = nearRight.style.display = ""
-      festImgs.forEach((img) => { setSrc(img, sharp && img.dataset.fest === "fest" ? WIDE_ART.fest2x : WIDE_ART[img.dataset.fest]); img.style.position = img.style.left = img.style.top = img.style.width = img.style.height = "" })
+      festImgs.forEach((img) => { img.style.position = img.style.left = img.style.top = img.style.width = img.style.height = "" })
       if (wide) {
         const nw = Math.max(W * 1.06, (vis + 4) * NEAR_FULL_ASPECT), nh = nw / NEAR_FULL_ASPECT, nl = (W - nw) / 2, nt = vis + 4 - nh
         nearHinge = W / 2 - nl
@@ -269,6 +415,8 @@ export default function BloomscrollScene({ children }) {
         const right = img.dataset.side === "right"
         img.style.translate = dx ? `${right ? -dx : dx}px 0` : ""
       })
+      props.forEach((el) => { el.style.translate = dx && el.dataset.shift ? `${el.dataset.shift === "r" ? -dx : dx}px 0` : "" })
+      placeSun((W - bw) / 2, top, bw, bh)
       farImg.style.visibility = farSoft.style.visibility = wide ? "" : "hidden"
       farTall.style.display = wide ? "none" : "block"
       if (!wide) {
@@ -317,7 +465,7 @@ export default function BloomscrollScene({ children }) {
 
     const crowdCanvas = part("crowd"), crowdCtx = crowdCanvas.getContext("2d")
     function drawCrowd(t) {
-      const bw = backdrop.clientWidth, bh = backdrop.clientHeight
+      const { bw, bh } = box
       const dpr = Math.min(devicePixelRatio || 1, 2)
       const cw = Math.round(bw * dpr), ch = Math.round(bh * dpr)
       if (crowdCanvas.width !== cw || crowdCanvas.height !== ch) { crowdCanvas.width = cw; crowdCanvas.height = ch }
@@ -441,7 +589,7 @@ export default function BloomscrollScene({ children }) {
 
     const wheelCanvas = part("wheel"), wheelCtx = wheelCanvas.getContext("2d")
     function drawWheel(t, appear) {
-      const bw = backdrop.clientWidth, bh = backdrop.clientHeight
+      const { bw, bh } = box
       const dpr = Math.min(devicePixelRatio || 1, 2)
       const cw = Math.round(bw * dpr), ch = Math.round(bh * dpr)
       if (wheelCanvas.width !== cw || wheelCanvas.height !== ch) { wheelCanvas.width = cw; wheelCanvas.height = ch }
@@ -500,7 +648,7 @@ export default function BloomscrollScene({ children }) {
     const lifeCanvas = part("life"), lifeCtx = lifeCanvas.getContext("2d")
     const embers = []
     function drawLife(t, dt, appear) {
-      const bw = backdrop.clientWidth, bh = backdrop.clientHeight
+      const { bw, bh } = box
       const dpr = Math.min(devicePixelRatio || 1, 2)
       const cw = Math.round(bw * dpr), ch = Math.round(bh * dpr)
       if (lifeCanvas.width !== cw || lifeCanvas.height !== ch) { lifeCanvas.width = cw; lifeCanvas.height = ch }
@@ -568,7 +716,7 @@ export default function BloomscrollScene({ children }) {
     }
 
     function drawFlies(t, dt, y, mx, appear) {
-      const W = scene.clientWidth, H = scene.clientHeight
+      const { W, H } = box
       const lagByDepth = [FAR_LAG, 0.3, -NEAR_SPEED]
       const sizeByDepth = [6, 11, 26]
       flyCanvases.forEach((cv, i) => {
@@ -618,11 +766,17 @@ export default function BloomscrollScene({ children }) {
     }
     const onPointerLeave = () => { tx = 0; ty = 0 }
 
+    const box = { W: 0, H: 0, bw: 0, bh: 0, mw: 0 }
+    function measure() {
+      Object.assign(box, { W: scene.clientWidth, H: scene.clientHeight, bw: backdrop.clientWidth, bh: backdrop.clientHeight, mw: moon.offsetWidth })
+      measureProps()
+    }
+
     let visible = true, running = false, rafId = 0
     function frame(now) {
       const dt = Math.min(64, now - last) / 1000
       last = now
-      const W = scene.clientWidth, H = scene.clientHeight
+      const { W, H } = box
       const hold = holdFor(H), walk = walkFor(H)
       const target = Math.min(scrollPos(), hold + H)
       const still = reduced.matches
@@ -646,13 +800,12 @@ export default function BloomscrollScene({ children }) {
 
       const rise = 1 - smoothstep(700, 2300, since)
       const sink = Math.max(rise, Math.min(1, p * 1.5))
-      const mw = moon.offsetWidth
+      const mw = box.mw
       const mxPos = W * ((phoneMode ? 0.56 : 0.63) + sink * 0.05) - mw / 2 + mx * -4
       const myPos = moonRest + sink * (moonSunk - moonRest) + y * 0.72 - mw / 2
-      moon.style.transform = `translate3d(${mxPos}px, ${myPos}px, 0)`
+      moon.style.transform = sunset ? `translate3d(${sunX - mw / 2}px, ${sunY - mw / 2 + y * 0.72}px, 0)` : `translate3d(${mxPos}px, ${myPos}px, 0)`
       moon.style.setProperty("--glow", String(1 - smoothstep(0.35, 0.95, sink)))
 
-      scene.style.setProperty("--approach", p.toFixed(3))
       const separate = W / H <= 1.6
       const grow = 1 + fp * NEAR_SPEED * (separate ? 0.3 : 1.2)
       const near = `translate3d(${fmx * -45}px, ${-fy * NEAR_SPEED * 0.25 + fmy * -14}px, 0) scale(${grow})`
@@ -671,16 +824,19 @@ export default function BloomscrollScene({ children }) {
       mark.style.opacity = land.toFixed(3)
       mark.style.transform = `translate3d(-50%, calc(-50% + ${(fy * 0.45 + (1 - land) * H * 0.12 + float).toFixed(1)}px), 0) scale(${(0.6 + 0.4 * land).toFixed(3)})`
       mark.style.setProperty("--glow", (still ? 0.8 : (0.6 + 0.25 * Math.sin(now / 700)) * land).toFixed(3))
-      haze.style.opacity = String(0.7 + fp * 0.6)
+      haze.style.opacity = String(sunset ? SUNSET_HAZE : 0.7 + fp * 0.6)
 
       const on = still ? 1 : smoothstep(1500, 1950, since)
       const shimmer = still ? 1 : 0.94 + 0.06 * Math.sin(now / 700)
       glowLights.style.opacity = String(on * shimmer * 0.95)
 
-      drawFlies(now, dt, y, mx, smoothstep(1700, 2500, since))
-      drawLife(now, dt, smoothstep(1500, 2100, since))
+      if (!sunset) {
+        drawFlies(now, dt, y, mx, smoothstep(1700, 2500, since))
+        drawLife(now, dt, smoothstep(1500, 2100, since))
+      }
+      drawPropGlows(now, smoothstep(1500, 2100, since))
       drawWheel(still ? 0 : now, 1)
-      drawCrowd(now)
+      if (!sunset) drawCrowd(now)
 
       if (visible) rafId = requestAnimationFrame(frame)
       else running = false
@@ -689,10 +845,11 @@ export default function BloomscrollScene({ children }) {
       if (!running && visible) { running = true; last = performance.now(); rafId = requestAnimationFrame(frame) }
     }
     const observer = new IntersectionObserver(([e]) => { visible = e.isIntersecting; kick() })
-    const resizer = new ResizeObserver(() => { sizeCanvases(); layout(); readStick() })
+    const resizer = new ResizeObserver(() => { sizeCanvases(); layout(); measure(); readStick() })
 
     sizeCanvases()
     layout()
+    measure()
     readStick()
     sy = scrollPos()
     window.addEventListener("pointermove", onPointerMove, { passive: true })
@@ -701,23 +858,249 @@ export default function BloomscrollScene({ children }) {
     observer.observe(scene)
     resizer.observe(scene)
     kick()
+
+    const garden = part("garden"), column = feed.querySelector(":scope > .container")
+    const sheet = new Image()
+    sheet.src = `${IMG}${ROSE_SHEET}?${ART_V}`
+    const sepalFill = `rgb(${rgb("sepal")})`
+    const clamp = (x) => Math.max(0, Math.min(1, x))
+    const blurredMask = (box, points, blur, baseOpacity) => `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${box}" preserveAspectRatio="none"><defs><linearGradient id="f" x1="0" y1="0" x2="0" y2="1"><stop offset="0.8" stop-color="black"/><stop offset="1" stop-color="black" stop-opacity="${baseOpacity}"/></linearGradient><filter id="b" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="${blur}"/></filter></defs><polygon points="${points.join(" ")}" fill="url(#f)" filter="url(#b)"/></svg>`)}")`
+    const wave = (n, at) => Array.from({ length: n + 13 }, (_, k) => at((k - 6) / n))
+    const sway = (t) => 0.7 + 0.07 * Math.sin(t * Math.PI * 2) + 0.04 * Math.sin(t * Math.PI * 6 + 1.3)
+    const edgeMask = (right) => blurredMask("100 640", [right ? "160,-120" : "-60,-120", ...wave(40, (t) => `${(right ? 1 - sway(t) : sway(t)) * 100},${t * 640}`), right ? "160,760" : "-60,760"], "3 3", 1)
+    const grassMask = blurredMask("900 100", ["-90,100", ...wave(60, (t) => `${t * 900},${(0.42 + 0.14 * Math.sin(t * Math.PI * 2 + 0.6) + 0.08 * Math.sin(t * Math.PI * 6)) * 100}`), "990,100"], "6 7", 0)
+    const grass = garden.querySelector(".tag-bs-garden__grass"), grounds = [...garden.querySelectorAll(".tag-bs-garden__ground")]
+    setSrc(grass, GRASS)
+    grass.style.maskImage = grass.style.webkitMaskImage = grassMask
+    const path = garden.querySelector(".tag-bs-garden__path"), shade = rgb("path-shade")
+    const litter = [...garden.querySelectorAll(".tag-bs-garden__litter")], fringe = [...garden.querySelectorAll(".tag-bs-garden__fringe")]
+    litter.forEach((el, n) => { el.style.backgroundImage = `url(${IMG}${LITTER[n]}?${ART_V})` })
+    let pathAt = 0
+    Promise.all([PATH, ...LITTER].map((file) => {
+      const img = new Image()
+      img.src = `${IMG}${file}?${ART_V}`
+      return img.decode().catch(() => {})
+    })).then(() => { pathAt = performance.now() })
+    const bed = { L: 0, w: 0, top: 0, vine: false, dpr: 1 }
+    const beds = [...garden.querySelectorAll(".tag-bs-garden__bed")].map((el, n) => {
+      el.style.maskImage = el.style.webkitMaskImage = edgeMask(n === 1)
+      return { el, bush: el.firstElementChild, ground: grounds[n], right: n === 1, roses: [], kept: [] }
+    })
+
+    function drawRose(rose) {
+      const { colour } = gardenPrefs.current, tint = colour === "full" && TINTS[rose.seed % TINTS.length]
+      paintRose(rose.el, colour === "calm" && ROSES[rose.art].teal ? { ...rose, art: WHITE_ROSES[rose.seed % WHITE_ROSES.length] } : rose, sheet, bed.dpr, sepalFill)
+      if (tint && sheet.complete && sheet.naturalWidth) tintCanvas(rose.el, `rgb(${rgb(tint)})`)
+    }
+
+    const mateOf = (r) => r.mate || (r.mate = {
+      y: r.y + 29, fx: r.fx > 0.24 ? r.fx - 0.12 : r.fx + 0.14, size: r.size * 0.78, seed: r.seed + 1, bud: false, jitter: r.jitter + 180,
+      el: null, t0: undefined, art: (r.art + 2) % ROSES.length, tilt: -r.tilt, spin: -r.spin, p: reduced.matches ? 1 : 0,
+    })
+
+    function sprout(b, rose) {
+      const cv = document.createElement("canvas"), box = rose.size * 1.3, x = rose.fx * bed.w
+      cv.className = "tag-bs-garden__rose"
+      cv.width = cv.height = Math.ceil(box * bed.dpr)
+      Object.assign(cv.style, { width: `${box}px`, height: `${box}px`, left: `${(b.right ? bed.w - x : x) - box / 2}px`, top: `${rose.y - box / 2}px` })
+      rose.el = cv
+      b.el.appendChild(cv)
+      drawRose(rose)
+    }
+
+    function plant(b, height) {
+      const segH = bed.w * BUSH_ASPECT
+      for (; b.bushTo < height; b.bushTo += segH * 0.42 * (0.9 + b.bushRnd() * 0.2)) {
+        let pick = Math.floor(b.bushRnd() * BUSHES.length)
+        if (pick === b.bushPick) pick = (pick + 1) % BUSHES.length
+        b.bushPick = pick
+        const scale = 1.06 + b.bushRnd() * 0.1, img = document.createElement("img")
+        img.alt = ""
+        img.decoding = "async"
+        img.src = `${IMG}${BUSHES[pick]}?${ART_V}`
+        Object.assign(img.style, { top: `${b.bushTo}px`, left: `${-b.bushRnd() * 0.08 * bed.w}px`, width: `${bed.w * scale}px`, height: `${segH * scale}px` })
+        b.bush.appendChild(img)
+      }
+      const rnd = b.roseRnd
+      for (; b.roseTo < height - (bed.vine ? 110 : 250); b.roseTo += 58 + rnd() * 52) {
+        const seed = Math.floor(rnd() * 1000)
+        const size = bed.vine ? 17 + rnd() * 7 : 50 + rnd() * 38
+        const bud = !bed.vine && rnd() < 0.08, jitter = rnd() * 400, fx = 0.08 + rnd() * 0.32
+        b.roses.push({
+          y: b.roseTo, fx, size, seed, bud, jitter, el: null, t0: undefined,
+          art: b.variety(), tilt: ((((seed * 37) % 40) - 20) * Math.PI) / 180, spin: seed % 2 ? 1 : -1,
+          p: b.kept[b.roses.length] ?? (reduced.matches ? 1 : 0),
+        })
+      }
+    }
+
+    function layoutGarden() {
+      if (!column) return
+      const H = scene.clientHeight
+      const rootR = root.getBoundingClientRect(), colR = column.getBoundingClientRect(), rootTop = rootR.top + window.scrollY
+      const gutter = colR.left - rootR.left, vine = gutter < VINE_GUTTER
+      const w = vine ? VINE_W : Math.min(BUSH_MAX, gutter - 12)
+      bed.dpr = Math.min(2, devicePixelRatio || 1)
+      bed.L = phoneMode ? holdFor(H) : sceneTop - stickTop + holdFor(H)
+      bed.top = bed.L + stickTop + H * (vine ? 1 : 0.74) - rootTop
+      const height = Math.max(0, rootR.height - bed.top)
+      garden.style.top = `${bed.top}px`
+      garden.style.height = `${height}px`
+      const pathTop = vine ? 0 : H * 0.26, edge = vine ? 0 : w, dark = `rgba(${shade}, 0.78)`, clear = `rgba(${shade}, 0)`
+      path.style.top = `${pathTop}px`
+      path.style.backgroundImage = `linear-gradient(to bottom, ${clear} calc(100% - 320px), rgba(${shade}, 0.94) calc(100% - 70px)), linear-gradient(to right, ${dark} 0, ${dark} ${edge}px, ${clear} ${edge + 320}px, ${clear} calc(100% - ${edge + 320}px), ${dark} calc(100% - ${edge}px), ${dark} 100%), url(${IMG}${PATH}?${ART_V})`
+      path.style.backgroundSize = `100% 100%, 100% 100%, ${Math.max(1400, rootR.width)}px auto`
+      litter.forEach((el) => { el.style.top = `${pathTop}px`; el.hidden = vine })
+      fringe.forEach((el) => { el.hidden = vine })
+      if (!vine) {
+        grounds.forEach((img, n) => setSrc(img, GROUNDS[n]))
+        fringe.forEach((el, n) => { el.style.backgroundImage = `url(${IMG}${FRINGE[n]}?${ART_V})` })
+      }
+      litter[0].style.left = `${w - 170}px`
+      litter[1].style.right = `${w - 170}px`
+      fringe[0].style.left = `${w * 0.56}px`
+      fringe[1].style.right = `${w * 0.56}px`
+      if (w !== bed.w || vine !== bed.vine) {
+        bed.w = w
+        bed.vine = vine
+        beds.forEach((b, n) => {
+          b.kept = b.roses.map((rose) => rose.p)
+          b.roses.forEach((rose) => rose.el?.remove())
+          b.bush.replaceChildren()
+          b.el.style.width = `${w}px`
+          b.ground.style.width = `${w + 260}px`
+          b.ground.hidden = vine
+          Object.assign(b, { roses: [], bushTo: -w * BUSH_ASPECT * 0.3, roseTo: 80, bushPick: -1, bushRnd: seeded(7 + n * 6), roseRnd: seeded(29 + n * 24), variety: deck(seeded(101 + n * 57)) })
+          if (b.right) { b.variety(); b.variety() }
+        })
+      }
+      beds.forEach((b) => plant(b, height))
+    }
+
+    let gardenOn = false, gardenRaf = 0
+    function tend(now) {
+      const g = reduced.matches ? 1 : smoothstep(0, holdFor(box.H), sy)
+      const travel = bed.w + 60
+      garden.style.transform = `translate3d(0, ${-Math.max(0, bed.L - window.scrollY)}px, 0)`
+      beds[0].el.style.transform = beds[0].ground.style.transform = litter[0].style.transform = fringe[0].style.transform = `translate3d(${-(1 - g) * travel}px, 0, 0)`
+      beds[1].el.style.transform = beds[1].ground.style.transform = litter[1].style.transform = fringe[1].style.transform = `translate3d(${(1 - g) * travel}px, 0, 0)`
+      const shown = pathAt ? g * smoothstep(0, PATH_FADE_MS, now - pathAt) : 0
+      path.style.opacity = litter[0].style.opacity = litter[1].style.opacity = shown.toFixed(3)
+      const locked = window.scrollY >= bed.L - 1, vh = innerHeight, top = garden.getBoundingClientRect().top
+      const { flowers } = gardenPrefs.current
+      for (const b of beds) {
+        for (let i = 0; i < b.roses.length; i++) {
+          const main = b.roses[i], skip = flowers === "off" || (flowers === "few" && i % 3 !== 0)
+          if (flowers !== "lots" && main.mate?.el) { main.mate.el.remove(); main.mate.el = null }
+          for (const rose of flowers === "lots" ? [main, mateOf(main)] : [main]) {
+            const y = top + rose.y
+            if (skip || y < -vh || y > vh * 2) {
+              if (rose.el) { rose.el.remove(); rose.el = null }
+              continue
+            }
+            if (!rose.el) sprout(b, rose)
+            if (rose.p >= 1) continue
+            if (rose.t0 === undefined && locked && !rose.bud && y < vh * BLOOM_LINE) rose.t0 = now + rose.jitter
+            if (rose.t0 === undefined) continue
+            rose.p = clamp((now - rose.t0) / BLOOM_MS)
+            drawRose(rose)
+          }
+        }
+      }
+      gardenRaf = gardenOn ? requestAnimationFrame(tend) : 0
+    }
+    const gardenSeen = new Set()
+    const gardenWatch = new IntersectionObserver((entries) => {
+      entries.forEach((e) => (e.isIntersecting ? gardenSeen.add(e.target) : gardenSeen.delete(e.target)))
+      gardenOn = gardenSeen.size > 0
+      if (gardenOn && !gardenRaf) gardenRaf = requestAnimationFrame(tend)
+    })
+    const gardenResizer = new ResizeObserver(() => layoutGarden())
+    sheet.addEventListener("load", () => beds.forEach((b) => b.roses.forEach((rose) => rose.el && drawRose(rose))))
+    gardenApply.current = () => beds.forEach((b) => b.roses.forEach((rose) => [rose, rose.mate].forEach((r) => r?.el && drawRose(r))))
+    layoutGarden()
+    gardenWatch.observe(garden)
+    gardenWatch.observe(scene)
+    gardenResizer.observe(scene)
+    gardenResizer.observe(feed)
+
+    const footFlies = part("footFlies"), footCtx = footFlies.getContext("2d"), flyRnd = seeded(5)
+    const swarm = Array.from({ length: 8 }, (_, i) => ({
+      x: i % 4 === 3 ? 0.3 + flyRnd() * 0.4 : i % 2 ? 1 - flyRnd() * 0.22 : flyRnd() * 0.22, y: 0.2 + flyRnd() * 0.6,
+      vx: (flyRnd() - 0.5) * 0.006, vy: (flyRnd() - 0.5) * 0.01, phase: flyRnd() * Math.PI * 2, size: 8 + flyRnd() * 6,
+    }))
+    let fliesOn = false, fliesRaf = 0, fliesLast = 0
+    function hover(now) {
+      const dt = Math.min(64, now - fliesLast) / 1000, still = reduced.matches
+      fliesLast = now
+      const dpr = Math.min(2, devicePixelRatio || 1), w = footFlies.clientWidth, h = footFlies.clientHeight
+      if (footFlies.width !== Math.round(w * dpr)) { footFlies.width = Math.round(w * dpr); footFlies.height = Math.round(h * dpr) }
+      footCtx.setTransform(dpr, 0, 0, dpr, 0, 0)
+      footCtx.clearRect(0, 0, w, h)
+      for (const f of swarm.slice(0, phoneMode ? 4 : swarm.length)) {
+        if (!still) {
+          f.x += (f.vx + Math.sin(now / 1300 + f.phase) * 0.004) * dt
+          f.y += (f.vy + Math.cos(now / 1700 + f.phase) * 0.012) * dt
+          if (f.x < 0.02 || f.x > 0.98) f.vx = -f.vx
+          if (f.y < 0.12) f.vy = Math.abs(f.vy)
+          if (f.y > 0.88) f.vy = -Math.abs(f.vy)
+        }
+        footCtx.globalAlpha = still ? 0.6 : 0.3 + 0.7 * Math.max(0, Math.sin(now / 650 + f.phase))
+        footCtx.drawImage(flySprite, f.x * w - f.size / 2, f.y * h - f.size / 2, f.size, f.size)
+      }
+      fliesRaf = fliesOn && !still && !sunset ? requestAnimationFrame(hover) : 0
+    }
+    const startFlies = () => { if (fliesOn && !fliesRaf && !sunset) { fliesLast = performance.now(); fliesRaf = requestAnimationFrame(hover) } }
+    const fliesWatch = new IntersectionObserver(([e]) => {
+      fliesOn = e.isIntersecting
+      startFlies()
+    })
+    fliesWatch.observe(footFlies)
+
+    let switching = 0
+    const modeWatch = new MutationObserver(() => {
+      const next = lightMode(), ticket = ++switching
+      if (next === sunset) return
+      const art = artFor(next)
+      const files = [art.sky, art.l, art.r, art.moon, art.lights, art.figures, ...Object.values(art.props)].filter(Boolean)
+      Promise.all(files.map((file) => {
+        const img = new Image()
+        img.src = `${IMG}${file}?${ART_V}`
+        return img.decode().catch(() => {})
+      })).then(() => {
+        if (ticket !== switching) return
+        sunset = next
+        layout()
+        measure()
+        startFlies()
+      })
+    })
+    modeWatch.observe(document.documentElement, { attributes: true, attributeFilter: ["data-mode"] })
     return () => {
+      switching++
+      modeWatch.disconnect()
+      cancelAnimationFrame(fliesRaf)
+      fliesWatch.disconnect()
+      cancelAnimationFrame(gardenRaf)
+      gardenWatch.disconnect()
+      gardenResizer.disconnect()
       cancelAnimationFrame(rafId)
       observer.disconnect()
       resizer.disconnect()
       window.removeEventListener("pointermove", onPointerMove)
       document.removeEventListener("pointerleave", onPointerLeave)
       window.removeEventListener("scroll", readStick)
+      gardenApply.current = null
     }
   }, [])
 
   return (
-    <div className="tag-bloomscroll" ref={rootRef}>
+    <div className="tag-bloomscroll" data-theme="tag-dark" data-mode="dark" ref={rootRef}>
       <div className="tag-bs-wrap" data-part="wrap">
         <section className="tag-bs" data-part="scene">
           <div className="tag-bs__book" data-part="book" aria-hidden="true">
             <img className="tag-bs__layer tag-bs__sky" data-part="sky" alt="" width={1584} height={672} />
-            <div className="tag-bs__moon" data-part="moon"><img src={`${IMG}${MOON}?${ART_V}`} alt="" width={320} height={320} /></div>
+            <div className="tag-bs__moon" data-part="moon"><img alt="" width={320} height={320} /></div>
             <div className="tag-bs__layer tag-bs__fit tag-bs__clouds" data-part="clouds"><img alt="" /></div>
             <div className="tag-bs__ground" data-part="ground" />
             <div className="tag-bs__layer tag-bs__far-tall" data-part="farTall">
@@ -728,8 +1111,17 @@ export default function BloomscrollScene({ children }) {
               <img data-part="far" alt="" width={1584} height={672} />
               <img className="tag-bs__far-soft" data-part="farSoft" alt="" width={1584} height={672} />
               <canvas data-part="wheel" />
+              <div className="tag-bs__prop tag-bs__prop--shadow" data-prop="shadow" data-shift="l" />
+              <img className="tag-bs__prop tag-bs__prop--market" data-prop="market" data-shift="l" alt="" />
+              <canvas className="tag-bs__prop-glow" data-glow="market" />
               <img className="tag-bs__half-l" data-fest="fest" data-half="l" alt="" width={1584} height={672} />
+              <img className="tag-bs__prop tag-bs__prop--van" data-prop="van" data-shift="r" alt="" />
+              <canvas className="tag-bs__prop-glow" data-glow="van" />
+              <img className="tag-bs__prop tag-bs__prop--queue" data-prop="queue" data-shift="r" alt="" />
               <img className="tag-bs__half-r" data-fest="fest" data-half="r" data-side="right" alt="" width={1584} height={672} />
+              <img className="tag-bs__prop tag-bs__prop--truck" data-prop="truck" data-shift="l" alt="" />
+              <img className="tag-bs__prop tag-bs__prop--walkers" data-prop="walkers" alt="" />
+              <img className="tag-bs__prop tag-bs__prop--picnic" data-prop="picnic" data-shift="l" alt="" />
               <canvas data-part="crowd" />
               <canvas className="tag-bs__life" data-part="life" />
             </div>
@@ -754,6 +1146,19 @@ export default function BloomscrollScene({ children }) {
         </section>
       </div>
       <div className="tag-bs-feed" data-part="feed">{children}</div>
+      <div className="tag-bs-garden" data-part="garden" aria-hidden="true">
+        <div className="tag-bs-garden__path" />
+        <div className="tag-bs-garden__litter tag-bs-garden__litter--l" />
+        <div className="tag-bs-garden__litter tag-bs-garden__litter--r" />
+        <img className="tag-bs-garden__grass" alt="" />
+        <div className="tag-bs-garden__bed tag-bs-garden__bed--l"><div className="tag-bs-garden__bush" /></div>
+        <div className="tag-bs-garden__bed tag-bs-garden__bed--r"><div className="tag-bs-garden__bush" /></div>
+        <div className="tag-bs-garden__fringe tag-bs-garden__fringe--l" />
+        <div className="tag-bs-garden__fringe tag-bs-garden__fringe--r" />
+        <img className="tag-bs-garden__ground tag-bs-garden__ground--l" alt="" />
+        <img className="tag-bs-garden__ground tag-bs-garden__ground--r" alt="" />
+      </div>
+      <canvas className="tag-bs-garden__flies" data-part="footFlies" aria-hidden="true" />
     </div>
   )
 }

@@ -75,6 +75,9 @@
   --tag-bs-wheel-hi-rgb: 79, 139, 134;
   --tag-bs-wheel-dark-rgb: 23, 51, 50;
   --tag-bs-window-rgb: 255, 214, 120;
+  --tag-bs-sepal-rgb: 31, 74, 60;
+  --tag-bs-path-shade-rgb: 30, 38, 28;
+  --tag-bs-sunset-shade-rgb: 16, 12, 10;
 
   /* status */
   --tag-info: #8f72ff;
@@ -158,6 +161,37 @@ html[data-mode="light"] {
 
 html[data-mode="light"][data-palette="7a"] {
   --tag-acc-text: #b0128c;
+}
+
+html[data-mode="light"] [data-mode="dark"] {
+  --tag-bg: #151318;
+  --tag-bg-2: #1a171f;
+  --tag-bg-3: #0e0c12;
+  --tag-surface: #1d1a24;
+  --tag-surface-2: #24202d;
+  --tag-line: rgba(255, 255, 255, 0.08);
+  --tag-line-2: rgba(255, 255, 255, 0.14);
+  --tag-text: #f5f5fc;
+  --tag-text-2: #c9c5d6;
+  --tag-muted: #9a96aa;
+  --tag-text-strong: #ffffff;
+  --tag-indigo-soft: #8f72ff;
+  --tag-tint-1: rgba(255, 255, 255, 0.04);
+  --tag-tint-2: rgba(255, 255, 255, 0.07);
+  --tag-edge-mid: rgba(255, 255, 255, 0.06);
+  --tag-band: rgba(255, 255, 255, 0.018);
+  --tag-glass: rgba(18, 16, 22, 0.72);
+  --tag-panel: rgba(22, 19, 28, 0.94);
+  --tag-panel-foot: rgba(14, 12, 18, 0.6);
+  --tag-scrim: rgba(8, 6, 12, 0.55);
+  --tag-mark-start: #ffffff;
+  --tag-acc-text: #ceff1d;
+  --tag-grad-text: var(--tag-grad-text-dark);
+  color-scheme: dark;
+}
+
+html[data-mode="light"][data-palette="7a"] [data-mode="dark"] {
+  --tag-acc-text: #ff4fd8;
 }
 
 /* Tailwind's font-sans utility uses the brand body font */
