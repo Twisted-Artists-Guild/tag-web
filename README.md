@@ -103,10 +103,12 @@ Artist media should be stored under the numeric `artistId` directory, not the ar
 
 ### Dependencies
 - Next.js, React, Tailwind CSS, daisyUI
-- Azure SDKs: communication-email, identity, storage-blob
-- Stripe, Mailgun, Nodemailer, PostgreSQL
-- Rich text & gallery libraries: react-quill, react-slick, react-image-gallery
-- Content sanitization: sanitize-html, dompurify
+- Azure Communication Email and Azure Storage SDKs; Mailgun (for inbound reply forwarding)
+- Stripe and PostgreSQL
+- Rich text and gallery libraries: Tiptap, react-image-gallery
+- Content sanitization: sanitize-html
+
+See the [npm dependency audit](./docs/dependency-audit.md) for the full dependency inventory, security findings, upgrade recommendations, and review process.
 
 ### API Reference
 - Backend: [tag-api](https://github.com/TwistedArtistsGuild/tag-api)
@@ -233,6 +235,4 @@ Our platform is built for artists, but we hope the approach will spread to other
 Open source • Low-profit • Community-first
 
 ---
-
-
 

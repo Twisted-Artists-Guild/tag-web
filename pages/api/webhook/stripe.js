@@ -12,7 +12,7 @@
 
 import Stripe from "stripe"
 import { buffer } from "micro"
-import { sendEmail } from "@/pages/api/sendEmail"
+import { sendEmail } from "@/libs/azure-email"
 import configFile from "@/config"
 import { findCheckoutSession } from "@/libs/stripe"
 
