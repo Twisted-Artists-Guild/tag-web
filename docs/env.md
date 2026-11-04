@@ -33,6 +33,7 @@ This document lists all environment variables used by the application. **Do not 
 
 ## Azure Communication Services
 - `AZURE_COMMUNICATION_SERVICES_CONNECTION_STRING` — Azure Communication Services connection string
+- `AZURE_COMMUNICATION_SERVICES_SENDER_ADDRESS` — Verified sender address for Azure Communication Email, including NextAuth email sign-in links
 
 ## Miscellaneous
 - `SHIPPOTOKEN` — (purpose TBD)
@@ -44,4 +45,3 @@ This document lists all environment variables used by the application. **Do not 
 **Note:**
 - All secrets and sensitive values must be set in your local `.env` file or in your deployment environment. Never commit actual secret values to version control.
 - If you add new environment variables, update this file and the README accordingly.
-
