@@ -44,23 +44,13 @@ export default async function handler(req, res) {
 		const newBlobClient = containerClient.getBlockBlobClient(newName)
 
 		// Check if old blob exists
-		try {
-			await oldBlobClient.getProperties()
-		} catch (error) {
-			if (error.code === "BlobNotFound") {
-				return res.status(404).json({ error: "Source blob not found" })
-			}
-			throw error
+		if (!(await oldBlobClient.exists())) {
+			return res.status(404).json({ error: "Source blob not found" })
 		}
 
 		// Check if new blob already exists
-		try {
-			await newBlobClient.getProperties()
+		if (await newBlobClient.exists()) {
 			return res.status(409).json({ error: "Destination blob already exists" })
-		} catch (error) {
-			if (error.code !== "BlobNotFound") {
-				throw error
-			}
 		}
 
 		// Copy blob from old to new
