@@ -25,6 +25,7 @@ import { getIdentityGlowStyle } from "@/utils/identityGlow";
 import Image from "next/image";
 import ImpressionReactions from './ImpressionReactions';
 import { useImpressions, ImpressionTargetType } from '@/hooks/useImpressions';
+import { useEntityProfileImage } from '@/hooks/useEntityProfileImage';
 import TiptapEditor from "@/components/tiptap/tiptap-editor";
 import ContextSwitcher from "@/components/Header/ContextSwitcher";
 // Import the canonical editor card from tiptap folder
@@ -424,6 +425,17 @@ const SocialComments = ({
             !comment.isEditing // Only fetch when not editing
         );
         
+        // Show the profile picture of the identity the comment was posted as (artist profile or user),
+        // matching the header context switcher rather than the database image field.
+        const isArtistAuthor = (comment.authorEntityType || comment.authorRole) === "artist" ||
+            (!comment.authorEntityType && !comment.authorRole && Boolean(comment.artistID));
+        const storedAuthorImage = useEntityProfileImage(
+            isArtistAuthor ? "artist" : "user",
+            isArtistAuthor
+                ? (comment.authorEntityId || comment.artistID)
+                : (comment.userId || comment.userID || comment.user?.id)
+        );
+
         // Check if this is a new comment with empty content
         const isNew = comment.id?.toString().startsWith('temp-') || 
                       !comment.content || 
@@ -441,8 +453,10 @@ const SocialComments = ({
                 : 'bg-base-200'; // Odd comments get slightly darker background
         const authorType = comment.authorEntityType || comment.authorRole || (comment.artistID ? "artist" : "user");
         const authorName = comment.authorDisplayName || comment.user?.name || comment.author || "Anonymous";
-        const authorImage = comment.authorImage || comment.avatarUrl ||
-            (authorType === "user" ? comment.user?.image : null) ||
+        const isTempComment = String(comment.id || "").startsWith("temp-");
+        const authorImage = storedAuthorImage ||
+            comment.authorImage || comment.avatarUrl ||
+            (authorType === "user" || isTempComment ? comment.user?.image : null) ||
             "/blank_image.png";
         const authorIdentity = {
             type: authorType,

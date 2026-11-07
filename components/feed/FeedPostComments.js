@@ -16,6 +16,8 @@ import { IoTrashOutline } from 'react-icons/io5';
 import { timeAgo } from '@/utils/relativeTime';
 import { getIdentityGlowStyle } from '@/utils/identityGlow';
 import ContextSwitcher from '@/components/Header/ContextSwitcher';
+import { getCommentAuthorContext } from '@/hooks/useComments';
+import { useEntityProfileImage } from '@/hooks/useEntityProfileImage';
 
 function getStoredActiveContext() {
     if (typeof window === "undefined") return null;
@@ -31,9 +33,10 @@ function getStoredActiveContext() {
     }
 }
 
-export default function FeedPostComments({ comments, commentsLoading, session, addComment, deleteComment, refetchCount }) {
+export default function FeedPostComments({ comments, commentsLoading, commentsError, session, addComment, deleteComment, refetchCount }) {
     const [newComment, setNewComment] = useState('');
     const [commentSubmitting, setCommentSubmitting] = useState(false);
+    const [submitError, setSubmitError] = useState('');
     const [activeContext, setActiveContext] = useState(getStoredActiveContext);
     const [contextProfiles, setContextProfiles] = useState([]);
 
@@ -72,22 +75,40 @@ export default function FeedPostComments({ comments, commentsLoading, session, a
 
     const handleSubmitComment = async (e) => {
         e.preventDefault();
-        if (!session?.user?.id || !newComment.trim()) return;
+        if (!newComment.trim() || commentSubmitting) return;
+        if (!session?.user?.id) {
+            setSubmitError('Unable to identify your account. Please sign in again.');
+            return;
+        }
+        let authorContext;
+        try {
+            authorContext = getCommentAuthorContext(activeContext);
+        } catch (error) {
+            setSubmitError(error.message);
+            return;
+        }
+        setSubmitError('');
         setCommentSubmitting(true);
 
-        const result = await addComment({
-            content: newComment.trim(),
-            userId: parseInt(session.user.id),
-            authorContextId: activeContext?.id || "user-primary",
-            authorEntityType: activeContext?.type || "user",
-            authorEntityId: activeContext?.rawId || activeContext?.id || null,
-        });
+        try {
+            const result = await addComment({
+                content: newComment.trim(),
+                userId: parseInt(session.user.id, 10),
+                ...authorContext,
+            });
 
-        if (result.success) {
-            setNewComment('');
-            refetchCount();
+            if (result.success) {
+                setNewComment('');
+                refetchCount();
+            } else {
+                setSubmitError(result.error || 'Unable to post your comment. Please try again.');
+            }
+        } catch (error) {
+            console.error('Error submitting comment:', error);
+            setSubmitError('Unable to post your comment. Please try again.');
+        } finally {
+            setCommentSubmitting(false);
         }
-        setCommentSubmitting(false);
     };
 
     const handleDeleteComment = async (commentId) => {
@@ -150,10 +171,13 @@ export default function FeedPostComments({ comments, commentsLoading, session, a
                     <Link href="/api/auth/signin" className="link link-primary">Sign in</Link> to comment
                 </p>
             )}
+            {submitError && <p role="alert" className="text-sm text-error">{submitError}</p>}
 
             {/* Comments list */}
             {commentsLoading ? (
                 <div className="flex justify-center py-3"><span className="loading loading-spinner loading-sm"></span></div>
+            ) : commentsError ? (
+                <p role="alert" className="text-sm text-error">Unable to load comments. Please try again later.</p>
             ) : comments.length === 0 ? (
                 <p className="text-xs text-base-content/40 text-center py-2">No comments yet. Be the first!</p>
             ) : (
@@ -172,34 +196,49 @@ export default function FeedPostComments({ comments, commentsLoading, session, a
     );
 }
 
-function CommentItem({ comment, session, onDelete }) {
+// Shows the profile picture of the identity the comment was posted as:
+// the artist profile for artist comments, otherwise the commenting user's profile.
+function CommentAvatar({ comment, sizeClass, sizePx }) {
     const authorName = comment.authorDisplayName || comment.user?.name || 'Anonymous';
-    const authorType = comment.authorEntityType || 'user';
-    const authorImage = comment.authorImage ||
-        (authorType === 'user' ? comment.user?.image : null) ||
+    const isArtist = comment.authorEntityType === 'artist' && comment.authorEntityId;
+    const storedImage = useEntityProfileImage(
+        isArtist ? 'artist' : 'user',
+        isArtist ? comment.authorEntityId : comment.userId
+    );
+    const imageSrc = storedImage ||
+        comment.authorImage ||
+        (isArtist ? null : comment.user?.image) ||
         '/blank_image.png';
-    const authorIdentity = {
-        type: authorType,
+    const identity = {
+        type: comment.authorEntityType || 'user',
         id: comment.authorEntityId || comment.userId,
         contextId: comment.authorContextId || undefined,
     };
 
     return (
-        <div className="flex gap-2">
-            <div className="avatar flex-shrink-0">
-                <div
-                    className="w-7 h-7 rounded-full bg-base-300 overflow-hidden relative border"
-                    style={getIdentityGlowStyle(authorIdentity, { contextId: comment.authorContextId })}
-                >
-                    <Image
-                        src={authorImage}
-                        alt={authorName}
-                        fill
-                        sizes="28px"
-                        className="object-cover"
-                    />
-                </div>
+        <div className="avatar flex-shrink-0">
+            <div
+                className={`${sizeClass} rounded-full bg-base-300 overflow-hidden relative border`}
+                style={getIdentityGlowStyle(identity, { contextId: comment.authorContextId })}
+            >
+                <Image
+                    src={imageSrc}
+                    alt={authorName}
+                    fill
+                    sizes={`${sizePx}px`}
+                    className="object-cover"
+                />
             </div>
+        </div>
+    );
+}
+
+function CommentItem({ comment, session, onDelete }) {
+    const authorName = comment.authorDisplayName || comment.user?.name || 'Anonymous';
+
+    return (
+        <div className="flex gap-2">
+            <CommentAvatar comment={comment} sizeClass="w-7 h-7" sizePx={28} />
             <div className="flex-1 min-w-0">
                 <div className="bg-base-200 rounded-box px-3 py-2">
                     <div className="flex items-center justify-between">
@@ -227,21 +266,11 @@ function CommentItem({ comment, session, onDelete }) {
                     <div className="ml-4 mt-2 space-y-2">
                         {comment.replies.map(reply => (
                             <div key={reply.id} className="flex gap-2">
-                                <div className="avatar flex-shrink-0">
-                                    <div className="w-6 h-6 rounded-full bg-base-300 overflow-hidden relative">
-                                        <Image
-                                            src={reply.user?.image || '/blank_image.png'}
-                                            alt={reply.user?.name || 'User'}
-                                            fill
-                                            sizes="24px"
-                                            className="object-cover"
-                                        />
-                                    </div>
-                                </div>
+                                <CommentAvatar comment={reply} sizeClass="w-6 h-6" sizePx={24} />
                                 <div className="flex-1 min-w-0">
                                     <div className="bg-base-200 rounded-box px-3 py-1.5">
                                         <div className="flex items-center justify-between">
-                                            <p className="font-bold text-xs">{reply.user?.name || 'Anonymous'}</p>
+                                            <p className="font-bold text-xs">{reply.authorDisplayName || reply.user?.name || 'Anonymous'}</p>
                                             {session?.user && parseInt(session.user.id) === reply.userId && (
                                                 <button
                                                     className="btn btn-ghost btn-xs text-error p-0 h-auto min-h-0"

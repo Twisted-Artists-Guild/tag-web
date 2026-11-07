@@ -65,6 +65,7 @@ export default function FeedPostCard({ post, showIdentityGlow = true }) {
     const {
         comments,
         loading: commentsLoading,
+        error: commentsError,
         addComment,
         deleteComment,
     } = useComments(post.feedPostID, CommentTargetType.FEED_POST, showComments);
@@ -192,6 +193,7 @@ export default function FeedPostCard({ post, showIdentityGlow = true }) {
                     <FeedPostComments
                         comments={comments}
                         commentsLoading={commentsLoading}
+                        commentsError={commentsError}
                         session={session}
                         addComment={addComment}
                         deleteComment={deleteComment}
