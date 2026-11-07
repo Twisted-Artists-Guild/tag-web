@@ -11,6 +11,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
+import { useSession } from "next-auth/react"
 import { X } from "lucide-react"
 import DirectMessages from "@/components/social/DirectMessages"
 import ContextSwitcher from "@/components/Header/ContextSwitcher"
@@ -23,6 +24,7 @@ export default function MessagesApplet({
   onContextChange,
   initialConversationId = null,
 }) {
+  const { data: session } = useSession()
   const [localSelectedContextId, setLocalSelectedContextId] = useState(null)
   const selectedContextId = activeContextId || localSelectedContextId || contextProfiles[0]?.id || null
 
@@ -36,8 +38,10 @@ export default function MessagesApplet({
       return currentUser
     }
 
+    // Conversations are owned by the signed-in user, so the API needs the real user ID.
+    // The selected context only changes how the user is displayed.
     return {
-      id: selectedContext.id,
+      id: session?.user?.id ?? currentUser?.id,
       username: (selectedContext.subtitle || selectedContext.label || "user")
         .toLowerCase()
         .replace(/[^a-z0-9]+/g, "_")
@@ -47,7 +51,7 @@ export default function MessagesApplet({
       color: selectedContext.color || currentUser?.color || "#3B82F6",
       isAdmin: String(selectedContext.type || "").toLowerCase() === "admin",
     }
-  }, [currentUser, selectedContext])
+  }, [currentUser, selectedContext, session?.user?.id])
 
   const handleContextSelect = (event) => {
     const nextContextId = event?.target?.value || event

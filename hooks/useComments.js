@@ -11,6 +11,23 @@
 
 import { useState, useEffect, useCallback } from 'react'
 
+export function getCommentAuthorContext(activeContext) {
+  const rawId = activeContext?.rawId
+  const authorEntityId = rawId == null || rawId === '' ? null : Number(rawId)
+  if (
+    (authorEntityId !== null && (!Number.isInteger(authorEntityId) || authorEntityId <= 0 || authorEntityId > 2147483647)) ||
+    (activeContext?.type === 'artist' && authorEntityId === null)
+  ) {
+    throw new Error('Unable to identify the selected profile. Please switch profiles and try again.')
+  }
+
+  return {
+    authorContextId: activeContext?.id || 'user-primary',
+    authorEntityType: activeContext?.type || 'user',
+    authorEntityId,
+  }
+}
+
 /**
  * Hook to fetch and manage comments for any target (listing, artist, post, etc.)
  * @param {string} targetId - Unique identifier for the target
@@ -96,8 +113,6 @@ export function useComments(targetId, targetType, enabled = true) {
    */
   const addComment = useCallback(async (commentData, parentCommentId = null) => {
     try {
-      console.log('useComments.addComment called:', { commentData, parentCommentId })
-      
       const payload = {
         targetId,
         targetType,
@@ -109,8 +124,6 @@ export function useComments(targetId, targetType, enabled = true) {
         authorEntityId: commentData.authorEntityId || null,
       }
       
-      console.log('API Payload:', payload)
-      
       const response = await fetch(`/api/comments`, {
         method: 'POST',
         headers: {
@@ -120,13 +133,10 @@ export function useComments(targetId, targetType, enabled = true) {
       })
 
       if (!response.ok) {
-        const errorData = await response.json()
-        console.error('API Error Response:', errorData)
-        throw new Error(errorData.message || `Failed to add comment: ${response.status}`)
+        throw new Error(`Failed to add comment (HTTP ${response.status}). Please try again.`)
       }
 
       const result = await response.json()
-      console.log('API Success Response:', result)
       
       // Refresh comments to get updated list (including nested replies)
       await fetchComments()
