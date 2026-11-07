@@ -410,7 +410,7 @@ export default function Header() {
 
   const messagesCurrentUser = resolvedActiveContext
     ? {
-        id: resolvedActiveContext.id,
+        id: session?.user?.id,
         username: (resolvedActiveContext.subtitle || resolvedActiveContext.label || "user")
           .toLowerCase()
           .replace(/[^a-z0-9]+/g, "_")

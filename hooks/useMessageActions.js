@@ -30,8 +30,8 @@ export function useMessageActions(conversationId, currentUserId, conversation = 
       return null
     }
     
-    // Find the first participant that's not the current user
-    const recipient = conversation.participants.find(p => p.id !== currentUserId)
+    // Find the first participant that's not the current user (IDs may be numbers or strings)
+    const recipient = conversation.participants.find(p => String(p.id) !== String(currentUserId))
     return recipient?.id || null
   }, [conversation, currentUserId])
   
