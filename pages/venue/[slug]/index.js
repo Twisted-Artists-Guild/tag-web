@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react"
 import { sanitizeCardHtml, stripHtmlText } from "@/components/security/sanitize"
 import serverFetch from "@/libs/serverFetch"
 import useEntityLogo from "@/components/cards/useEntityLogo"
+import { fetchVenueForPage, splitVenueMedia } from "@/utils/venue-form"
 
 function normalizeSlug(value) {
   return String(value || "").trim().toLowerCase()
@@ -20,16 +21,7 @@ function pickField(record, ...keys) {
 }
 
 function splitMedia(files = []) {
-  const items = Array.isArray(files) ? files : []
-  const profile = items.find((item) => String(item?.name || item?.url || "").toLowerCase().includes("/profile/"))
-  const cover = items.find((item) => String(item?.name || item?.url || "").toLowerCase().includes("/cover/"))
-  const gallery = items.filter((item) => String(item?.name || item?.url || "").toLowerCase().includes("/gallery/"))
-
-  return {
-    profile,
-    cover,
-    gallery,
-  }
+  return splitVenueMedia(files)
 }
 
 export default function VenueProfilePage({ venue }) {
@@ -58,7 +50,8 @@ export default function VenueProfilePage({ venue }) {
       setGalleryState({ loading: true, error: "", files: [] })
 
       try {
-        const folders = [""]
+        // The image list API returns one folder level at a time, so each media folder is listed on its own.
+        const folders = ["profile/", "cover/", "gallery/"]
         const results = await Promise.all(folders.map(async (folder) => {
           const prefix = `${mediaPrefix}${folder}`
           const query = new URLSearchParams({ container: "tagpictures", startPrefix: mediaPrefix, prefix })
@@ -167,7 +160,8 @@ export async function getServerSideProps(context) {
   }
 
   try {
-    const venue = await serverFetch(`/venue/by-slug/${encodeURIComponent(slug)}`)
+    // The venue API needs the session token, and serverFetch returns a Response, not the venue itself.
+    const venue = await fetchVenueForPage({ req: context.req, slug, fetchApi: serverFetch })
     if (!venue) {
       return { notFound: true }
     }
