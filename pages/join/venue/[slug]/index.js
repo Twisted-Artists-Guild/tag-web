@@ -5,6 +5,7 @@ import OrganizationPrimaryContactsStep from "@/components/forms/onboarding/organ
 import OrganizationPublicContactsStep from "@/components/forms/onboarding/organizations/OrganizationPublicContactsStep"
 import OrganizationMediaStep from "@/components/forms/onboarding/organizations/OrganizationMediaStep"
 import JoinPageShell from "@/components/join/common/join-page-shell"
+import { mapVenueOptionalFields, buildVenueOptionalPayload } from "@/utils/venue-form"
 
 function getRequestOrigin(req) {
   const forwardedProto = String(req?.headers?.["x-forwarded-proto"] || "").split(",")[0].trim()
@@ -66,8 +67,7 @@ function mapVenue(venueData) {
     venueID: Number(venueData?.venueID || venueData?.VenueID || 0),
     name: String(venueData?.name || venueData?.Name || ""),
     addressID: Number(venueData?.addressID || venueData?.AddressID || 0),
-    externalLinkID: Number(venueData?.externalLinkID || venueData?.ExternalLinkID || 0),
-    phoneContactID: Number(venueData?.phoneContactID || venueData?.PhoneContactID || 0),
+    ...mapVenueOptionalFields(venueData),
     isPublished: Boolean(venueData?.isPublished || venueData?.IsPublished),
     isModerationBlocked: Boolean(venueData?.isModerationBlocked || venueData?.IsModerationBlocked),
   }
@@ -207,8 +207,7 @@ export default function JoinVenueSlugPage({ currentStep, venueData, routeSlug, v
     venueID: resolvedVenueId,
     name: String(venueForm.name || "").trim(),
     addressID: venueForm.addressID,
-    externalLinkID: venueForm.externalLinkID,
-    phoneContactID: venueForm.phoneContactID,
+    ...buildVenueOptionalPayload(venueForm),
     isPublished: Boolean(venueForm.isPublished),
     isModerationBlocked: Boolean(venueForm.isModerationBlocked),
   }
