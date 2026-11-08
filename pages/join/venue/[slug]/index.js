@@ -5,6 +5,8 @@ import OrganizationPrimaryContactsStep from "@/components/forms/onboarding/organ
 import OrganizationPublicContactsStep from "@/components/forms/onboarding/organizations/OrganizationPublicContactsStep"
 import OrganizationMediaStep from "@/components/forms/onboarding/organizations/OrganizationMediaStep"
 import JoinPageShell from "@/components/join/common/join-page-shell"
+import { mapVenueOptionalFields, buildVenueOptionalPayload, fetchVenueForPage } from "@/utils/venue-form"
+import serverFetch from "@/libs/serverFetch"
 
 function getRequestOrigin(req) {
   const forwardedProto = String(req?.headers?.["x-forwarded-proto"] || "").split(",")[0].trim()
@@ -66,8 +68,7 @@ function mapVenue(venueData) {
     venueID: Number(venueData?.venueID || venueData?.VenueID || 0),
     name: String(venueData?.name || venueData?.Name || ""),
     addressID: Number(venueData?.addressID || venueData?.AddressID || 0),
-    externalLinkID: Number(venueData?.externalLinkID || venueData?.ExternalLinkID || 0),
-    phoneContactID: Number(venueData?.phoneContactID || venueData?.PhoneContactID || 0),
+    ...mapVenueOptionalFields(venueData),
     isPublished: Boolean(venueData?.isPublished || venueData?.IsPublished),
     isModerationBlocked: Boolean(venueData?.isModerationBlocked || venueData?.IsModerationBlocked),
   }
@@ -186,6 +187,12 @@ export default function JoinVenueSlugPage({ currentStep, venueData, routeSlug, v
   }, [currentStep, resolvedVenueId])
 
   const persistVenue = async (payload, setError) => {
+    // Without the loaded venue there is no address ID, and saving would overwrite the venue with an invalid record.
+    if (!payload?.addressID) {
+      setError("The venue details could not be loaded. Refresh the page and try again.")
+      return false
+    }
+
     const response = await fetch(`/api/venue/${resolvedVenueId}`, {
       method: "PUT",
       headers: {
@@ -207,8 +214,7 @@ export default function JoinVenueSlugPage({ currentStep, venueData, routeSlug, v
     venueID: resolvedVenueId,
     name: String(venueForm.name || "").trim(),
     addressID: venueForm.addressID,
-    externalLinkID: venueForm.externalLinkID,
-    phoneContactID: venueForm.phoneContactID,
+    ...buildVenueOptionalPayload(venueForm),
     isPublished: Boolean(venueForm.isPublished),
     isModerationBlocked: Boolean(venueForm.isModerationBlocked),
   }
@@ -494,27 +500,14 @@ export async function getVenueJoinServerProps(context, routeSlug = null) {
   let venueData = null
   let venueId = Number(context.query?.id || 0)
 
-  if (normalizedRouteSlug) {
-    try {
-      const response = await fetch(`/api/venue/by-slug/${encodeURIComponent(normalizedRouteSlug)}`)
-      if (response.ok) {
-        venueData = await response.json()
-        venueId = Number(venueData?.venueID || venueData?.VenueID || 0)
-      }
-    } catch {
-      // no-op
-    }
-  }
-
-  if (!venueData && venueId > 0) {
-    try {
-      const response = await fetch(`/api/venue/byID/${venueId}`)
-      if (response.ok) {
-        venueData = await response.json()
-      }
-    } catch {
-      // no-op
-    }
+  venueData = await fetchVenueForPage({
+    req: context.req,
+    id: context.query?.id,
+    slug: normalizedRouteSlug,
+    fetchApi: serverFetch,
+  })
+  if (venueData) {
+    venueId = Number(venueData?.venueID || venueData?.VenueID || venueId || 0)
   }
 
   return {
