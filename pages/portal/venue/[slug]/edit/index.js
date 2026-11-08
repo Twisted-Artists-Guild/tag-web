@@ -9,7 +9,7 @@ import OrganizationPublicContactsStep from "@/components/forms/onboarding/organi
 import JoinPageShell from "@/components/join/common/join-page-shell"
 import RegisterSlug from "@/components/forms/onboarding/register-slug"
 import serverFetch from "@/libs/serverFetch"
-import { mapVenueOptionalFields, buildVenueOptionalPayload } from "@/utils/venue-form"
+import { mapVenueOptionalFields, buildVenueOptionalPayload, fetchVenueForPage } from "@/utils/venue-form"
 
 function getRequestOrigin(req) {
   const forwardedProto = String(req?.headers?.["x-forwarded-proto"] || "").split(",")[0].trim()
@@ -183,6 +183,12 @@ export default function PortalVenueEditPage({ currentStep, venueData, routeSlug,
   }, [currentStep, resolvedVenueId])
 
   const persistVenue = async (payload, setError) => {
+    // Without the loaded venue there is no address ID, and saving would overwrite the venue with an invalid record.
+    if (!payload?.addressID) {
+      setError("The venue details could not be loaded. Refresh the page and try again.")
+      return false
+    }
+
     const response = await fetch(`/api/venue/${resolvedVenueId}`, {
       method: "PUT",
       headers: {
@@ -433,7 +439,12 @@ export async function getServerSideProps(context) {
   const currentStep = getPortalStep(context.query?.step)
 
   try {
-    const venueData = await serverFetch(`/venue/by-slug/${encodeURIComponent(normalizedSlug)}`)
+    const venueData = await fetchVenueForPage({
+      req: context.req,
+      id: context.query?.id,
+      slug: normalizedSlug,
+      fetchApi: serverFetch,
+    })
     const venueId = venueData?.id || venueData?.ID || venueData?.venueID || venueData?.VenueID || null
 
     if (!venueId) {

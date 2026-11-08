@@ -36,3 +36,51 @@ export function buildVenueOptionalPayload(venueForm) {
     eventSourceUrl: String(form.eventSourceUrl || "").trim() || null,
   }
 }
+
+// Splits the files listed from a venue's media folders. The profile and cover pictures are the newest file
+// directly inside their folder; files in nested folders are archived versions and are ignored for those two.
+export function splitVenueMedia(files = []) {
+  const items = Array.isArray(files) ? files : []
+  const pathOf = (item) => String(item?.name || item?.url || "").toLowerCase()
+  const directChildOf = (folder) => items.filter((item) => {
+    const rest = pathOf(item).split(`/${folder}/`)[1]
+    return rest !== undefined && rest.length > 0 && !rest.includes("/")
+  })
+  const newest = (list) => [...list].sort((left, right) => new Date(right?.lastModified || 0) - new Date(left?.lastModified || 0))[0]
+
+  return {
+    profile: newest(directChildOf("profile")),
+    cover: newest(directChildOf("cover")),
+    gallery: items.filter((item) => pathOf(item).includes("/gallery/")),
+  }
+}
+
+// Same cookie names the /api proxy (proxy.js) reads to authenticate calls to the backend.
+export function getSessionTokenFromRequest(req) {
+  const cookies = req?.cookies || {}
+  return cookies["__Secure-next-auth.session-token"] || cookies["next-auth.session-token"] || ""
+}
+
+// Loads a venue inside getServerSideProps. The venue API requires sign-in, so the session token is sent along.
+// The numeric id is tried first because a slug is derived from the venue name and can drift from the URL.
+export async function fetchVenueForPage({ req, id, slug, fetchApi }) {
+  const token = getSessionTokenFromRequest(req)
+  if (!token) return null
+
+  const paths = []
+  const numericId = Number(id)
+  if (Number.isInteger(numericId) && numericId > 0) paths.push(`/venue/byID/${numericId}`)
+  const normalizedSlug = String(slug || "").trim().toLowerCase()
+  if (normalizedSlug) paths.push(`/venue/by-slug/${encodeURIComponent(normalizedSlug)}`)
+
+  for (const path of paths) {
+    try {
+      const response = await fetchApi(path, { headers: { Authorization: `Bearer ${token}` } })
+      if (response.ok) return await response.json()
+    } catch {
+      // Fall through to the next lookup.
+    }
+  }
+
+  return null
+}
