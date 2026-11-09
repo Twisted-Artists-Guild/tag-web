@@ -5,7 +5,7 @@ import OrganizationPrimaryContactsStep from "@/components/forms/onboarding/organ
 import OrganizationPublicContactsStep from "@/components/forms/onboarding/organizations/OrganizationPublicContactsStep"
 import OrganizationMediaStep from "@/components/forms/onboarding/organizations/OrganizationMediaStep"
 import JoinPageShell from "@/components/join/common/join-page-shell"
-import { mapVenueOptionalFields, buildVenueOptionalPayload, fetchVenueForPage } from "@/utils/venue-form"
+import { mapVenueOptionalFields, buildVenueOptionalPayload, fetchVenueForPage, getApiErrorMessage } from "@/utils/venue-form"
 import serverFetch from "@/libs/serverFetch"
 
 function getRequestOrigin(req) {
@@ -202,8 +202,7 @@ export default function JoinVenueSlugPage({ currentStep, venueData, routeSlug, v
     })
 
     if (!response.ok) {
-      const message = await response.text()
-      setError(message || `Unable to save venue (${response.status}).`)
+      setError(getApiErrorMessage(await response.text(), response.status))
       return false
     }
 
