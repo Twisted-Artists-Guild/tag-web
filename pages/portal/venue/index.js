@@ -15,6 +15,7 @@ import TagSEO from "@/components/TagSEO"
 import VenueContextNav from "@/components/portal/VenueContextNav"
 import { authOptions } from "@/pages/api/auth/[...nextauth]"
 import serverFetch from "@/libs/serverFetch"
+import { fetchJsonWithSession } from "@/utils/venue-form"
 
 export default function VenuePortalIndex({ venues }) {
 	const pageMetaData = {
@@ -114,7 +115,12 @@ export async function getServerSideProps(context) {
 	}
 
 	try {
-		const venues = await serverFetch(`/linker_usertovenue/byUserID/${userId}`)
+		// serverFetch returns a Response, and the endpoint needs the session token; the helper handles both.
+		const venues = await fetchJsonWithSession({
+			req: context.req,
+			path: `/linker_usertovenue/byUserID/${userId}`,
+			fetchApi: serverFetch,
+		})
 
 		if (venues) {
 			return {

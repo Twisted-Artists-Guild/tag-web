@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { toNullableId, mapVenueOptionalFields, buildVenueOptionalPayload, getSessionTokenFromRequest, fetchVenueForPage, splitVenueMedia, getApiErrorMessage } from './venue-form.js'
+import { toNullableId, mapVenueOptionalFields, buildVenueOptionalPayload, getSessionTokenFromRequest, fetchVenueForPage, fetchJsonWithSession, splitVenueMedia, getApiErrorMessage } from './venue-form.js'
 
 test('missing, zero and invalid IDs become null instead of 0', () => {
   for (const value of [undefined, null, '', 0, '0', -1, 1.5, 'abc', NaN]) {
@@ -143,4 +143,27 @@ test('API error messages fall back to the status when the body is empty or unusa
   assert.equal(getApiErrorMessage(undefined, 401), 'Unable to save venue (401).')
   assert.equal(getApiErrorMessage('{}', 500), 'Unable to save venue (500).')
   assert.equal(getApiErrorMessage('{"errors":{"Name":[1]}}', 400), 'Unable to save venue (400).')
+})
+
+test('session fetch sends the token and returns the parsed JSON, including lists', async () => {
+  const calls = []
+  const fetchApi = async (path, options) => {
+    calls.push({ path, auth: options.headers.Authorization })
+    return okResponse([{ venueID: 13, slug: 'test-hall' }])
+  }
+
+  const venues = await fetchJsonWithSession({ req: reqWithCookie(), path: '/linker_usertovenue/byUserID/2', fetchApi })
+
+  assert.deepEqual(venues, [{ venueID: 13, slug: 'test-hall' }])
+  assert.deepEqual(calls, [{ path: '/linker_usertovenue/byUserID/2', auth: 'Bearer tok123' }])
+})
+
+test('session fetch returns null when signed out, on a failed response, or when the call throws', async () => {
+  let called = false
+  const countingFetch = async () => { called = true; return okResponse([]) }
+  assert.equal(await fetchJsonWithSession({ req: { cookies: {} }, path: '/x', fetchApi: countingFetch }), null)
+  assert.equal(called, false)
+
+  assert.equal(await fetchJsonWithSession({ req: reqWithCookie(), path: '/x', fetchApi: async () => failResponse(401) }), null)
+  assert.equal(await fetchJsonWithSession({ req: reqWithCookie(), path: '/x', fetchApi: async () => { throw new Error('network down') } }), null)
 })

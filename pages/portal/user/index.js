@@ -7,6 +7,7 @@ import UserContextNav from "@/components/portal/UserContextNav"
 import TagSEO from "@/components/TagSEO"
 import { authOptions } from "@/pages/api/auth/[...nextauth]"
 import serverFetch from "@/libs/serverFetch"
+import { fetchJsonWithSession } from "@/utils/venue-form"
 
 const ROLE_META = {
 	admin: { label: "Admin", badge: "badge-error", icon: "🛡️" },
@@ -462,7 +463,7 @@ export async function getServerSideProps(context) {
 				fetchJsonOrNull(`/usersettings/${userId}`),
 				fetchJsonOrNull(`/linker_usertoartist/byUserID/${userId}`),
 				fetchJsonOrNull(`/linker_vendortouser`),
-				fetchJsonOrNull(`/linker_usertovenue/byUserID/${userId}`),
+				fetchJsonWithSession({ req: context.req, path: `/linker_usertovenue/byUserID/${userId}`, fetchApi: serverFetch }),
 			])
 
 			apiSnapshot.user = user
