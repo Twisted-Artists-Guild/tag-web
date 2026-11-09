@@ -9,7 +9,7 @@ import OrganizationPublicContactsStep from "@/components/forms/onboarding/organi
 import JoinPageShell from "@/components/join/common/join-page-shell"
 import RegisterSlug from "@/components/forms/onboarding/register-slug"
 import serverFetch from "@/libs/serverFetch"
-import { mapVenueOptionalFields, buildVenueOptionalPayload, fetchVenueForPage } from "@/utils/venue-form"
+import { mapVenueOptionalFields, buildVenueOptionalPayload, fetchVenueForPage, getApiErrorMessage } from "@/utils/venue-form"
 
 function getRequestOrigin(req) {
   const forwardedProto = String(req?.headers?.["x-forwarded-proto"] || "").split(",")[0].trim()
@@ -198,8 +198,7 @@ export default function PortalVenueEditPage({ currentStep, venueData, routeSlug,
     })
 
     if (!response.ok) {
-      const message = await response.text()
-      setError(message || `Unable to save venue (${response.status}).`)
+      setError(getApiErrorMessage(await response.text(), response.status))
       return false
     }
 
