@@ -39,6 +39,12 @@ export default function StaffContextNav() {
       purpose: "Manage contest entries and contest workflows.",
     },
     {
+      key: "staff-venues",
+      label: "Venues",
+      href: "/portal/staff/venues",
+      purpose: "Find venues and assign or remove their owners.",
+    },
+    {
       key: "staff-ghl-index",
       label: "CRM Index",
       href: "/portal/staff/ghl-index",
