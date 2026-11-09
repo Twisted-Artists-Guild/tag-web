@@ -56,9 +56,9 @@ export function splitVenueMedia(files = []) {
 }
 
 // Turns an API error response body into text a person can read. The API answers with plain text, or JSON such as
-// { message }, { title } or { errors: { Field: ["..."] } }.
-export function getApiErrorMessage(body, status) {
-  const fallback = `Unable to save venue (${status}).`
+// { message }, { title } or { errors: { Field: ["..."] } }. The action names what was being attempted.
+export function getApiErrorMessage(body, status, action = "save venue") {
+  const fallback = `Unable to ${action} (${status}).`
   const text = String(body || "").trim()
   if (!text) return fallback
 
