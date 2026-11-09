@@ -78,6 +78,20 @@ export function getSessionTokenFromRequest(req) {
   return cookies["__Secure-next-auth.session-token"] || cookies["next-auth.session-token"] || ""
 }
 
+// GET a backend path from getServerSideProps as the signed-in user and return the parsed JSON, or null when the
+// user is signed out or the call fails. The backend rejects calls that carry no session token.
+export async function fetchJsonWithSession({ req, path, fetchApi }) {
+  const token = getSessionTokenFromRequest(req)
+  if (!token) return null
+
+  try {
+    const response = await fetchApi(path, { headers: { Authorization: `Bearer ${token}` } })
+    return response.ok ? await response.json() : null
+  } catch {
+    return null
+  }
+}
+
 // Loads a venue inside getServerSideProps. The venue API requires sign-in, so the session token is sent along.
 // The numeric id is tried first because a slug is derived from the venue name and can drift from the URL.
 export async function fetchVenueForPage({ req, id, slug, fetchApi }) {
