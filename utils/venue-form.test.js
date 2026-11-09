@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { toNullableId, mapVenueOptionalFields, buildVenueOptionalPayload, getSessionTokenFromRequest, fetchVenueForPage, splitVenueMedia } from './venue-form.js'
+import { toNullableId, mapVenueOptionalFields, buildVenueOptionalPayload, getSessionTokenFromRequest, fetchVenueForPage, splitVenueMedia, getApiErrorMessage } from './venue-form.js'
 
 test('missing, zero and invalid IDs become null instead of 0', () => {
   for (const value of [undefined, null, '', 0, '0', -1, 1.5, 'abc', NaN]) {
@@ -128,4 +128,19 @@ test('media split tolerates empty, missing and malformed input', () => {
     assert.equal(media.cover, undefined)
     assert.deepEqual(media.gallery, [])
   }
+})
+
+test('API errors become readable messages for plain text, message, title and field validation bodies', () => {
+  assert.equal(getApiErrorMessage('Slug is already in use.', 409), 'Slug is already in use.')
+  assert.equal(getApiErrorMessage('{"message":"You are not allowed to edit this venue."}', 403), 'You are not allowed to edit this venue.')
+  assert.equal(getApiErrorMessage('{"title":"One or more validation errors occurred.","status":400,"errors":{"Name":["The Name field is required."]}}', 400), 'The Name field is required.')
+  assert.equal(getApiErrorMessage('{"title":"Bad Request","status":400}', 400), 'Bad Request')
+  assert.equal(getApiErrorMessage('"EventSourceUrl must be an absolute http or https URL."', 400), 'EventSourceUrl must be an absolute http or https URL.')
+})
+
+test('API error messages fall back to the status when the body is empty or unusable', () => {
+  assert.equal(getApiErrorMessage('', 500), 'Unable to save venue (500).')
+  assert.equal(getApiErrorMessage(undefined, 401), 'Unable to save venue (401).')
+  assert.equal(getApiErrorMessage('{}', 500), 'Unable to save venue (500).')
+  assert.equal(getApiErrorMessage('{"errors":{"Name":[1]}}', 400), 'Unable to save venue (400).')
 })

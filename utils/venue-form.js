@@ -55,6 +55,23 @@ export function splitVenueMedia(files = []) {
   }
 }
 
+// Turns an API error response body into text a person can read. The API answers with plain text, or JSON such as
+// { message }, { title } or { errors: { Field: ["..."] } }.
+export function getApiErrorMessage(body, status) {
+  const fallback = `Unable to save venue (${status}).`
+  const text = String(body || "").trim()
+  if (!text) return fallback
+
+  try {
+    const data = JSON.parse(text)
+    if (typeof data === "string") return data || fallback
+    const firstFieldError = data?.errors ? Object.values(data.errors).flat().find((value) => typeof value === "string") : null
+    return String(data?.message || firstFieldError || data?.title || fallback)
+  } catch {
+    return text
+  }
+}
+
 // Same cookie names the /api proxy (proxy.js) reads to authenticate calls to the backend.
 export function getSessionTokenFromRequest(req) {
   const cookies = req?.cookies || {}
