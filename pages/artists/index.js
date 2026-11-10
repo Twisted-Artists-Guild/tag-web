@@ -157,29 +157,6 @@ Artists.getInitialProps = async () => {
   // Function to generate a random number for social counters
   const getRandomCount = () => Math.floor(Math.random() * 1000) + 1 // Random number between 1 and 1000
 
-  // Function to generate random placeholder images for slideshow
-  const getRandomImages = (count = 3) => {
-    const pool = [
-      {
-        url: getRandomStockPhotoByCategory("artist"),
-        alt: "Curated artist portrait",
-      },
-      {
-        url: getRandomStockPhotoByCategory("painting"),
-        alt: "Curated painting detail",
-      },
-      {
-        url: getRandomStockPhotoByCategory("general"),
-        alt: "Curated creative image",
-      },
-    ]
-
-    return Array.from({ length: count }, (_, index) => {
-      const item = pool[(index + Math.floor(Math.random() * pool.length)) % pool.length]
-      return item
-    })
-  }
-
   const toImageUrl = (image) => {
     if (!image) {
       return null
@@ -243,22 +220,15 @@ console.log("Fetched artist data:", data);
       return map
     }, new Map())
 
-    // Populate galleries from DB-first sources, then fallback to stock photos.
     data = data.map((artist) => ({
       ...(() => {
         const artistPathKey = normalizeArtistKey(artist?.path)
 
-        const dbGalleryImages = dedupeImageUrls([
+        const galleryImages = dedupeImageUrls([
           ...(Array.isArray(artist?.images) ? artist.images : []),
-          artist?.profilePic,
-          artist?.coverPic,
           ...(Array.isArray(artist?.listings) ? artist.listings.map(l => l?.profilePic).filter(Boolean) : []),
           ...(listingImagesByArtistPath.get(artistPathKey) || []),
         ])
-
-        const galleryImages = dbGalleryImages.length > 0
-          ? dbGalleryImages
-          : getRandomImages(Math.floor(Math.random() * 3) + 2)
 
         const fallbackProfilePic = artist?.profilePic?.url || toImageUrl(galleryImages[0]) || "/blank_image.png"
 
