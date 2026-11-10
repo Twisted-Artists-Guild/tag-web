@@ -11,8 +11,8 @@
 
 // Main navigation, shared by the header and the mobile menu
 export const NAV_LINKS = [
-  { href: "/art/", label: "Browse" },
   { href: "/artists", label: "Artists" },
+  { href: "/art/", label: "Browse Art" },
   { href: "/events", label: "Events" },
   { href: "/blogs", label: "Blog" },
   { href: "/news", label: "News" },
