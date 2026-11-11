@@ -14,6 +14,7 @@ import React, { useMemo } from "react";
 import Link from "next/link";
 import GalleryManager from "@/components/gallery/GalleryManager"
 import DynaFormDB from "@/components/widgets/DynaFormDB"
+import BlogPostSelector from "@/components/blog/blog-post-selector"
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import { isAdmin, isStaff } from "@/utils/authHelpers";
@@ -78,6 +79,7 @@ export default function UpdateBlogForm1(props) {
       <div className="p-4">
 			<TagSEO metadataProp={{ title: "Update Blog Post", description: "Edit and update an existing blog post.", keywords: "blog, update, staff", robots: "noindex, nofollow", og: { title: "Update Blog Post", description: "Edit and update an existing blog post." } }} canonicalSlug="portal/staff/tagblog/[id]/update" />
             <div className="mb-6">
+                <BlogPostSelector currentBlog={props.blogdata} />
                 <GalleryManager
                     entityType="blog"
                     entityId={props.blogdata?.blogID}

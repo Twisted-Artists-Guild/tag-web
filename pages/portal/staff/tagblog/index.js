@@ -12,6 +12,7 @@
 import React, { useMemo } from "react";
 import { getServerSession } from "next-auth/next";
 import DynaFormDB from "@/components/widgets/DynaFormDB";
+import BlogPostSelector from "@/components/blog/blog-post-selector";
 import TagSEO from "@/components/TagSEO";
 import StaffContextNav from "@/components/portal/StaffContextNav";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
@@ -86,6 +87,7 @@ export default function StaffTagBlogSuggestion(props) {
 				</p>
 			</div>
 
+			<BlogPostSelector />
 			<DynaFormDB request="add" metadataProp={enhancedMetadata} formData={null} />
 		</div>
 	);
