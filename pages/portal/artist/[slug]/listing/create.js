@@ -19,6 +19,7 @@ import TagSEO from "@/components/TagSEO";
 import ArtistContextNav from "@/components/portal/ArtistContextNav";
 import serverFetch from "@/libs/serverFetch";
 import CostCalculator from "@/components/listings/CostCalculator";
+import ListingSelector, { fetchArtistListings } from "@/components/listings/listing-selector";
 import { IoCalculatorOutline, IoChevronDownOutline, IoChevronUpOutline } from "react-icons/io5";
 
 const formName = "ListingForm1";
@@ -95,10 +96,6 @@ export default function CreateListingForm1(props) {
         }
     }, [costBreakdownData]);
 
-    if (!enhancedMetadata) {
-        return <div className="p-10 text-center"><span className="loading loading-ghost loading-lg"></span></div>;
-    }
-
     return (
         <div className="p-4">
             <TagSEO
@@ -115,13 +112,22 @@ export default function CreateListingForm1(props) {
                 canonicalSlug="portal/artist/[slug]/listing/create"
             />
             <ArtistContextNav />
-            <DynaFormDB
-                request="add"
-                metadataProp={enhancedMetadata}
-                fieldsProp={enhancedMetadata.forms_fields}
-                formData={null}
-                onPostSubmit={handlePostSubmit}
+            <ListingSelector
+                artistSlug={props.artistSlug}
+                listings={props.listings}
+                error={props.listingsError}
             />
+            {enhancedMetadata ? (
+                <DynaFormDB
+                    request="add"
+                    metadataProp={enhancedMetadata}
+                    fieldsProp={enhancedMetadata.forms_fields}
+                    formData={null}
+                    onPostSubmit={handlePostSubmit}
+                />
+            ) : (
+                <div className="p-10 text-center"><span className="loading loading-ghost loading-lg"></span></div>
+            )}
 
             {/* Cost & Margin Calculator Section */}
             <div className="mt-6">
@@ -155,6 +161,7 @@ export default function CreateListingForm1(props) {
 }
 
 export async function getServerSideProps(context) {
+    const artistSlug = context.params.slug;
     const session = await getServerSession(context.req, context.res, authOptions);
 
     if (!session?.user) {
@@ -202,9 +209,25 @@ export async function getServerSideProps(context) {
     } catch (error) {
         console.error("Error fetching form meta:", error);
     }
+
+    let listings = [];
+    let listingsError = null;
+    try {
+        const artistResponse = await serverFetch(`/artist/${encodeURIComponent(artistSlug)}`);
+        if (!artistResponse.ok) throw new Error(`Artist request failed (${artistResponse.status}).`);
+        const artist = await artistResponse.json();
+        listings = await fetchArtistListings(artist?.artistID || artist?.ArtistID);
+    } catch (error) {
+        console.error("Unable to load listings for the listing creation page:", error);
+        listingsError = "Existing listings could not be loaded. You can still create a new listing.";
+    }
+
     return {
         props: {
             metadataProp: metadata,
+            artistSlug,
+            listings,
+            listingsError,
         }
     };
 }
