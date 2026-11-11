@@ -49,6 +49,7 @@ export default function UnifiedCard({
   summary = "",
   image = "",
   mediaContent = null,
+  mediaPosition = "top",
   galleryImages = [],
   contentWarnings = [],
   imageAlt = "Card media",
@@ -65,6 +66,9 @@ export default function UnifiedCard({
   logoImage = "",
   logoEntityType = "",
   logoEntityId = "",
+  profileImage = "",
+  profileImageAlt = "Artist profile picture",
+  backgroundImage = "",
   tags = [],
   maxTags = 3,
   size = "md",
@@ -185,16 +189,24 @@ export default function UnifiedCard({
     )
   )
 
-  return (
-    <article className={`${CARD_SHELL_CLASS.replace(" h-full", "")} ${compact ? "rounded-box shadow-sm" : ""} self-start ${className} overflow-hidden`}>
-      <div className={`flex h-full ${orientationClass}`}>
-        {(resolvedMediaContent) && (
-          <figure className={`relative ${hasGalleryThumbnails ? "overflow-visible" : "overflow-hidden"} bg-base-200 ${figureClasses} ${compact && orientation !== "horizontal" ? "h-32" : ""} ${!compact ? mediaClass : ""}`}>
-            {resolvedMediaContent}
-          </figure>
-        )}
+  const mediaNode = resolvedMediaContent ? (
+    <figure className={`relative ${hasGalleryThumbnails ? "overflow-visible" : "overflow-hidden"} bg-base-200 ${figureClasses} ${compact && orientation !== "horizontal" ? "h-32" : ""} ${!compact ? mediaClass : ""}`}>
+      {resolvedMediaContent}
+    </figure>
+  ) : null
 
-        <div className={`card-body min-w-0 flex-1 ${compact ? "gap-2 p-3" : CARD_SIZE_CLASSES[normalizedSize] || CARD_SIZE_CLASSES.md}`}>
+  return (
+    <article className={`${CARD_SHELL_CLASS.replace(" h-full", "")} ${compact ? "rounded-box shadow-sm" : ""} relative isolate self-start ${className} overflow-hidden`}>
+      <div className={`relative flex h-full ${orientationClass}`}>
+        {mediaPosition !== "bottom" ? mediaNode : null}
+
+        <div className={`card-body relative isolate min-w-0 flex-1 ${compact ? "gap-2 p-3" : CARD_SIZE_CLASSES[normalizedSize] || CARD_SIZE_CLASSES.md}`}>
+          {backgroundImage ? (
+            <div className="pointer-events-none absolute inset-0 -z-10" aria-hidden="true">
+              <Image src={backgroundImage} alt="" fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover" />
+              <div className="absolute inset-0 bg-base-100/85" />
+            </div>
+          ) : null}
           {(badge || date) && (
             <div className="flex min-w-0 items-center justify-between gap-2 text-[11px] uppercase tracking-[0.12em] text-base-content/60">
               {badge ? <span className="badge badge-outline badge-sm shrink-0">{badge}</span> : <span />}
@@ -203,13 +215,18 @@ export default function UnifiedCard({
           )}
 
           <div className="space-y-2">
-            <div className="flex min-w-0 items-start gap-2">
+            <div className="flex min-w-0 items-center gap-2">
+              {profileImage ? (
+                <div className="relative h-27 w-21 shrink-0 overflow-hidden rounded-full border border-base-300 bg-base-100">
+                  <Image src={profileImage} alt={profileImageAlt} fill sizes="84px" className="object-cover" />
+                </div>
+              ) : null}
               {resolvedLogoImage ? (
                 <div className="relative mt-0.5 h-9 w-9 shrink-0 overflow-hidden rounded-md border border-base-300 bg-base-100">
                   <Image src={resolvedLogoImage} alt={`${headline} logo`} fill sizes="36px" className="object-contain p-0.5" />
                 </div>
               ) : null}
-              <div className="min-w-0 flex-1">{titleNode}</div>
+              <div className="min-w-0 flex-1 wrap-anywhere">{titleNode}</div>
             </div>
             {summary ? (
               <div
@@ -314,6 +331,7 @@ export default function UnifiedCard({
 
           {footer}
         </div>
+        {mediaPosition === "bottom" ? mediaNode : null}
       </div>
     </article>
   )
