@@ -20,6 +20,7 @@ import ArtistContextNav from "@/components/portal/ArtistContextNav";
 import serverFetch from "@/libs/serverFetch";
 import CostCalculator from "@/components/listings/CostCalculator";
 import ListingSelector, { fetchArtistListings } from "@/components/listings/listing-selector";
+import ListingMediaManager from "@/components/listings/listing-media-manager";
 import { IoCalculatorOutline, IoChevronDownOutline, IoChevronUpOutline } from "react-icons/io5";
 
 const formName = "ListingForm1";
@@ -33,7 +34,10 @@ const formName = "ListingForm1";
 export default function CreateListingForm1(props) {
     const [showCalculator, setShowCalculator] = useState(false);
     const [costBreakdownData, setCostBreakdownData] = useState(null);
+    const [savedListing, setSavedListing] = useState(null);
+    const [saveError, setSaveError] = useState("");
     const costCalculatorRef = useRef(null);
+    const listingId = savedListing?.listingID || savedListing?.ListingID || savedListing?.id || null;
 
     const enhancedMetadata = useMemo(() => {
         const base = Array.isArray(props.metadataProp)
@@ -46,11 +50,11 @@ export default function CreateListingForm1(props) {
 
         return {
             ...base,
-            FromURL: "/portal/artist/listing/create.js",
-            redirectURL: "/portal/artist/listing/",
-            APIURL: `/api/listing`
+            FromURL: `/portal/artist/${encodeURIComponent(props.artistSlug)}/listing/create`,
+            redirectURL: "",
+            APIURL: listingId ? `/api/listing/byID/${listingId}` : "/api/listing",
         };
-    }, [props.metadataProp]);
+    }, [props.metadataProp, props.artistSlug, listingId]);
 
     /**
      * Called by CostCalculator whenever a calculation is performed.
@@ -62,17 +66,22 @@ export default function CreateListingForm1(props) {
 
     /**
      * Post-submit hook — called by DynaFormDB after successful listing creation.
-     * Saves the cost breakdown linked to the newly created listing.
+     * Keeps the saved listing on this page and unlocks its media tools.
      * @param {Object} responseData - The API response from listing creation
      */
     const handlePostSubmit = useCallback(async (responseData) => {
-        if (!costBreakdownData) return; // No cost data to save
+        if (savedListing) return;
 
-        const newListingId = responseData?.listingID || responseData?.ListingID || responseData?.id;
-        if (!newListingId) {
-            console.warn("Could not extract ListingID from response to save cost breakdown");
+        const newListingId = Number(responseData?.listingID || responseData?.ListingID || responseData?.id);
+        if (!Number.isSafeInteger(newListingId) || newListingId <= 0) {
+            console.error("The created listing response did not contain a valid listing ID.");
+            setSavedListing(responseData || {});
+            setSaveError("The listing was saved, but its ID was not returned. Open it from your artist portal before continuing; do not create it again.");
             return;
         }
+
+        setSavedListing({ ...responseData, listingID: newListingId });
+        if (!costBreakdownData) return;
 
         try {
             const payload = {
@@ -88,13 +97,15 @@ export default function CreateListingForm1(props) {
 
             if (!res.ok) {
                 console.error("Failed to save cost breakdown for new listing:", await res.text());
+                setSaveError("Your listing was saved, but the cost breakdown could not be saved. Use the calculator below to try saving it again.");
             } else if (process.env.NODE_ENV === 'development') {
                 console.log("✅ Cost breakdown saved for listing", newListingId);
             }
         } catch (err) {
             console.error("Error saving cost breakdown:", err);
+            setSaveError("Your listing was saved, but the cost breakdown could not be saved. Use the calculator below to try saving it again.");
         }
-    }, [costBreakdownData]);
+    }, [costBreakdownData, savedListing]);
 
     return (
         <div className="p-4">
@@ -116,18 +127,24 @@ export default function CreateListingForm1(props) {
                 artistSlug={props.artistSlug}
                 listings={props.listings}
                 error={props.listingsError}
+                listingId={listingId}
+                currentListing={savedListing}
             />
-            {enhancedMetadata ? (
+            {listingId && (
+                <div className="alert alert-success mb-4" role="status">Listing saved. Profile, cover, and gallery management are now available below.</div>
+            )}
+            {saveError && <div className="alert alert-error mb-4" role="alert">{saveError}</div>}
+            {enhancedMetadata && (!savedListing || listingId) ? (
                 <DynaFormDB
-                    request="add"
+                    request={listingId ? "update" : "add"}
                     metadataProp={enhancedMetadata}
                     fieldsProp={enhancedMetadata.forms_fields}
-                    formData={null}
+                    formData={savedListing}
                     onPostSubmit={handlePostSubmit}
                 />
-            ) : (
+            ) : !savedListing ? (
                 <div className="p-10 text-center"><span className="loading loading-ghost loading-lg"></span></div>
-            )}
+            ) : null}
 
             {/* Cost & Margin Calculator Section */}
             <div className="mt-6">
@@ -145,17 +162,18 @@ export default function CreateListingForm1(props) {
                 {showCalculator && (
                     <div className="mt-4 p-4 bg-base-100 rounded-box border border-base-300 shadow-sm">
                         <p className="text-sm text-base-content/60 mb-4">
-                            Use the calculator below to determine your pricing. The cost breakdown will be saved automatically when you submit the listing above.
+                            {listingId ? "Update and save the cost breakdown for this listing below." : "Use the calculator below to determine your pricing. The cost breakdown will be saved automatically when you submit the listing above."}
                         </p>
                         <CostCalculator
                             ref={costCalculatorRef}
-                            listingId={null}
+                            listingId={listingId}
                             onPriceCalculated={handleCostDataReady}
-                            saveMode="deferred"
+                            saveMode={listingId ? "immediate" : "deferred"}
                         />
                     </div>
                 )}
             </div>
+            <ListingMediaManager listingId={listingId} currentUser={props.currentUser} />
         </div>
     );
 }
@@ -228,6 +246,11 @@ export async function getServerSideProps(context) {
             artistSlug,
             listings,
             listingsError,
+            currentUser: {
+                id: session.user.id || "",
+                name: session.user.name || "",
+                username: session.user.username || "",
+            },
         }
     };
 }

@@ -15,7 +15,7 @@ import { isAdmin, isArtist, isStaff } from "@/utils/authHelpers";
 import React, { useMemo } from "react";
 import TagSEO from "@/components/TagSEO";
 import ArtistContextNav from "@/components/portal/ArtistContextNav";
-import GalleryManager from "@/components/gallery/GalleryManager";
+import ListingMediaManager from "@/components/listings/listing-media-manager";
 import serverFetch from "@/libs/serverFetch"
 import ListingSelector, { fetchArtistListings } from "@/components/listings/listing-selector";
 
@@ -85,18 +85,7 @@ export default function UpdateListingForm2(props) {
                 error={props.listingsError}
             />
             <DynaFormDB request="update" metadataProp={enhancedMetadata} fieldsProp={enhancedMetadata.forms_fields} formData={props.listingdata} />
-            {props.listingId ? (
-                <GalleryManager
-                    entityType="listing"
-                    entityId={props.listingId}
-                    entityLabel={`Listing #${props.listingId}`}
-                    currentUser={props.currentUser}
-                />
-            ) : (
-                <div className="alert alert-warning">
-                    <span>Gallery manager unavailable: listingId is missing.</span>
-                </div>
-            )}
+            <ListingMediaManager listingId={props.listingId} currentUser={props.currentUser} />
         </div>
     );
 }
