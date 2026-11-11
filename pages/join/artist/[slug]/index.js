@@ -2,6 +2,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
 import TagSEO from "@/components/TagSEO";
+import serverFetch from "@/libs/serverFetch";
 import ProfileForm from "@/components/forms/onboarding/artists/ProfileForm";
 import BusinessDetailsForm from "@/components/forms/onboarding/artists/BusinessDetailsForm";
 import PrivateContactsForm from "@/components/forms/onboarding/artists/PrivateContactsForm";
@@ -102,9 +103,9 @@ function validateSeoTags(value) {
   };
 }
 
-export default function JoinArtistIndexPage({ sessionUser, currentStep, artistId, artistData, pictures }) {
+export default function JoinArtistIndexPage({ sessionUser, currentStep, artistId, artistSlug, artistData, pictures }) {
   const initialProgress = typeof window !== "undefined" ? (getArtistRegistrationProgress?.() || {}) : {};
-  const initialArtistSlug = String(artistData?.path || artistData?.Path || initialProgress.slug || "").trim().toLowerCase();
+  const initialArtistSlug = String(artistSlug || artistData?.path || artistData?.Path || initialProgress.slug || "").trim().toLowerCase();
   const initialArtistTitle = String(artistData?.title || artistData?.Title || "").trim();
   const initialArtistByline = String(artistData?.byline || artistData?.Byline || "").trim();
   const initialArtistBiography = String(artistData?.biography || artistData?.Biography || "").trim();
@@ -318,6 +319,17 @@ export default function JoinArtistIndexPage({ sessionUser, currentStep, artistId
       description: "Artist onboarding wizard with slug registration first and packeted DynaForm updates after.",
     },
   };
+
+  const pictureById = useMemo(() => {
+    const safePictures = Array.isArray(pictures) ? pictures : [];
+    return safePictures.reduce((acc, picture) => {
+      const pictureId = Number(picture?.pictureID || picture?.PictureID || 0);
+      if (Number.isInteger(pictureId) && pictureId > 0) {
+        acc[pictureId] = picture;
+      }
+      return acc;
+    }, {});
+  }, [pictures]);
 
   const pictureByUrl = useMemo(() => {
     const safePictures = Array.isArray(pictures) ? pictures : [];
@@ -928,9 +940,10 @@ export async function getArtistJoinServerProps(context, routeSlug = null, option
 
   let artistData = null;
   let pictures = [];
+  const fetchOptions = { headers: { cookie: context.req?.headers?.cookie || "" } };
 
   try {
-    const picturesResponse = await fetch(`/api/picture`);
+    const picturesResponse = await serverFetch(`/picture`, fetchOptions);
     if (picturesResponse.ok) {
       pictures = await picturesResponse.json();
     }
@@ -940,7 +953,7 @@ export async function getArtistJoinServerProps(context, routeSlug = null, option
 
   if (normalizedRouteSlug) {
     try {
-      const response = await fetch(`/api/artist/${encodeURIComponent(normalizedRouteSlug)}`);
+      const response = await serverFetch(`/artist/${encodeURIComponent(normalizedRouteSlug)}`, fetchOptions);
       if (response.ok) {
         artistData = await response.json();
         artistId = Number(artistData?.artistID || artistData?.ArtistID || 0);
@@ -952,17 +965,18 @@ export async function getArtistJoinServerProps(context, routeSlug = null, option
 
   if (!strictPreSlugFlow && !artistData && !(artistId > 0) && Number.isFinite(sessionUserId) && sessionUserId > 0) {
     try {
-      const linkedResponse = await fetch(`/api/linker_usertoartist/byUserID/${sessionUserId}`);
+      const linkedResponse = await serverFetch(`/linker_usertoartist/byUserID/${sessionUserId}`, fetchOptions);
       if (linkedResponse.ok) {
         const linkedArtists = await linkedResponse.json();
         const rows = Array.isArray(linkedArtists) ? linkedArtists : [];
-        const latestArtistId = rows
+        const linkedArtistId = rows
+          .filter((artist) => !normalizedRouteSlug || String(artist?.path || artist?.Path || "").trim().toLowerCase() === normalizedRouteSlug)
           .map((artist) => Number(artist?.artistID || artist?.ArtistID || 0))
           .filter((value) => Number.isFinite(value) && value > 0)
           .sort((a, b) => b - a)[0];
 
-        if (latestArtistId) {
-          artistId = latestArtistId;
+        if (linkedArtistId) {
+          artistId = linkedArtistId;
         }
       }
     } catch {
@@ -972,7 +986,7 @@ export async function getArtistJoinServerProps(context, routeSlug = null, option
 
   if (!strictPreSlugFlow && !artistData && artistId > 0) {
     try {
-      const response = await fetch(`/api/artist/byID/${artistId}`);
+      const response = await serverFetch(`/artist/byID/${artistId}`, fetchOptions);
       if (response.ok) {
         artistData = await response.json();
       }
@@ -986,6 +1000,7 @@ export async function getArtistJoinServerProps(context, routeSlug = null, option
       sessionUser: session?.user || null,
       currentStep,
       artistId: artistId > 0 ? artistId : null,
+      artistSlug: normalizedRouteSlug || String(artistData?.path || artistData?.Path || "").trim().toLowerCase(),
       artistData,
       pictures,
     },

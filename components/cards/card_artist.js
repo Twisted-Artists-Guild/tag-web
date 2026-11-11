@@ -41,7 +41,9 @@ const getArtistDescription = (artist) =>
 	"Creative portfolio and artist highlights."
 
 const mapGalleryItemsToMedia = (entity) => {
-	const items = Array.isArray(entity?.gallery?.galleryItems) ? entity.gallery.galleryItems : []
+	const gallery = entity?.gallery || entity?.relatedGallery
+	const sourceItems = gallery?.galleryItems || gallery?.GalleryItems || gallery?.items
+	const items = Array.isArray(sourceItems) ? sourceItems : []
 	if (items.length === 0) return []
 
 	return items
@@ -51,18 +53,20 @@ const mapGalleryItemsToMedia = (entity) => {
 			const picture = item?.picture
 			const video = item?.video
 			const pictureUrl = picture?.url || picture?.URL || ""
-			const pictureThumb = picture?.thumbnailURL || picture?.ThumbnailURL || pictureUrl
-			const videoThumb = video?.thumbnailURL || video?.ThumbnailURL || video?.url || video?.URL || ""
-			const url = picture ? pictureThumb : videoThumb
+			const pictureThumb = picture?.thumbnailURL || picture?.thumbnailUrl || picture?.ThumbnailURL || pictureUrl
+			const videoThumb = video?.thumbnailURL || video?.thumbnailUrl || video?.ThumbnailURL || video?.url || video?.URL || ""
+			const videoEmbed = video?.embedURL || video?.embedUrl || video?.EmbedURL || ""
+			const isPicture = Boolean(pictureUrl)
+			const url = isPicture ? pictureThumb : (videoThumb || (videoEmbed ? "/blank_image.png" : ""))
 
 			if (!url) return null
 
 			return {
 				original: url,
 				thumbnail: url,
-				mediaType: picture ? "picture" : "video",
-				sourceURL: picture ? pictureUrl : (video?.url || video?.URL || ""),
-				embedURL: picture ? (picture?.embedURL || picture?.EmbedURL || "") : (video?.embedURL || video?.EmbedURL || ""),
+				mediaType: isPicture ? "picture" : "video",
+				sourceURL: isPicture ? pictureUrl : (video?.url || video?.URL || ""),
+				embedURL: isPicture ? (picture?.embedURL || picture?.embedUrl || picture?.EmbedURL || "") : videoEmbed,
 				description:
 					item?.captionOverride ||
 					picture?.description ||
@@ -72,6 +76,8 @@ const mapGalleryItemsToMedia = (entity) => {
 					"",
 				byline: picture?.byline || video?.byline || "",
 				altText: picture?.altText || picture?.alttext || "",
+				originalAlt: picture?.altText || picture?.alttext || item?.captionOverride || picture?.title || video?.title || "Artist gallery media",
+				thumbnailAlt: picture?.altText || picture?.alttext || item?.captionOverride || picture?.title || video?.title || "Artist gallery media",
 			}
 		})
 		.filter(Boolean)
@@ -87,8 +93,7 @@ const getArtistGalleryImages = (artist) => {
 		return artist.images
 	}
 
-	const fallback = artist?.profilePic?.url || "/blank_image.png"
-	return [fallback]
+	return []
 }
 
 const getArtistHeaderGalleryImages = (artist) => {
@@ -269,12 +274,17 @@ const ArtistCard = ({
 		<PhotoGallery
 			images={galleryImages}
 			mode="standalone"
-			navigationMode={galleryImages.length > 1 ? "hover" : "manual"}
+			navigationMode="manual"
 			imageEffect="landscape"
 			showThumbnails={galleryImages.length > 1}
 			contentWarnings={contentWarnings}
 			contentWarningSize="sm"
 		/>
+	) : showHeaderGallery ? (
+		<div className="w-full bg-base-200" aria-hidden="true">
+			<div className="aspect-video w-full" />
+			<div className="h-24" />
+		</div>
 	) : (
 		undefined
 	)
@@ -289,8 +299,12 @@ const ArtistCard = ({
 			logoImage={artist?.logoPic?.url || artist?.logoPic?.URL || artist?.logoPic?.normalizedURL || artist?.logoPic?.NormalizedURL || artist?.LogoPic?.url || artist?.LogoPic?.URL || artist?.LogoPic?.normalizedURL || artist?.LogoPic?.NormalizedURL || artist?.logo?.url || artist?.logo?.URL || artist?.logoUrl || artist?.logoURL || ""}
 			logoEntityType="artist"
 			logoEntityId={artist?.artistID || artist?.artistid || ""}
+			profileImage={artist?.profilePic?.url || artist?.profilePic?.URL || ""}
+			profileImageAlt={artist?.profilePic?.altText || artist?.profilePic?.alttext || `${artistTitleText} profile picture`}
+			backgroundImage={artist?.coverPic?.url || artist?.coverPic?.URL || ""}
 			galleryImages={galleryImages}
 			mediaContent={showHeaderGallery ? unifiedCardMediaContent : undefined}
+			mediaPosition="bottom"
 			contentWarnings={contentWarnings}
 			imageAlt={artist?.title || "Artist media"}
 			href={artistHref}
@@ -322,7 +336,7 @@ const ArtistCard = ({
 				report: true,
 			}}
 			className="h-full"
-			mediaClassName={compact ? "h-36" : "h-auto"}
+			mediaClassName={showHeaderGallery ? "w-full h-auto! shrink-0" : (compact ? "h-36" : "h-auto")}
 		/>
 	)
 }

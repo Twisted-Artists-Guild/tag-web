@@ -139,8 +139,7 @@ export default function StaffTagBlogManage({ blogs = [], isAdminUser = false }) 
 									View Live
 								</Link>
 								<Link
-									href="/portal/staff/tagblog/[slug]/update"
-									as={`/portal/staff/tagblog/${blog.path}/update`}
+									href={`/portal/staff/tagblog/${blog.blogID}/update`}
 									className="link link-warning font-semibold"
 								>
 									Edit Post
