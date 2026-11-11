@@ -15,6 +15,7 @@ import { isAdmin, isArtist, isStaff } from "@/utils/authHelpers";
 import React, { useMemo } from "react";
 import TagSEO from "@/components/TagSEO";
 import ArtistContextNav from "@/components/portal/ArtistContextNav";
+import CostCalculator from "@/components/listings/CostCalculator";
 import ListingMediaManager from "@/components/listings/listing-media-manager";
 import serverFetch from "@/libs/serverFetch"
 import ListingSelector, { fetchArtistListings } from "@/components/listings/listing-selector";
@@ -85,6 +86,15 @@ export default function UpdateListingForm2(props) {
                 error={props.listingsError}
             />
             <DynaFormDB request="update" metadataProp={enhancedMetadata} fieldsProp={enhancedMetadata.forms_fields} formData={props.listingdata} />
+            <details className="rounded-box border border-base-300 bg-base-100">
+                <summary className="cursor-pointer p-4 text-lg font-semibold">Cost &amp; Margin Calculator</summary>
+                <div className="p-4">
+                    <p className="text-sm text-base-content/60 mb-4">
+                        Update and save the cost breakdown for this listing below.
+                    </p>
+                    <CostCalculator key={props.listingId} listingId={props.listingId} saveMode="immediate" />
+                </div>
+            </details>
             <ListingMediaManager listingId={props.listingId} currentUser={props.currentUser} />
         </div>
     );
