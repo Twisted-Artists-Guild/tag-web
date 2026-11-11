@@ -15,9 +15,10 @@ import { isAdmin, isArtist, isStaff } from "@/utils/authHelpers";
 import React, { useMemo } from "react";
 import TagSEO from "@/components/TagSEO";
 import ArtistContextNav from "@/components/portal/ArtistContextNav";
-import GalleryManager from "@/components/gallery/GalleryManager";
-import ListingCard from "@/components/cards/card_listing";
+import CostCalculator from "@/components/listings/CostCalculator";
+import ListingMediaManager from "@/components/listings/listing-media-manager";
 import serverFetch from "@/libs/serverFetch"
+import ListingSelector, { fetchArtistListings } from "@/components/listings/listing-selector";
 
 const formName = "ListingForm1";
 
@@ -33,11 +34,11 @@ export default function UpdateListingForm2(props) {
 
         return {
             ...base,
-            FromURL: "/portal/artist/listing/update/[slug]",
-            redirectURL: `/portal/artist/listing/${props.listingId}`,
+            FromURL: `/portal/artist/${encodeURIComponent(props.artistSlug)}/listing/update/${props.listingId}`,
+            redirectURL: `/portal/artist/${encodeURIComponent(props.artistSlug)}`,
             APIURL: `/api/listing/byID/${props.listingId}`
         };
-    }, [props.metadataProp, props.listingId]);
+    }, [props.metadataProp, props.listingId, props.artistSlug]);
 
     if (props.loadError) {
         return (
@@ -60,20 +61,6 @@ export default function UpdateListingForm2(props) {
     }
 
     const listingRecord = Array.isArray(props.listingdata) ? props.listingdata[0] : props.listingdata;
-    const artistId = props.artistId || listingRecord?.artistID;
-
-    const previewListing = listingRecord
-        ? {
-            ...listingRecord,
-            path: listingRecord?.path || listingRecord?.Path || String(props.listingId || ""),
-            artist: {
-                ...(listingRecord?.artist || {}),
-                path: props.artistSlug || listingRecord?.artist?.path || "",
-                title: listingRecord?.artist?.title || "Artist",
-                profilePic: listingRecord?.artist?.profilePic || {},
-            },
-        }
-        : null;
 
     return (
         <div className="p-4 space-y-6">
@@ -91,28 +78,24 @@ export default function UpdateListingForm2(props) {
                 canonicalSlug="portal/artist/[slug]/listing/update/[L_slug]"
             />
             <ArtistContextNav />
-            {props.listingId ? (
-                <GalleryManager
-                    entityType="listing"
-                    entityId={props.listingId}
-                    entityLabel={`Listing #${props.listingId}`}
-                    currentUser={props.currentUser}
-                />
-            ) : (
-                <div className="alert alert-warning">
-                    <span>Gallery manager unavailable: listingId is missing.</span>
-                </div>
-            )}
-
-            {previewListing && (
-                <div className="rounded-box border border-base-300 bg-base-100 p-3">
-                    <div className="mb-2 text-sm font-semibold text-base-content/80">Listing Preview (Gallery-Aware)</div>
-                        
-                            <ListingCard listing={previewListing} panelSize="full" showGalleryThumbnails />
-                        
-                </div>
-            )}
+            <ListingSelector
+                artistSlug={props.artistSlug}
+                listingId={props.listingId}
+                currentListing={listingRecord}
+                listings={props.listings}
+                error={props.listingsError}
+            />
             <DynaFormDB request="update" metadataProp={enhancedMetadata} fieldsProp={enhancedMetadata.forms_fields} formData={props.listingdata} />
+            <details className="rounded-box border border-base-300 bg-base-100">
+                <summary className="cursor-pointer p-4 text-lg font-semibold">Cost &amp; Margin Calculator</summary>
+                <div className="p-4">
+                    <p className="text-sm text-base-content/60 mb-4">
+                        Update and save the cost breakdown for this listing below.
+                    </p>
+                    <CostCalculator key={props.listingId} listingId={props.listingId} saveMode="immediate" />
+                </div>
+            </details>
+            <ListingMediaManager listingId={props.listingId} currentUser={props.currentUser} />
         </div>
     );
 }
@@ -207,7 +190,7 @@ export async function getServerSideProps(context) {
 
         const listingRecord = Array.isArray(data) ? data[0] : data;
         listingId = listingId || listingRecord?.listingID || listingRecord?.ListingID || null;
-        artistId = listingRecord?.artistID || null;
+        artistId = listingRecord?.artistID || listingRecord?.ArtistID || null;
 
         if (!listingId && !loadError) {
             loadError = "Could not resolve listingId from route or payload.";
@@ -227,6 +210,18 @@ export async function getServerSideProps(context) {
         console.error("Error fetching form meta or field data:", error);
         loadError = error.message || "Unknown error while loading listing editor data.";
     }
+    let listings = [];
+    let listingsError = null;
+    if (artistId) {
+        try {
+            listings = await fetchArtistListings(artistId);
+        } catch (error) {
+            console.error("Unable to load listings for the listing editor:", error);
+            listings = [];
+            listingsError = "Other listings could not be loaded. You can still edit this listing or create a new one.";
+        }
+    }
+
     return {
         props: {
             listingdata: data,
@@ -235,6 +230,8 @@ export async function getServerSideProps(context) {
             listingId,
             metadataProp: metadata,
             loadError,
+            listings,
+            listingsError,
             currentUser: session.user
                 ? {
                                         id: session.user.id || "",
