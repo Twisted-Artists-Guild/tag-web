@@ -14,6 +14,7 @@ import React, { useMemo } from "react";
 import Link from "next/link";
 import GalleryManager from "@/components/gallery/GalleryManager"
 import DynaFormDB from "@/components/widgets/DynaFormDB"
+import BlogPostSelector from "@/components/blog/blog-post-selector"
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import { isAdmin, isStaff } from "@/utils/authHelpers";
@@ -65,6 +66,10 @@ export default function UpdateBlogForm1(props) {
         };
     }, [props.id, props.blogdata, props.metadataProp]);
 
+    if (props.loadError) {
+        return <div className="p-10"><div className="alert alert-error" role="alert">{props.loadError}</div></div>;
+    }
+
     // Only render DynaFormDB if we actually have data, otherwise show a loader
     if (!props.blogdata || !enhancedMetadata) {
         return <div className="p-10 text-center"><span className="loading loading-ghost loading-lg"></span></div>;
@@ -74,6 +79,7 @@ export default function UpdateBlogForm1(props) {
       <div className="p-4">
 			<TagSEO metadataProp={{ title: "Update Blog Post", description: "Edit and update an existing blog post.", keywords: "blog, update, staff", robots: "noindex, nofollow", og: { title: "Update Blog Post", description: "Edit and update an existing blog post." } }} canonicalSlug="portal/staff/tagblog/[id]/update" />
             <div className="mb-6">
+                <BlogPostSelector currentBlog={props.blogdata} />
                 <GalleryManager
                     entityType="blog"
                     entityId={props.blogdata?.blogID}
@@ -124,21 +130,34 @@ export async function getServerSideProps(context) {
     }
 
     const { id } = context.query;
-    if (!id) {
+    if (typeof id !== "string" || !/^[1-9]\d*$/.test(id)) {
         return { notFound: true };
     }
-    let data = {};
+    let data = null;
     let metadata = null;
+    let loadError = null;
     try {
-        const res1 = await serverFetch(`/blog/${id}`);
-        data = await res1.json();
-
-        const metadataResponse = await serverFetch(`/formsmetadata/${formName}`);
-        if (metadataResponse.ok) {
-            metadata = await metadataResponse.json();
+        const fetchOptions = { headers: { cookie: context.req.headers.cookie || "" } };
+        const res1 = await serverFetch(`/blog/${id}`, fetchOptions);
+        if (res1.status === 404) {
+            return { notFound: true };
         }
+        if (!res1.ok) {
+            throw new Error(`Blog request failed with status ${res1.status}`);
+        }
+        data = await res1.json();
+        if (!Number.isInteger(data?.blogID) || data.blogID <= 0) {
+            throw new Error("Blog response is missing a valid blog ID");
+        }
+
+        const metadataResponse = await serverFetch(`/formsmetadata/${formName}`, fetchOptions);
+        if (!metadataResponse.ok) {
+            throw new Error(`Form metadata request failed with status ${metadataResponse.status}`);
+        }
+        metadata = await metadataResponse.json();
     } catch (error) {
         console.error("Error fetching form meta or field data:", error);
+        loadError = "Unable to load this blog editor. Please refresh the page or sign in again.";
         if (typeof window !== 'undefined') {
             console.log('getInitialProps result:', { data, metadata, id });
         }
@@ -150,6 +169,7 @@ export async function getServerSideProps(context) {
             blogdata: data,
             id: id,
             metadataProp: metadata || {},
+            loadError,
             currentUser: session.user?.name || session.user?.email || ""
         }
     };

@@ -103,12 +103,12 @@ const Artists = (props) => {
       <div className="min-h-screen flex flex-col bg-base-100 text-base-content">
 			<TagSEO metadataProp={pageMetaData} canonicalSlug="artists" />
 			{/* Hero Section */}
-			<section className="text-center py-12">
-				<h1 className="text-5xl md:text-7xl font-extrabold mb-4 text-primary">
-					Artist Portfolios
+      <section className="px-4 pt-8 pb-2 text-center md:pt-10" aria-labelledby="artists-heading">
+        <h1 id="artists-heading" className="mb-3 text-3xl font-extrabold text-primary md:text-4xl">
+          Meet the Artists
 				</h1>
-				<p className="text-xl md:text-2xl text-secondary mb-6">
-					Discover the creative energy of Twisted Artists Guild members. Each portfolio showcases the artist’s unique voice, featured works, and ways to connect or support them.
+        <p className="mx-auto max-w-3xl text-base leading-relaxed text-base-content/80 md:text-lg">
+          Explore featured photos and videos from Guild artists. Click an artist&apos;s name to see their full profile and browse their full portfolio.
 				</p>
 			</section>
       <main className="container mx-auto px-4 py-8 flex-1 w-full">
@@ -156,29 +156,6 @@ Artists.getInitialProps = async () => {
 
   // Function to generate a random number for social counters
   const getRandomCount = () => Math.floor(Math.random() * 1000) + 1 // Random number between 1 and 1000
-
-  // Function to generate random placeholder images for slideshow
-  const getRandomImages = (count = 3) => {
-    const pool = [
-      {
-        url: getRandomStockPhotoByCategory("artist"),
-        alt: "Curated artist portrait",
-      },
-      {
-        url: getRandomStockPhotoByCategory("painting"),
-        alt: "Curated painting detail",
-      },
-      {
-        url: getRandomStockPhotoByCategory("general"),
-        alt: "Curated creative image",
-      },
-    ]
-
-    return Array.from({ length: count }, (_, index) => {
-      const item = pool[(index + Math.floor(Math.random() * pool.length)) % pool.length]
-      return item
-    })
-  }
 
   const toImageUrl = (image) => {
     if (!image) {
@@ -243,22 +220,15 @@ console.log("Fetched artist data:", data);
       return map
     }, new Map())
 
-    // Populate galleries from DB-first sources, then fallback to stock photos.
     data = data.map((artist) => ({
       ...(() => {
         const artistPathKey = normalizeArtistKey(artist?.path)
 
-        const dbGalleryImages = dedupeImageUrls([
+        const galleryImages = dedupeImageUrls([
           ...(Array.isArray(artist?.images) ? artist.images : []),
-          artist?.profilePic,
-          artist?.coverPic,
           ...(Array.isArray(artist?.listings) ? artist.listings.map(l => l?.profilePic).filter(Boolean) : []),
           ...(listingImagesByArtistPath.get(artistPathKey) || []),
         ])
-
-        const galleryImages = dbGalleryImages.length > 0
-          ? dbGalleryImages
-          : getRandomImages(Math.floor(Math.random() * 3) + 2)
 
         const fallbackProfilePic = artist?.profilePic?.url || toImageUrl(galleryImages[0]) || "/blank_image.png"
 
