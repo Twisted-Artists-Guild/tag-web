@@ -70,9 +70,9 @@ export default function ArtistContextNav() {
       },
       {
         key: "artist-create-listing",
-        label: "Create Listing",
+        label: "Art Listing Management",
         href: slug ? `/portal/artist/${slug}/listing/create` : "",
-        purpose: "Create a listing inside this artist workspace.",
+        purpose: "Create and manage art listings inside this artist workspace.",
         disabled: !slug,
       },
     ]
