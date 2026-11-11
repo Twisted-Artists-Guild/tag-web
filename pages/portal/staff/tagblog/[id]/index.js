@@ -49,8 +49,7 @@ export default function BlogCreditsByIdPage({ blog }) {
 						<h1 className="text-xl font-bold">{blog.title || "Untitled Blog"}</h1>
 					</div>
 					<Link
-						href="/portal/staff/tagblog/[slug]/update"
-						as={`/portal/staff/tagblog/${blog.path}/update`}
+						href={`/portal/staff/tagblog/${blog.blogID}/update`}
 						className="btn btn-outline btn-sm"
 					>
 						Back To Post Editor
