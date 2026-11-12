@@ -289,7 +289,7 @@ const ArtistCard = ({
 		undefined
 	)
 
-	const unifiedImage = hasGallery ? primaryImage : ""
+	const unifiedImage = showHeaderGallery && hasGallery ? primaryImage : ""
 
 	return (
 		<UnifiedCard
@@ -302,7 +302,7 @@ const ArtistCard = ({
 			profileImage={artist?.profilePic?.url || artist?.profilePic?.URL || ""}
 			profileImageAlt={artist?.profilePic?.altText || artist?.profilePic?.alttext || `${artistTitleText} profile picture`}
 			backgroundImage={artist?.coverPic?.url || artist?.coverPic?.URL || ""}
-			galleryImages={galleryImages}
+			galleryImages={showHeaderGallery ? galleryImages : []}
 			mediaContent={showHeaderGallery ? unifiedCardMediaContent : undefined}
 			mediaPosition="bottom"
 			contentWarnings={contentWarnings}
