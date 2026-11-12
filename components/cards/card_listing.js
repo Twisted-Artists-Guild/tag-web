@@ -19,6 +19,7 @@ import ImpressionReactions from "@/components/social/ImpressionReactions"
 import { extractContentWarnings } from "@/components/social/ContentTags"
 import { CARD_SHELL_CLASS } from "@/components/cards/sizes/panel-layout"
 import { useImpressions, ImpressionTargetType } from "@/hooks/useImpressions"
+import { useEntityImage } from "@/hooks/useEntityProfileImage"
 import { sanitizeCardHtml, stripHtmlText } from "@/components/security/sanitize"
 import { useLayout } from "@/components/LayoutProvider";
 import ReportButton from "@/components/moderation/ReportButton"
@@ -40,7 +41,7 @@ const mapGalleryItemsToMedia = (entity) => {
       const picture = item?.picture
       const video = item?.video
       const pictureUrl = picture?.url || picture?.URL || ""
-      const pictureThumb = picture?.thumbnailURL || picture?.ThumbnailURL || pictureUrl
+      const pictureThumb = picture?.thumbnailURL || picture?.thumbnailUrl || picture?.ThumbnailURL || pictureUrl
       const videoThumb = video?.thumbnailURL || video?.thumbnailUrl || video?.ThumbnailURL || "/blank_image.png"
       const url = picture ? pictureThumb : videoThumb
 
@@ -61,6 +62,8 @@ const mapGalleryItemsToMedia = (entity) => {
           "",
         byline: picture?.byline || video?.byline || "",
         altText: picture?.altText || picture?.alttext || "",
+        originalAlt: picture?.altText || picture?.alttext || item?.captionOverride || picture?.title || video?.title || "Listing gallery media",
+        thumbnailAlt: picture?.altText || picture?.alttext || item?.captionOverride || picture?.title || video?.title || "Listing gallery media",
       }
     })
     .filter(Boolean)
@@ -76,8 +79,7 @@ const getListingGalleryImages = (listing) => {
     return listing.images
   }
 
-  const fallback = listing?.profilePic?.url || "/blank_image.png"
-  return [fallback]
+  return []
 }
 
 const formatCreatedDate = (value) => {
@@ -123,7 +125,7 @@ const getListingIdentity = (listing) => {
 const ListingCard = ({ 
   listing, 
   panelSize = "third", 
-  showGalleryThumbnails = false, 
+  showGalleryThumbnails = true,
   hideGallery = false,
   currentUser: propCurrentUser = null,
   enableDynamicImpressions = true,
@@ -133,15 +135,16 @@ const ListingCard = ({
   const { data: session } = useSession()
   const currentUser = propCurrentUser || session?.user || null
   
-  const listingSeed = listing?.listingid || listing?.listingID || listing?.path || listing?.title
-  const targetId = listingSeed
-  const targetType = ImpressionTargetType.LISTING
+  const listingId = listing?.listingID || listing?.listingid
+  const listingSeed = listingId || listing?.path || listing?.title
+  const profileImage = useEntityImage("listing", listingId, "profile")
+  const coverImage = useEntityImage("listing", listingId, "cover")
 
   const { 
     impressions, 
     loading: impressionsLoading,
     toggleReaction
-  } = useImpressions(targetId, targetType, enableDynamicImpressions)
+  } = useImpressions(listingId, ImpressionTargetType.LISTING, enableDynamicImpressions)
 
   const isLargePanel = ["twoThirds", "threeQuarters", "full"].includes(panelSize)
   const galleryImages = useMemo(() => getListingGalleryImages(listing), [listing])
@@ -165,8 +168,14 @@ const ListingCard = ({
     <UnifiedCard
       title={listing?.title || "Untitled listing"}
       summary={renderHtml ? listingDescriptionHtml : listingDescriptionText}
-      image={galleryImages[0]?.original || galleryImages[0]?.thumbnail || galleryImages[0] || ""}
       imageAlt={listing?.title || "Listing media"}
+      profileImage={profileImage}
+      profileImageAlt={listing?.profilePic?.altText || listing?.profilePic?.alttext || `${listingTitleText} profile picture`}
+      backgroundImage={coverImage}
+      galleryImages={!hideGallery ? galleryImages : []}
+      mediaPosition="bottom"
+      mediaClassName="w-full h-auto! shrink-0"
+      contentWarnings={contentWarnings}
       href={listingPath}
       badge="Listing"
       date={listing?.created}
@@ -185,13 +194,13 @@ const ListingCard = ({
       showImpressions={false}
       showComments={false}
       showReport={false}
-      mediaContent={!hideGallery ? (
+      mediaContent={!hideGallery && galleryImages.length > 0 ? (
         <PhotoGallery
           images={galleryImages}
           mode="standalone"
-          navigationMode={galleryImages.length > 1 ? "hover" : "manual"}
+          navigationMode="manual"
           imageEffect="landscape"
-          showThumbnails={showGalleryThumbnails}
+          showThumbnails={showGalleryThumbnails && galleryImages.length > 1}
           contentWarnings={contentWarnings}
           hasViewerConsent={Boolean(listing?.viewerHasContentConsent)}
         />
@@ -207,7 +216,7 @@ const ListingCard = ({
                 readOnly={false}
                 size="sm"
                 showDetails
-                targetId={`listing-${targetId}`}
+                targetId={`listing-${listingId}`}
                 targetType="listing"
               />
             ) : impressionsLoading ? (
@@ -227,7 +236,7 @@ const ListingCard = ({
             {listing?.price !== undefined && listing?.price !== null && Number(listing.price) > 0 && (
               <AddToCartButton listing={listing} />
             )}
-            <ReportButton targetType="Listing" targetId={listing?.listingID || listing?.listingid} />
+            <ReportButton targetType="Listing" targetId={listingId} />
           </div>
         </>
       )}
