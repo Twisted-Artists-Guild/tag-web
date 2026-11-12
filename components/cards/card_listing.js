@@ -10,11 +10,11 @@
  Open source · low-profit · human-first*/
 "use client"
 
-import Link from "next/link"
 import { useMemo } from "react"
 import { useSession } from "next-auth/react"
 import PhotoGallery from "@/components/cards/card_photoGallery"
 import UnifiedCard from "@/components/cards/UnifiedCard"
+import useEntityLogo from "@/components/cards/useEntityLogo"
 import ImpressionReactions from "@/components/social/ImpressionReactions"
 import { extractContentWarnings } from "@/components/social/ContentTags"
 import { CARD_SHELL_CLASS } from "@/components/cards/sizes/panel-layout"
@@ -105,9 +105,7 @@ const getListingIdentity = (listing) => {
     entity?.profilePic?.url ||
     entity?.profilePic?.URL ||
     entity?.profilePicUrl ||
-    entity?.logoUrl ||
     entity?.image ||
-    listing?.profilePic?.url ||
     "/blank_image.png"
 
   return {
@@ -122,8 +120,9 @@ const getListingIdentity = (listing) => {
   }
 }
 
-const ListingCard = ({ 
+export const ListingCardContent = ({
   listing, 
+  coverImage = "",
   panelSize = "third", 
   showGalleryThumbnails = true,
   hideGallery = false,
@@ -138,7 +137,6 @@ const ListingCard = ({
   const listingId = listing?.listingID || listing?.listingid
   const listingSeed = listingId || listing?.path || listing?.title
   const profileImage = useEntityImage("listing", listingId, "profile")
-  const coverImage = useEntityImage("listing", listingId, "cover")
 
   const { 
     impressions, 
@@ -157,6 +155,11 @@ const ListingCard = ({
   const listingDescriptionHtml = sanitizeCardHtml(listing?.description || "No description available")
 
   const listingIdentity = useMemo(() => getListingIdentity(listing), [listing])
+  const artistLogo = useEntityLogo({
+    logoImage: listingIdentity.logoImage,
+    entityType: listingIdentity.logoEntityType,
+    entityId: listingIdentity.logoEntityId,
+  })
 
   const totalReactionCount = impressions?.reduce((sum, imp) => sum + (imp.count || 0), 0) || 0
   const listingTags = [
@@ -171,6 +174,7 @@ const ListingCard = ({
       imageAlt={listing?.title || "Listing media"}
       profileImage={profileImage}
       profileImageAlt={listing?.profilePic?.altText || listing?.profilePic?.alttext || `${listingTitleText} profile picture`}
+      profileImageClassName="rounded-none"
       backgroundImage={coverImage}
       galleryImages={!hideGallery ? galleryImages : []}
       mediaPosition="bottom"
@@ -179,16 +183,21 @@ const ListingCard = ({
       href={listingPath}
       badge="Listing"
       date={listing?.created}
+      headerActions={<ReportButton targetType="Listing" targetId={listingId} targetURL={listingPath} />}
       price={listing?.price}
+      priceActions={<AddToCartButton listing={listing} />}
       authorName={listingIdentity.title}
       authorImage={listingIdentity.image}
+      authorImageClassName="h-27 w-21"
+      authorImageSizes="84px"
+      authorLogoImage={artistLogo}
+      authorClassName="flex min-w-0 max-w-full flex-row-reverse items-center gap-3 justify-self-end text-right @min-[34rem]:col-start-2 @min-[34rem]:row-start-1 @min-[34rem]:row-span-2"
       authorRole={listingIdentity.badge}
       authorHref={listingIdentity.href}
       enableAuthorLink
-      logoImage={listingIdentity.logoImage}
-      logoEntityType={listingIdentity.logoEntityType}
-      logoEntityId={listingIdentity.logoEntityId}
       tags={[...listingTags, listing?.artCategory?.category].filter(Boolean).slice(0, 3)}
+      className="@container"
+      detailsClassName="grid grid-cols-1 items-center gap-4 @min-[34rem]:grid-cols-2 @min-[34rem]:gap-x-6"
       size={isLargePanel ? "lg" : "md"}
       showIdentityGlow={showArtistIdentityGlow}
       showImpressions={false}
@@ -207,7 +216,7 @@ const ListingCard = ({
       ) : null}
       footer={(
         <>
-          <div className="space-y-2 border-t border-base-300 pt-3">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-base-300 pt-3">
             {!impressionsLoading && impressions && impressions.length > 0 ? (
               <ImpressionReactions
                 impressions={impressions}
@@ -224,24 +233,21 @@ const ListingCard = ({
             ) : (
               <div className="text-sm text-base-content/50">No reactions data</div>
             )}
-            <p className="text-xs text-base-content/65">
+            <p className="ml-auto text-right text-xs text-base-content/65">
               {totalReactionCount} reactions • {listing.commentCount ?? getSeededCount(listingSeed, 15, 1, "comments")} comments
             </p>
-          </div>
-          <div className="card-actions mt-1 justify-start gap-2">
-            <Link href={listingPath} className="btn btn-primary btn-sm">View Listing</Link>
-            <Link href={listingIdentity.href || `/artists/${listing?.artist?.path || ""}`} className="btn btn-outline btn-sm">
-              View {listingIdentity.badge}
-            </Link>
-            {listing?.price !== undefined && listing?.price !== null && Number(listing.price) > 0 && (
-              <AddToCartButton listing={listing} />
-            )}
-            <ReportButton targetType="Listing" targetId={listingId} />
           </div>
         </>
       )}
     />
   )
+}
+
+const ListingCard = ({ listing, ...cardProps }) => {
+  const listingId = listing?.listingID || listing?.listingid
+  const coverImage = useEntityImage("listing", listingId, "cover")
+
+  return <ListingCardContent {...cardProps} listing={listing} coverImage={coverImage} />
 }
 
 // Child component to safely hook into CartContext without breaking SSR
@@ -250,28 +256,22 @@ import { IoCartOutline } from 'react-icons/io5';
 
 const AddToCartButton = ({ listing }) => {
   const { addToCart } = useCart();
-  const layout = useLayout();
-  const toggleRightSidebar = layout?.toggleRightSidebar || (() => {});
+  const { toggleRightSidebar } = useLayout();
 
   const handleAddToCart = () => {
-      // Normalize listing ID property safely
       const normalizedListing = {
           ...listing,
-          id: listing.listingID || listing.id,
+          id: listing.listingID || listing.listingid || listing.id,
           price: Number(listing.price || 0)
       };
 
       addToCart(normalizedListing, 1);
-      
-      // Attempt to force the layout sidebar open if context allows it
-      if (typeof toggleRightSidebar === 'function') {
-          // If it acts as a toggle, we only fire it if it's closed
-          setTimeout(() => toggleRightSidebar(true), 100);
-      }
+      toggleRightSidebar(true);
   };
 
   return (
     <button 
+      type="button"
       onClick={handleAddToCart}
       className="btn btn-secondary btn-sm"
       title="Add to Cart"

@@ -9,7 +9,8 @@
 
  Open source · low-profit · human-first*/
 import TagSEO from "@/components/TagSEO"
-import ListingCard from "@/components/cards/card_listing"
+import { ListingCardContent } from "@/components/cards/card_listing"
+import Image from "next/image"
 import dynamic from "next/dynamic"
 import { useSession } from "next-auth/react"
 import { useEffect, useMemo, useState } from "react"
@@ -17,6 +18,7 @@ import { useRouter } from "next/router"
 import { PERMISSIONS } from "@/utils/permissions"
 import { hasPermission } from "@/utils/authHelpers"
 import DynamicComments, { CommentTargetType } from "@/components/social/DynamicComments"
+import { useEntityImage } from "@/hooks/useEntityProfileImage"
 
 const PhotoGallery = dynamic(() => import("@/components/cards/card_photoGallery"), { ssr: false })
 
@@ -111,8 +113,7 @@ const getListingGalleryImages = (listing) => {
     return listing.images
   }
 
-  const fallback = listing?.profilePic?.url || "/blank_image.png"
-  return [fallback]
+  return []
 }
 
 const normalizeListingPayload = (payload) => {
@@ -144,6 +145,7 @@ const ListingDetails = () => {
     () => listing?.listingID || listing?.ListingID || listing?.listingid || listing?.listingId || listing?.ListingId || null,
     [listing],
   )
+  const coverImage = useEntityImage("listing", listingId, "cover")
 
   // Calculate gallery images - MUST be before any conditional returns
   const listingGalleryImages = useMemo(
@@ -173,6 +175,7 @@ const ListingDetails = () => {
 
   const listingForCard = useMemo(() => ({
     ...listing,
+    listingID: listingId,
     panelSize: "half",
     images: listingGalleryImages,
     path: listing?.path || "",
@@ -180,7 +183,7 @@ const ListingDetails = () => {
       ...(listing?.artist || {}),
       path: listing?.artist?.path || slug || "",
     },
-  }), [listing, listingGalleryImages, slug])
+  }), [listing, listingId, listingGalleryImages, slug])
 
   const canonicalSlug = listing.seoCanonicalSlug || `artists/${slug}/listings/${L_slug}`
   const pageMetaData = useMemo(() => ({
@@ -419,29 +422,22 @@ const ListingDetails = () => {
       <div className="container mx-auto px-4 py-6 bg-base-200 text-base-content">
         <TagSEO metadataProp={pageMetaData} canonicalSlug={canonicalSlug} />
         <div className="mb-8">
-          <div className="card bg-base-100 text-base-content border border-base-300 shadow-lg p-4 rounded-box">
-            <div className="space-y-4">
-              <h2 className="text-xl font-bold border-b pb-2 text-primary">Listing Gallery</h2>
-              {hasRealGalleryMedia ? (
-                <PhotoGallery
-                  images={effectiveGalleryImages}
-                  mode="standalone"
-                  navigationMode="manual"
-                  imageEffect="landscape"
-                  showThumbnails={effectiveGalleryImages.length > 1}
-                  showContentWarnings={false}
-                />
-              ) : (
-                <div className="rounded-box border border-base-300 bg-base-200 p-4 text-sm text-base-content/70">
-                  No gallery media is available for this listing yet.
-                </div>
-              )}
-            </div>
-          </div>
+          {coverImage ? (
+            <figure className="relative mb-8 aspect-video overflow-hidden rounded-box bg-base-100">
+              <Image
+                src={coverImage}
+                alt={listing.coverPic?.altText || `${listing.title || "Listing"} cover picture`}
+                fill
+                sizes="(max-width: 1280px) 100vw, 1280px"
+                className="object-cover"
+                priority
+              />
+            </figure>
+          ) : null}
 
           <div className="mt-8">
             <h2 className="text-xl font-bold mb-4 border-b pb-2 text-primary">Listing Details</h2>
-            <ListingCard listing={listingForCard} panelSize="half" showArtistIdentityGlow={false} />
+            <ListingCardContent listing={listingForCard} panelSize="half" showArtistIdentityGlow={false} hideGallery />
           </div>
 
           <div className="mt-8">
@@ -478,6 +474,26 @@ const ListingDetails = () => {
                 </tr>
               </tbody>
             </table>
+          </div>
+
+          <div className="mt-8 card bg-base-100 text-base-content border border-base-300 shadow-lg p-4 rounded-box">
+            <div className="space-y-4">
+              <h2 className="text-xl font-bold border-b pb-2 text-primary">Listing Gallery</h2>
+              {hasRealGalleryMedia ? (
+                <PhotoGallery
+                  images={effectiveGalleryImages}
+                  mode="standalone"
+                  navigationMode="manual"
+                  imageEffect="landscape"
+                  showThumbnails={effectiveGalleryImages.length > 1}
+                  showContentWarnings={false}
+                />
+              ) : (
+                <div className="rounded-box border border-base-300 bg-base-200 p-4 text-sm text-base-content/70">
+                  No gallery media is available for this listing yet.
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Comments Section */}
