@@ -13,6 +13,7 @@ import { useState, useRef, useEffect, useCallback, useMemo } from "react"
 import Image from "next/image"
 import ContentTags, { WARNING_DEFINITIONS } from "@/components/social/ContentTags"
 import { invalidateEntityLogoCache } from "@/components/cards/useEntityLogo"
+import { invalidateEntityImageCache } from "@/hooks/useEntityProfileImage"
 
 const defaultFieldClass = "input input-bordered w-full"
 const LOGO_API_ENTITY_TYPES = {
@@ -1293,6 +1294,9 @@ export default function GalleryManager({ entityType, entityId, entityLabel, curr
 
     if (uploaded.length) {
       setUploadMessage(`Uploaded ${uploaded.length} file${uploaded.length > 1 ? "s" : ""}`)
+      if (entityType === "listing") {
+        invalidateEntityImageCache(entityType, entityId, normalizedFolderKind)
+      }
       if ((entityType === "user" || entityType === "artist") && normalizedFolderKind === "profile" && typeof window !== "undefined") {
         window.dispatchEvent(new CustomEvent("entity-profile-picture-updated", {
           detail: { entityType, entityId, imageUrl: uploaded[uploaded.length - 1].url },

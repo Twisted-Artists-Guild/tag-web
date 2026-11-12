@@ -41,7 +41,13 @@ const getListingIdentity = (listing) => {
   }
 }
 
-const ListingCardSmall = ({ listing, artist, textRenderMode = "strip" }) => {
+const ListingCardSmall = ({
+  listing,
+  artist,
+  textRenderMode = "strip",
+  image = listing?.profilePic?.url || listing?.defaultImageURL || listing?.image || "/blank_image.png",
+  imageAlt = listing?.profilePic?.alttext || `${listing?.title || "Unknown"}'s listing`,
+}) => {
   if (!listing) return null
 
   if (!listing.artist && artist) {
@@ -55,7 +61,6 @@ const ListingCardSmall = ({ listing, artist, textRenderMode = "strip" }) => {
     : "#"
 
   const identity = getListingIdentity(listing)
-  const image = listing?.profilePic?.url || listing?.defaultImageURL || listing?.image || "/blank_image.png"
   const summary = listing?.description || listing?.byline || "No description available"
   const tags = [listing?.artCategory?.category, listing?.medium].filter(Boolean).slice(0, 2)
 
@@ -74,7 +79,7 @@ const ListingCardSmall = ({ listing, artist, textRenderMode = "strip" }) => {
       summary={summary}
       image={image}
       mediaContent={mediaContent}
-      imageAlt={listing?.profilePic?.alttext || `${listing?.title || "Unknown"}'s listing`}
+      imageAlt={imageAlt}
       href={listingPath}
       badge="Listing"
       date={listing?.created}
