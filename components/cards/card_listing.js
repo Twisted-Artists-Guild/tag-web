@@ -10,15 +10,16 @@
  Open source · low-profit · human-first*/
 "use client"
 
-import Link from "next/link"
 import { useMemo } from "react"
 import { useSession } from "next-auth/react"
 import PhotoGallery from "@/components/cards/card_photoGallery"
 import UnifiedCard from "@/components/cards/UnifiedCard"
+import useEntityLogo from "@/components/cards/useEntityLogo"
 import ImpressionReactions from "@/components/social/ImpressionReactions"
 import { extractContentWarnings } from "@/components/social/ContentTags"
 import { CARD_SHELL_CLASS } from "@/components/cards/sizes/panel-layout"
 import { useImpressions, ImpressionTargetType } from "@/hooks/useImpressions"
+import { useEntityImage } from "@/hooks/useEntityProfileImage"
 import { sanitizeCardHtml, stripHtmlText } from "@/components/security/sanitize"
 import { useLayout } from "@/components/LayoutProvider";
 import ReportButton from "@/components/moderation/ReportButton"
@@ -40,7 +41,7 @@ const mapGalleryItemsToMedia = (entity) => {
       const picture = item?.picture
       const video = item?.video
       const pictureUrl = picture?.url || picture?.URL || ""
-      const pictureThumb = picture?.thumbnailURL || picture?.ThumbnailURL || pictureUrl
+      const pictureThumb = picture?.thumbnailURL || picture?.thumbnailUrl || picture?.ThumbnailURL || pictureUrl
       const videoThumb = video?.thumbnailURL || video?.thumbnailUrl || video?.ThumbnailURL || "/blank_image.png"
       const url = picture ? pictureThumb : videoThumb
 
@@ -61,6 +62,8 @@ const mapGalleryItemsToMedia = (entity) => {
           "",
         byline: picture?.byline || video?.byline || "",
         altText: picture?.altText || picture?.alttext || "",
+        originalAlt: picture?.altText || picture?.alttext || item?.captionOverride || picture?.title || video?.title || "Listing gallery media",
+        thumbnailAlt: picture?.altText || picture?.alttext || item?.captionOverride || picture?.title || video?.title || "Listing gallery media",
       }
     })
     .filter(Boolean)
@@ -76,8 +79,7 @@ const getListingGalleryImages = (listing) => {
     return listing.images
   }
 
-  const fallback = listing?.profilePic?.url || "/blank_image.png"
-  return [fallback]
+  return []
 }
 
 const formatCreatedDate = (value) => {
@@ -103,9 +105,7 @@ const getListingIdentity = (listing) => {
     entity?.profilePic?.url ||
     entity?.profilePic?.URL ||
     entity?.profilePicUrl ||
-    entity?.logoUrl ||
     entity?.image ||
-    listing?.profilePic?.url ||
     "/blank_image.png"
 
   return {
@@ -120,10 +120,11 @@ const getListingIdentity = (listing) => {
   }
 }
 
-const ListingCard = ({ 
+export const ListingCardContent = ({
   listing, 
+  coverImage = "",
   panelSize = "third", 
-  showGalleryThumbnails = false, 
+  showGalleryThumbnails = true,
   hideGallery = false,
   currentUser: propCurrentUser = null,
   enableDynamicImpressions = true,
@@ -133,15 +134,15 @@ const ListingCard = ({
   const { data: session } = useSession()
   const currentUser = propCurrentUser || session?.user || null
   
-  const listingSeed = listing?.listingid || listing?.listingID || listing?.path || listing?.title
-  const targetId = listingSeed
-  const targetType = ImpressionTargetType.LISTING
+  const listingId = listing?.listingID || listing?.listingid
+  const listingSeed = listingId || listing?.path || listing?.title
+  const profileImage = useEntityImage("listing", listingId, "profile")
 
   const { 
     impressions, 
     loading: impressionsLoading,
     toggleReaction
-  } = useImpressions(targetId, targetType, enableDynamicImpressions)
+  } = useImpressions(listingId, ImpressionTargetType.LISTING, enableDynamicImpressions)
 
   const isLargePanel = ["twoThirds", "threeQuarters", "full"].includes(panelSize)
   const galleryImages = useMemo(() => getListingGalleryImages(listing), [listing])
@@ -154,6 +155,11 @@ const ListingCard = ({
   const listingDescriptionHtml = sanitizeCardHtml(listing?.description || "No description available")
 
   const listingIdentity = useMemo(() => getListingIdentity(listing), [listing])
+  const artistLogo = useEntityLogo({
+    logoImage: listingIdentity.logoImage,
+    entityType: listingIdentity.logoEntityType,
+    entityId: listingIdentity.logoEntityId,
+  })
 
   const totalReactionCount = impressions?.reduce((sum, imp) => sum + (imp.count || 0), 0) || 0
   const listingTags = [
@@ -165,40 +171,52 @@ const ListingCard = ({
     <UnifiedCard
       title={listing?.title || "Untitled listing"}
       summary={renderHtml ? listingDescriptionHtml : listingDescriptionText}
-      image={galleryImages[0]?.original || galleryImages[0]?.thumbnail || galleryImages[0] || ""}
       imageAlt={listing?.title || "Listing media"}
+      profileImage={profileImage}
+      profileImageAlt={listing?.profilePic?.altText || listing?.profilePic?.alttext || `${listingTitleText} profile picture`}
+      profileImageClassName="rounded-none"
+      backgroundImage={coverImage}
+      galleryImages={!hideGallery ? galleryImages : []}
+      mediaPosition="bottom"
+      mediaClassName="w-full h-auto! shrink-0"
+      contentWarnings={contentWarnings}
       href={listingPath}
       badge="Listing"
       date={listing?.created}
+      headerActions={<ReportButton targetType="Listing" targetId={listingId} targetURL={listingPath} />}
       price={listing?.price}
+      priceActions={<AddToCartButton listing={listing} />}
       authorName={listingIdentity.title}
       authorImage={listingIdentity.image}
+      authorImageClassName="h-27 w-21"
+      authorImageSizes="84px"
+      authorLogoImage={artistLogo}
+      authorClassName="flex min-w-0 max-w-full flex-row-reverse items-center gap-3 justify-self-end text-right @min-[34rem]:col-start-2 @min-[34rem]:row-start-1 @min-[34rem]:row-span-2"
       authorRole={listingIdentity.badge}
       authorHref={listingIdentity.href}
       enableAuthorLink
-      logoImage={listingIdentity.logoImage}
-      logoEntityType={listingIdentity.logoEntityType}
-      logoEntityId={listingIdentity.logoEntityId}
       tags={[...listingTags, listing?.artCategory?.category].filter(Boolean).slice(0, 3)}
+      className="@container"
+      detailsClassName="grid grid-cols-1 items-center gap-4 @min-[34rem]:grid-cols-2 @min-[34rem]:gap-x-6"
       size={isLargePanel ? "lg" : "md"}
       showIdentityGlow={showArtistIdentityGlow}
       showImpressions={false}
       showComments={false}
       showReport={false}
-      mediaContent={!hideGallery ? (
+      mediaContent={!hideGallery && galleryImages.length > 0 ? (
         <PhotoGallery
           images={galleryImages}
           mode="standalone"
-          navigationMode={galleryImages.length > 1 ? "hover" : "manual"}
+          navigationMode="manual"
           imageEffect="landscape"
-          showThumbnails={showGalleryThumbnails}
+          showThumbnails={showGalleryThumbnails && galleryImages.length > 1}
           contentWarnings={contentWarnings}
           hasViewerConsent={Boolean(listing?.viewerHasContentConsent)}
         />
       ) : null}
       footer={(
         <>
-          <div className="space-y-2 border-t border-base-300 pt-3">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-base-300 pt-3">
             {!impressionsLoading && impressions && impressions.length > 0 ? (
               <ImpressionReactions
                 impressions={impressions}
@@ -207,7 +225,7 @@ const ListingCard = ({
                 readOnly={false}
                 size="sm"
                 showDetails
-                targetId={`listing-${targetId}`}
+                targetId={`listing-${listingId}`}
                 targetType="listing"
               />
             ) : impressionsLoading ? (
@@ -215,24 +233,21 @@ const ListingCard = ({
             ) : (
               <div className="text-sm text-base-content/50">No reactions data</div>
             )}
-            <p className="text-xs text-base-content/65">
+            <p className="ml-auto text-right text-xs text-base-content/65">
               {totalReactionCount} reactions • {listing.commentCount ?? getSeededCount(listingSeed, 15, 1, "comments")} comments
             </p>
-          </div>
-          <div className="card-actions mt-1 justify-start gap-2">
-            <Link href={listingPath} className="btn btn-primary btn-sm">View Listing</Link>
-            <Link href={listingIdentity.href || `/artists/${listing?.artist?.path || ""}`} className="btn btn-outline btn-sm">
-              View {listingIdentity.badge}
-            </Link>
-            {listing?.price !== undefined && listing?.price !== null && Number(listing.price) > 0 && (
-              <AddToCartButton listing={listing} />
-            )}
-            <ReportButton targetType="Listing" targetId={listing?.listingID || listing?.listingid} />
           </div>
         </>
       )}
     />
   )
+}
+
+const ListingCard = ({ listing, ...cardProps }) => {
+  const listingId = listing?.listingID || listing?.listingid
+  const coverImage = useEntityImage("listing", listingId, "cover")
+
+  return <ListingCardContent {...cardProps} listing={listing} coverImage={coverImage} />
 }
 
 // Child component to safely hook into CartContext without breaking SSR
@@ -241,28 +256,22 @@ import { IoCartOutline } from 'react-icons/io5';
 
 const AddToCartButton = ({ listing }) => {
   const { addToCart } = useCart();
-  const layout = useLayout();
-  const toggleRightSidebar = layout?.toggleRightSidebar || (() => {});
+  const { toggleRightSidebar } = useLayout();
 
   const handleAddToCart = () => {
-      // Normalize listing ID property safely
       const normalizedListing = {
           ...listing,
-          id: listing.listingID || listing.id,
+          id: listing.listingID || listing.listingid || listing.id,
           price: Number(listing.price || 0)
       };
 
       addToCart(normalizedListing, 1);
-      
-      // Attempt to force the layout sidebar open if context allows it
-      if (typeof toggleRightSidebar === 'function') {
-          // If it acts as a toggle, we only fire it if it's closed
-          setTimeout(() => toggleRightSidebar(true), 100);
-      }
+      toggleRightSidebar(true);
   };
 
   return (
     <button 
+      type="button"
       onClick={handleAddToCart}
       className="btn btn-secondary btn-sm"
       title="Add to Cart"
