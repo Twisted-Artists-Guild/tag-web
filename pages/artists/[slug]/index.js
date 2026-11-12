@@ -27,6 +27,7 @@ import { sanitizeDefaultHtml } from "@/components/security/sanitize"
 import { pickContactCardData } from "@/utils/artistContactUtils"
 import SendMessageButton from '@/components/messaging/SendMessageButton'
 import serverFetch from "@/libs/serverFetch"
+import { useEntityImage } from "@/hooks/useEntityProfileImage"
 
 const PhotoGallery = dynamic(() => import("@/components/cards/card_photoGallery"), { ssr: false })
 
@@ -76,6 +77,20 @@ const artistSections = [
   { id: "listings", label: "Art Listings" },
   { id: "comments", label: "Comments & Feedback" },
 ]
+
+const TopListingCard = ({ listing }) => {
+  const listingId = listing.listingID || listing.listingid
+  const coverImage = useEntityImage("listing", listingId, "cover")
+
+  return (
+    <ListingCardSmall
+      listing={listing}
+      image={coverImage || "/blank_image.png"}
+      imageAlt={listing.coverPic?.altText || `${stripHtmlTags(listing.title) || "Listing"} cover picture`}
+      textRenderMode="html"
+    />
+  )
+}
 
 const Artist = (props) => {
   const { data: session } = useSession()
@@ -401,10 +416,9 @@ const Artist = (props) => {
                 filteredListings.length > 0 ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {filteredListings.map((listing) => (
-                      <ListingCardSmall
+                      <TopListingCard
                         key={listing.listingID || listing.listingid || listing.path}
                         listing={listing}
-                        textRenderMode="html"
                       />
                     ))}
                   </div>
