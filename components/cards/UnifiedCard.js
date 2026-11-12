@@ -56,9 +56,15 @@ export default function UnifiedCard({
   href = "",
   badge = "",
   date = "",
+  headerActions = null,
   price = null,
+  priceActions = null,
   authorName = "",
   authorImage = "",
+  authorImageClassName = "",
+  authorImageSizes = "",
+  authorLogoImage = "",
+  authorClassName = "",
   authorRole = "Contributor",
   showAuthor = true,
   authorHref = "",
@@ -68,9 +74,11 @@ export default function UnifiedCard({
   logoEntityId = "",
   profileImage = "",
   profileImageAlt = "Artist profile picture",
+  profileImageClassName = "rounded-full",
   backgroundImage = "",
   tags = [],
   maxTags = 3,
+  detailsClassName = "contents",
   size = "md",
   orientation = "vertical",
   compact = false,
@@ -207,17 +215,20 @@ export default function UnifiedCard({
               <div className="absolute inset-0 bg-base-100/85" />
             </div>
           ) : null}
-          {(badge || date) && (
+          {(badge || date || headerActions) && (
             <div className="flex min-w-0 items-center justify-between gap-2 text-[11px] uppercase tracking-[0.12em] text-base-content/60">
               {badge ? <span className="badge badge-outline badge-sm shrink-0">{badge}</span> : <span />}
-              {date ? <time className="shrink-0 whitespace-nowrap text-right" dateTime={String(date)}>{formatDisplayDate(date)}</time> : null}
+              <div className="flex min-w-0 items-center gap-2">
+                {date ? <time className="shrink-0 whitespace-nowrap text-right" dateTime={String(date)}>{formatDisplayDate(date)}</time> : null}
+                {headerActions}
+              </div>
             </div>
           )}
 
           <div className="space-y-2">
             <div className="flex min-w-0 items-center gap-2">
               {profileImage ? (
-                <div className="relative h-27 w-21 shrink-0 overflow-hidden rounded-full border border-base-300 bg-base-100">
+                <div className={`relative h-27 w-21 shrink-0 overflow-hidden border border-base-300 bg-base-100 ${profileImageClassName}`}>
                   <Image src={profileImage} alt={profileImageAlt} fill sizes="84px" className="object-cover" />
                 </div>
               ) : null}
@@ -236,54 +247,66 @@ export default function UnifiedCard({
             ) : null}
           </div>
 
-          {hasPrice && (
-            <div className="inline-flex w-fit items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-2.5 py-1.5 shadow-sm">
-              <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-primary/70">Price</span>
-              <span className="text-sm font-black tracking-tight text-primary">{formattedPrice}</span>
-            </div>
-          )}
+          <div className={detailsClassName}>
+            {hasPrice && (
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="inline-flex w-fit items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-2.5 py-1.5 shadow-sm">
+                  <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-primary/70">Price</span>
+                  <span className="text-sm font-black tracking-tight text-primary">{formattedPrice}</span>
+                </div>
+                {priceActions}
+              </div>
+            )}
 
-          {visibleTags.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              {visibleTags.map((tag) => (
-                <span key={tag} className="badge badge-ghost badge-sm">
-                  {tag}
-                </span>
-              ))}
-            </div>
-          )}
+            {visibleTags.length > 0 && (
+              <div className="flex flex-wrap gap-2">
+                {visibleTags.map((tag) => (
+                  <span key={tag} className="badge badge-ghost badge-sm">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
 
-          {showAuthor && (authorName || authorImage) && (
-            <div className={`${compact ? "gap-2 p-2" : "gap-3 p-2.5"} mt-auto flex items-center rounded-box border border-base-300 bg-base-100/80`}>
-              {authorImage && (
-                <div className="avatar">
-                  <div
-                    className={`relative ${compact ? "h-8 w-8" : "h-10 w-10"} overflow-hidden rounded-full border ${showIdentityGlow ? "shadow-[0_0_0_2px_rgba(168,85,247,0.25)]" : "border-base-300"}`}
-                  >
-                    {contributorHref ? (
-                      <Link href={contributorHref} aria-label={`View ${authorName || "contributor"} profile`} className="block h-full w-full">
-                        <Image src={authorImage} alt={authorName || "Author avatar"} fill sizes={compact ? "32px" : "40px"} className="object-cover" />
-                      </Link>
-                    ) : (
-                      <Image src={authorImage} alt={authorName || "Author avatar"} fill sizes={compact ? "32px" : "40px"} className="object-cover" />
+            {showAuthor && (authorName || authorImage) && (
+              <div className={authorClassName || `${compact ? "gap-2 p-2" : "gap-3 p-2.5"} mt-auto flex items-center rounded-box border border-base-300 bg-base-100/80`}>
+                {authorImage && (
+                  <div className="avatar shrink-0">
+                    <div
+                      className={`relative ${authorImageClassName || (compact ? "h-8 w-8" : "h-10 w-10")} overflow-hidden rounded-full border ${showIdentityGlow ? "shadow-[0_0_0_2px_rgba(168,85,247,0.25)]" : "border-base-300"}`}
+                    >
+                      {contributorHref ? (
+                        <Link href={contributorHref} aria-label={`View ${authorName || "contributor"} profile`} className="relative block h-full w-full">
+                          <Image src={authorImage} alt={authorName || "Author avatar"} fill sizes={authorImageSizes || (compact ? "32px" : "40px")} className="object-cover" />
+                        </Link>
+                      ) : (
+                        <Image src={authorImage} alt={authorName || "Author avatar"} fill sizes={authorImageSizes || (compact ? "32px" : "40px")} className="object-cover" />
+                      )}
+                    </div>
+                  </div>
+                )}
+                <div className="min-w-0 flex-1">
+                  <div className="flex min-w-0 items-center gap-2">
+                    {authorLogoImage ? (
+                      <div className="relative h-9 w-9 shrink-0 overflow-hidden rounded-md border border-base-300 bg-base-100">
+                        <Image src={authorLogoImage} alt={`${authorName || "Contributor"} logo`} fill sizes="36px" className="object-contain p-0.5" />
+                      </div>
+                    ) : null}
+                    {authorName && (
+                      contributorHref ? (
+                        <Link href={contributorHref} className="block truncate text-sm font-semibold text-base-content hover:underline">
+                          {authorName}
+                        </Link>
+                      ) : (
+                        <p className="truncate text-sm font-semibold text-base-content">{authorName}</p>
+                      )
                     )}
                   </div>
+                  <p className="text-[10px] uppercase tracking-[0.12em] text-base-content/60">{authorRole}</p>
                 </div>
-              )}
-              <div className="min-w-0">
-                {authorName && (
-                  contributorHref ? (
-                    <Link href={contributorHref} className="block truncate text-sm font-semibold text-base-content hover:underline">
-                      {authorName}
-                    </Link>
-                  ) : (
-                    <p className="truncate text-sm font-semibold text-base-content">{authorName}</p>
-                  )
-                )}
-                <p className="text-[10px] uppercase tracking-[0.12em] text-base-content/60">{authorRole}</p>
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
           {(shouldShowImpressions && hasImpressionTarget || shouldShowComments && hasCommentTarget || shouldShowReport && hasReportTarget) && (
             <div className="mt-3 flex items-center justify-between gap-3 border-t border-base-300 pt-3">

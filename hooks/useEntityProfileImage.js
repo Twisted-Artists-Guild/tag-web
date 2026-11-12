@@ -11,28 +11,29 @@
 
 import { useEffect, useState } from 'react'
 
-const SUPPORTED_ENTITY_TYPES = new Set(['user', 'artist'])
+const SUPPORTED_ENTITY_TYPES = new Set(['user', 'artist', 'listing'])
+const SUPPORTED_IMAGE_KINDS = new Set(['profile', 'cover'])
 const imageCache = new Map()
 const resolvedImages = new Map()
 
-function buildCacheKey(entityType, entityId) {
+function buildCacheKey(entityType, entityId, imageKind = 'profile') {
   const type = String(entityType || '').toLowerCase()
   const id = Number(entityId)
-  if (!SUPPORTED_ENTITY_TYPES.has(type) || !Number.isInteger(id) || id <= 0) return null
-  return `${type}/${id}`
+  if (!SUPPORTED_ENTITY_TYPES.has(type) || !Number.isInteger(id) || id <= 0 || !SUPPORTED_IMAGE_KINDS.has(imageKind)) return null
+  return `${type}/${id}/${imageKind}`
 }
 
 /**
- * Resolves the active profile picture for a user or artist from blob storage,
- * using the same source as the header context switcher (newest file in the profile folder).
+ * Resolves an active profile or cover picture from blob storage,
+ * using the newest file in the selected folder.
  * Results are cached per entity for the lifetime of the page.
  */
-export function fetchEntityProfileImage(entityType, entityId) {
-  const key = buildCacheKey(entityType, entityId)
+export function fetchEntityImage(entityType, entityId, imageKind = 'profile') {
+  const key = buildCacheKey(entityType, entityId, imageKind)
   if (!key) return Promise.resolve('')
 
   if (!imageCache.has(key)) {
-    const profilePrefix = `platformpics/${key}/profile/`
+    const profilePrefix = `platformpics/${key}/`
     const query = new URLSearchParams({
       container: 'tagpictures',
       startPrefix: profilePrefix,
@@ -56,7 +57,7 @@ export function fetchEntityProfileImage(entityType, entityId) {
       .catch((error) => {
         // Do not cache failures so a later render can retry.
         imageCache.delete(key)
-        console.error('Error loading profile image:', error.message)
+        console.error(`Error loading ${imageKind} image:`, error.message)
         return ''
       })
 
@@ -66,31 +67,40 @@ export function fetchEntityProfileImage(entityType, entityId) {
   return imageCache.get(key)
 }
 
+export function fetchEntityProfileImage(entityType, entityId) {
+  return fetchEntityImage(entityType, entityId)
+}
+
+export function invalidateEntityImageCache(entityType, entityId, imageKind = 'profile') {
+  const key = buildCacheKey(entityType, entityId, imageKind)
+  if (key) {
+    imageCache.delete(key)
+    resolvedImages.delete(key)
+  }
+}
+
 if (typeof window !== 'undefined') {
   window.addEventListener('entity-profile-picture-updated', (event) => {
-    const key = buildCacheKey(event.detail?.entityType, event.detail?.entityId)
-    if (key) {
-      imageCache.delete(key)
-      resolvedImages.delete(key)
-    }
+    invalidateEntityImageCache(event.detail?.entityType, event.detail?.entityId)
   })
 }
 
 /**
- * @param {'user'|'artist'} entityType
+ * @param {'user'|'artist'|'listing'} entityType
  * @param {number|string} entityId
- * @returns {string} profile image URL, or an empty string while loading or when none exists
+ * @param {'profile'|'cover'} imageKind
+ * @returns {string} image URL, or an empty string while loading or when none exists
  */
-export function useEntityProfileImage(entityType, entityId) {
-  const key = buildCacheKey(entityType, entityId)
+export function useEntityImage(entityType, entityId, imageKind = 'profile') {
+  const key = buildCacheKey(entityType, entityId, imageKind)
   const [result, setResult] = useState({ key: null, url: '' })
 
   useEffect(() => {
     if (!key) return undefined
 
     let cancelled = false
-    const [type, id] = key.split('/')
-    fetchEntityProfileImage(type, id).then((url) => {
+    const [type, id, kind] = key.split('/')
+    fetchEntityImage(type, id, kind).then((url) => {
       if (!cancelled) setResult({ key, url })
     })
 
@@ -101,4 +111,8 @@ export function useEntityProfileImage(entityType, entityId) {
 
   if (!key) return ''
   return result.key === key ? result.url : (resolvedImages.get(key) || '')
+}
+
+export function useEntityProfileImage(entityType, entityId) {
+  return useEntityImage(entityType, entityId)
 }
