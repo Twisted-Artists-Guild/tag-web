@@ -5,6 +5,8 @@
   "scripts": {
     "dev": "cross-env NODE_OPTIONS='--use-system-ca' next dev --webpack",
     "dev:turbopack": "next dev",
+    "mobile:dev": "npm run dev -- --hostname 0.0.0.0",
+    "mobile:android": "cross-env-shell CAPACITOR_SERVER_URL=http://10.0.2.2:3000 \"cap sync android && cap open android\"",
     "build": "next build",
     "postbuild": "next-sitemap",
     "start": "next start",
@@ -17,6 +19,9 @@
     "@azure/communication-email": "^1.1.0",
     "@azure/identity": "^4.13.1",
     "@azure/storage-blob": "^12.31.0",
+    "@capacitor/android": "^8.6.2",
+    "@capacitor/core": "^8.6.2",
+    "@capacitor/ios": "^8.6.2",
     "@headlessui/react": "^2.2.10",
     "@microsoft/applicationinsights-web": "^3.4.1",
     "@microsoft/signalr": "^10.0.0",
@@ -71,6 +76,7 @@
     "stripe": "^22.0.2"
   },
   "devDependencies": {
+    "@capacitor/cli": "^8.6.2",
     "@tailwindcss/postcss": "^4.2.2",
     "autoprefixer": "^10.5.0",
     "cross-env": "^10.1.0",
