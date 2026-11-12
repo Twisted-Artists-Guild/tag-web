@@ -22,7 +22,6 @@ import ArtistCard from "@/components/cards/card_artist"
 import ListingCardSmall from "@/components/cards/card_listing_small"
 import ContactCard from "@/components/cards/card_contactList"
 import DynamicComments, { CommentTargetType } from "@/components/social/DynamicComments"
-import ArtistEventsSection from "@/components/artist/ArtistEventsSection"
 import { isArtist, isStaff, isAdmin } from "@/utils/authHelpers"
 import { sanitizeDefaultHtml } from "@/components/security/sanitize"
 import { pickContactCardData } from "@/utils/artistContactUtils"
@@ -74,7 +73,6 @@ function mapCreditsByPictureId(rows) {
 const artistSections = [
   { id: "profile", label: "Profile" },
   { id: "gallery", label: "Gallery" },
-  { id: "events", label: "Events & Exhibitions" },
   { id: "listings", label: "Art Listings" },
   { id: "comments", label: "Comments & Feedback" },
 ]
@@ -153,6 +151,42 @@ const Artist = (props) => {
       },
     }
   }), [props.listings, props.slug])
+
+  const filteredListings = useMemo(() => {
+    const keywords = [...new Set(searchTerm.toLowerCase().trim().split(/\s+/).filter(Boolean))]
+    if (!keywords.length) return listings
+
+    return listings
+      .map((listing, index) => {
+        const title = stripHtmlTags(listing.title).toLowerCase()
+        const description = stripHtmlTags(listing.description || listing.byline).toLowerCase()
+        const metadata = [
+          listing.medium,
+          listing.style,
+          listing.artCategory?.category,
+          ...(Array.isArray(listing.seoTags) ? listing.seoTags : [listing.seoTags]),
+          ...(Array.isArray(listing.artForms) ? listing.artForms : []),
+        ]
+          .filter((value) => typeof value === "string")
+          .map(stripHtmlTags)
+          .join(" ")
+          .toLowerCase()
+        const content = `${title} ${description} ${metadata}`
+        if (!keywords.every((keyword) => content.includes(keyword))) return null
+
+        const score = keywords.reduce((total, keyword) => (
+          total
+          + (title.includes(keyword) ? 3 : 0)
+          + (description.includes(keyword) ? 1 : 0)
+          + (metadata.includes(keyword) ? 1 : 0)
+        ), 0)
+
+        return { listing, index, score }
+      })
+      .filter(Boolean)
+      .sort((left, right) => right.score - left.score || left.index - right.index)
+      .map(({ listing }) => listing)
+  }, [listings, searchTerm])
 
   const galleryItems = useMemo(() => (
     props.artist?.gallery?.galleryItems ||
@@ -327,56 +361,59 @@ const Artist = (props) => {
                 }}
               />
             </div>
-            <ArtistEventsSection />
 
             {/* Listings */}
             <div id="listings" className="mt-12">
               <h2 className="text-2xl font-bold mb-4 border-b pb-2 text-primary">Top Listings</h2>
-              {listings.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {listings.map((listing) => (
-                    <ListingCardSmall
-                      key={listing.listingID || listing.listingid || listing.path}
-                      listing={listing}
-                      textRenderMode="html"
-                    />
-                  ))}
+              {listings.length > 0 && (
+                <div role="search" aria-label="Search loaded listings" className="mb-6 space-y-2">
+                  <label htmlFor="top-listings-search" className="block text-sm font-medium">
+                    Search these listings
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <div className="relative min-w-0 flex-1">
+                      <SearchIcon aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 z-10 h-4 w-4 -translate-y-1/2 text-base-content/60" />
+                      <input
+                        id="top-listings-search"
+                        type="search"
+                        placeholder="Title, description, medium, or tags"
+                        className="input input-bordered w-full pl-10"
+                        value={searchTerm}
+                        onChange={(event) => setSearchTerm(event.target.value)}
+                        aria-describedby="top-listings-search-help top-listings-search-status"
+                      />
+                    </div>
+                    {searchTerm && (
+                      <button type="button" className="btn btn-ghost btn-sm" onClick={() => setSearchTerm("")}>
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                  <p id="top-listings-search-help" className="text-xs text-base-content/60">
+                    Search only the loaded listings. All keywords must match; title matches count most.
+                  </p>
+                  <p id="top-listings-search-status" role="status" className="text-sm text-base-content/70">
+                    {filteredListings.length} of {listings.length} listings
+                  </p>
                 </div>
+              )}
+              {listings.length > 0 ? (
+                filteredListings.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {filteredListings.map((listing) => (
+                      <ListingCardSmall
+                        key={listing.listingID || listing.listingid || listing.path}
+                        listing={listing}
+                        textRenderMode="html"
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-base-content/60">No listings match your search.</p>
+                )
               ) : (
                 <p className="text-base-content/60">No listings available for this artist.</p>
               )}
-            </div>
-
-            {/* Search */}
-            <div id="search" className="mt-12">
-              <h2 className="text-2xl font-bold mb-4 border-b pb-2 text-primary">Search Works</h2>
-              <div className="card bg-base-100 shadow-lg p-6">
-                <div className="form-control mb-4">
-                  <div className="input-group w-full">
-                    <input
-                      type="text"
-                      placeholder="Search by title, medium, or style..."
-                      className="input input-bordered w-full"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      aria-label="Search for artist's works"
-                    />
-                    <button className="btn btn-primary">
-                      <SearchIcon className="w-6 h-6" />
-                    </button>
-                  </div>
-                </div>
-                <div className="flex flex-wrap gap-3 mb-4">
-                  <span className="text-sm font-medium mr-2 text-base-content/80">Quick Filters:</span>
-                  {["Paintings", "Digital Art", "Sculptures", "Photography", "Recent Works"].map((f) => (
-                    <button key={f} className="btn btn-sm btn-outline">{f}</button>
-                  ))}
-                </div>
-                <div className="bg-base-200 p-4 rounded-lg text-center text-base-content/80">
-                  <p>Enter search terms above to find works by this artist</p>
-                  <p className="text-sm text-base-content/60 mt-1">Advanced search options coming soon!</p>
-                </div>
-              </div>
             </div>
 
             {/* Comments */}
