@@ -92,11 +92,25 @@ export async function fetchJsonWithSession({ req, path, fetchApi }) {
   }
 }
 
-// Loads a venue inside getServerSideProps. The venue API requires sign-in, so the session token is sent along.
+// Published venues are public, so a signed-out visitor is looked up by slug without a token.
+async function fetchPublicVenueBySlug(slug, fetchApi) {
+  const normalizedSlug = String(slug || "").trim().toLowerCase()
+  if (!normalizedSlug) return null
+
+  try {
+    const response = await fetchApi(`/venue/by-slug/${encodeURIComponent(normalizedSlug)}`)
+    return response.ok ? await response.json() : null
+  } catch {
+    return null
+  }
+}
+
+// Loads a venue inside getServerSideProps. Signed-in users send their session token, which also lets owners and staff
+// open drafts. Signed-out visitors can only load published venues, by slug.
 // The numeric id is tried first because a slug is derived from the venue name and can drift from the URL.
 export async function fetchVenueForPage({ req, id, slug, fetchApi }) {
   const token = getSessionTokenFromRequest(req)
-  if (!token) return null
+  if (!token) return fetchPublicVenueBySlug(slug, fetchApi)
 
   const paths = []
   const numericId = Number(id)

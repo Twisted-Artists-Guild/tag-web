@@ -16,7 +16,7 @@ export function getCommentAuthorContext(activeContext) {
   const authorEntityId = rawId == null || rawId === '' ? null : Number(rawId)
   if (
     (authorEntityId !== null && (!Number.isInteger(authorEntityId) || authorEntityId <= 0 || authorEntityId > 2147483647)) ||
-    (activeContext?.type === 'artist' && authorEntityId === null)
+    ((activeContext?.type === 'artist' || activeContext?.type === 'venue') && authorEntityId === null)
   ) {
     throw new Error('Unable to identify the selected profile. Please switch profiles and try again.')
   }

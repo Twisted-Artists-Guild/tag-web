@@ -128,11 +128,15 @@ function mapLinkedVenueToContext(venue) {
   const venueId = venue?.venueID ?? venue?.VenueID ?? venue?.id ?? "unknown"
   return {
     id: `venue-${venueId}`,
+    // The comment API needs the numeric venue id to prove ownership and show the venue as the author.
+    rawId: venueId,
     label: venue?.title ?? venue?.Title ?? venue?.name ?? venue?.Name ?? "Untitled Venue",
     type: "venue",
     avatarUrl:
       venue?.profilePic?.url ||
       venue?.profilePic?.URL ||
+      venue?.logoPic?.url ||
+      venue?.logoPic?.URL ||
       venue?.logoUrl ||
       "",
     color: getDefaultContextColor("collective"),
@@ -676,8 +680,16 @@ export default function LoginProfile({
         )
         const vendorCtxs = resolvedVendors.filter(Boolean)
 
-        // Resolve venue contexts
-        const venueCtxs = (Array.isArray(venueLinksRaw) ? venueLinksRaw : []).map(mapLinkedVenueToContext)
+        // Resolve published venue contexts. Drafts and blocked venues cannot post, so they stay out of the switcher.
+        const venueCtxs = await Promise.all(
+          (Array.isArray(venueLinksRaw) ? venueLinksRaw : [])
+            .filter((venue) => getPublishFlag(venue) && !(venue?.isModerationBlocked || venue?.IsModerationBlocked))
+            .map(async (venue) => {
+              const venueContext = mapLinkedVenueToContext(venue)
+              const storedProfileImage = await loadActiveEntityProfileImage("venue", venueContext.rawId)
+              return { ...venueContext, avatarUrl: storedProfileImage || venueContext.avatarUrl }
+            })
+        )
 
         const pendingRows = []
         const userIsPublished = getPublishFlag(userPayload)

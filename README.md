@@ -142,6 +142,28 @@ npm run test
 - Cypress setup in progress
 - Target 80%+ coverage across major components
 
+### iOS native setup
+
+The iOS project is already scaffolded and uses Swift Package Manager.
+Building, signing, and installing on an iPhone require macOS and Xcode 26+.
+The initial testing shell loads the deployed TAG website over HTTPS.
+
+After transferring the repository changes to the Mac, install dependencies with
+`npm ci` and open the existing project:
+
+```sh
+npm run mobile:ios
+```
+
+This syncs the native configuration and opens Xcode. Select a signing Team under
+**Signing & Capabilities**, connect and trust the iPhone, enable Developer Mode
+if required, select the device, and click **Run**.
+
+The command explicitly sets `CAPACITOR_SERVER_URL`; a bare `npx cap` command
+still needs that environment variable. The hosted testing shell requires
+internet access. The bundled/offline frontend and store-release signing are
+separate pending work.
+
 ---
 
 ## 🤝 Contributing
