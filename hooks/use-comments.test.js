@@ -20,9 +20,19 @@ test('artist context sends a numeric entity ID', () => {
   })
 })
 
+test('venue context sends a numeric entity ID', () => {
+  assert.deepEqual(getCommentAuthorContext({ id: 'venue-13', type: 'venue', rawId: 13 }), {
+    authorContextId: 'venue-13',
+    authorEntityType: 'venue',
+    authorEntityId: 13,
+  })
+})
+
 test('contexts without a numeric ID are not sent as entity IDs', () => {
   assert.equal(getCommentAuthorContext({ id: 'vendor-42', type: 'vendor' }).authorEntityId, null)
-  for (const rawId of [null, '', 'artist-slug', 0, -1, 1.5, 2147483648]) {
-    assert.throws(() => getCommentAuthorContext({ type: 'artist', rawId }), /Unable to identify/)
+  for (const type of ['artist', 'venue']) {
+    for (const rawId of [null, '', undefined, 'slug', 0, -1, 1.5, 2147483648]) {
+      assert.throws(() => getCommentAuthorContext({ type, rawId }), /Unable to identify/)
+    }
   }
 })

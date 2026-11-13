@@ -197,17 +197,18 @@ export default function FeedPostComments({ comments, commentsLoading, commentsEr
 }
 
 // Shows the profile picture of the identity the comment was posted as:
-// the artist profile for artist comments, otherwise the commenting user's profile.
+// the artist or venue profile for those comments, otherwise the commenting user's profile.
 function CommentAvatar({ comment, sizeClass, sizePx }) {
     const authorName = comment.authorDisplayName || comment.user?.name || 'Anonymous';
     const isArtist = comment.authorEntityType === 'artist' && comment.authorEntityId;
+    const isVenue = comment.authorEntityType === 'venue' && comment.authorEntityId;
     const storedImage = useEntityProfileImage(
-        isArtist ? 'artist' : 'user',
-        isArtist ? comment.authorEntityId : comment.userId
+        isArtist ? 'artist' : isVenue ? 'venue' : 'user',
+        isArtist || isVenue ? comment.authorEntityId : comment.userId
     );
     const imageSrc = storedImage ||
         comment.authorImage ||
-        (isArtist ? null : comment.user?.image) ||
+        (isArtist || isVenue ? null : comment.user?.image) ||
         '/blank_image.png';
     const identity = {
         type: comment.authorEntityType || 'user',

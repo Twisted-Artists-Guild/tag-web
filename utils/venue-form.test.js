@@ -78,11 +78,25 @@ test('venue lookup falls back to the slug when the id lookup fails or no id is g
   assert.deepEqual(paths, ['/venue/by-slug/a%20b'])
 })
 
-test('venue lookup returns null when signed out, without calling the API', async () => {
+test('venue lookup for a signed-out visitor uses only the slug and sends no token', async () => {
+  const calls = []
+  const fetchApi = async (path, options) => {
+    calls.push({ path, options })
+    return okResponse({ venueID: 7 })
+  }
+
+  assert.deepEqual(await fetchVenueForPage({ req: { cookies: {} }, id: 1, slug: ' Test-Hall ', fetchApi }), { venueID: 7 })
+  assert.deepEqual(calls, [{ path: '/venue/by-slug/test-hall', options: undefined }])
+})
+
+test('venue lookup for a signed-out visitor returns null for a missing slug, a failed response or a thrown error', async () => {
   let called = false
-  const fetchApi = async () => { called = true; return okResponse({}) }
-  assert.equal(await fetchVenueForPage({ req: { cookies: {} }, id: 1, slug: 'x', fetchApi }), null)
+  const never = async () => { called = true; return okResponse({}) }
+  assert.equal(await fetchVenueForPage({ req: { cookies: {} }, id: 1, slug: '  ', fetchApi: never }), null)
   assert.equal(called, false)
+
+  assert.equal(await fetchVenueForPage({ req: undefined, slug: 'draft-hall', fetchApi: async () => failResponse(404) }), null)
+  assert.equal(await fetchVenueForPage({ req: undefined, slug: 'x', fetchApi: async () => { throw new Error('network down') } }), null)
 })
 
 test('venue lookup ignores invalid ids and returns null when every lookup fails or throws', async () => {
