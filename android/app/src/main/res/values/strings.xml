@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Twisted Artists Guild</string>
+    <string name="title_activity_main">Twisted Artists Guild</string>
+    <string name="package_name">com.twistedartistsguild.app</string>
+    <string name="custom_url_scheme">com.twistedartistsguild.app</string>
+</resources>
