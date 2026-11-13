@@ -52,6 +52,8 @@ async function fetchSearchResults(type, queryText, limit = 20, baseUrl = "") {
 
 	const endpoint = `/api/${endpointPath}?q=${encodeURIComponent(queryText)}&limit=${limit}`
 	const response = await fetch(endpoint)
+	// User search needs sign-in, so signed-out visitors simply get no user results.
+	if (type === "user" && response.status === 401) return []
 	if (!response.ok) {
 		throw new Error(`Search ${type} failed with status ${response.status}`)
 	}
@@ -186,10 +188,10 @@ function normalizeResults(data, searchType) {
 			const slug = item.slug || item.path || ""
 			return {
 				key: item.venueID || item.venueid || `venue-${index}`,
-				href: slug ? `/portal/venue/${slug}` : "/portal/venue",
+				href: slug ? `/venue/${slug}` : null,
 				label: item.name || "Unnamed venue",
 				byline: item.byline || item.description || "",
-				canLink: true,
+				canLink: Boolean(slug),
 			}
 		}
 
@@ -260,6 +262,7 @@ const SearchPage = ({ initialSearchTerm, searchType: initialSearchType = "all", 
 
 		const typesToSearch = getSearchTypes(searchType)
 		const nextResults = buildEmptyResultsByType()
+		const nextRawResults = buildEmptyResultsByType()
 		setSearchError("")
 		setIsLoading(true)
 

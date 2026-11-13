@@ -425,15 +425,18 @@ const SocialComments = ({
             !comment.isEditing // Only fetch when not editing
         );
         
-        // Show the profile picture of the identity the comment was posted as (artist profile or user),
+        // Show the profile picture of the identity the comment was posted as (artist or venue profile, or user),
         // matching the header context switcher rather than the database image field.
         const isArtistAuthor = (comment.authorEntityType || comment.authorRole) === "artist" ||
             (!comment.authorEntityType && !comment.authorRole && Boolean(comment.artistID));
+        const isVenueAuthor = (comment.authorEntityType || comment.authorRole) === "venue" && Boolean(comment.authorEntityId);
         const storedAuthorImage = useEntityProfileImage(
-            isArtistAuthor ? "artist" : "user",
+            isArtistAuthor ? "artist" : isVenueAuthor ? "venue" : "user",
             isArtistAuthor
                 ? (comment.authorEntityId || comment.artistID)
-                : (comment.userId || comment.userID || comment.user?.id)
+                : isVenueAuthor
+                    ? comment.authorEntityId
+                    : (comment.userId || comment.userID || comment.user?.id)
         );
 
         // Check if this is a new comment with empty content

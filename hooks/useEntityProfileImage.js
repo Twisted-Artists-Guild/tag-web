@@ -11,7 +11,7 @@
 
 import { useEffect, useState } from 'react'
 
-const SUPPORTED_ENTITY_TYPES = new Set(['user', 'artist', 'listing'])
+const SUPPORTED_ENTITY_TYPES = new Set(['user', 'artist', 'listing', 'venue'])
 const SUPPORTED_IMAGE_KINDS = new Set(['profile', 'cover'])
 const imageCache = new Map()
 const resolvedImages = new Map()
