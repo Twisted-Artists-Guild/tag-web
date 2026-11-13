@@ -2,7 +2,7 @@ const serverUrl = process.env.CAPACITOR_SERVER_URL;
 
 if (!serverUrl) {
   throw new Error(
-    'Native testing requires CAPACITOR_SERVER_URL. Use npm run mobile:android for emulator live reload.'
+    'Native testing requires CAPACITOR_SERVER_URL. Use npm run mobile:android or npm run mobile:ios.'
   );
 }
 
