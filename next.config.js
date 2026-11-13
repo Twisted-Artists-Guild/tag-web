@@ -17,6 +17,7 @@ const localDevStartedAt = process.env.NODE_ENV === "development" ? new Date().to
 const nextConfig = {
   output: 'standalone',
   reactStrictMode: true,
+  allowedDevOrigins: ['10.0.2.2'],
   env: {
     NEXT_PUBLIC_LOCAL_DEV_STARTED_AT: process.env.NEXT_PUBLIC_LOCAL_DEV_STARTED_AT || localDevStartedAt,
   },

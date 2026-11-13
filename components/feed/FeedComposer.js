@@ -17,6 +17,7 @@ const SHARE_TYPES = [
     { type: 'Listing', label: 'Share a Listing' },
     { type: 'Artist', label: 'Share an Artist Profile' },
     { type: 'Event', label: 'Share an Event' },
+    { type: 'Venue', label: 'Share a Venue' },
 ];
 
 export default function FeedComposer({ session, onPostCreated }) {
