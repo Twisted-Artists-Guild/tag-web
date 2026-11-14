@@ -133,7 +133,7 @@ export default function VenuesPage({ initialPage }) {
         </p>
       </header>
 
-      <div className="grid gap-6 lg:grid-cols-[22rem_minmax(0,1fr)]">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)]">
         <aside aria-label="Search and filters">
           <div className="card bg-base-100 border border-base-300 shadow-sm">
             <div className="card-body">
