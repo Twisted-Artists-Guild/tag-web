@@ -15,8 +15,9 @@ import { describeRegion, filterRegionOptions, mergeRegionOptions, toggleRegionId
 const REGIONS_URL = "/api/Region"
 
 // A multi-select for regions, used in forms (choose a venue's or artist's regions) and in filters. It is a controlled
-// component: `value` is the list of chosen region ids and `onChange` receives the new list. `extraRegions` are regions the
-// record already has, including deactivated ones, so an existing choice stays visible and can be kept or removed.
+// component: `value` is the list of chosen regions and `onChange` receives the new list. By default the list holds region
+// ids; pass `selectBy="slug"` to hold slugs instead, which is what filters and shareable links use. `extraRegions` are
+// regions the record already has, including deactivated ones, so an existing choice stays visible and can be kept or removed.
 // Pass `state` (for example "GA") to offer only the regions that cover that state.
 export default function RegionSelect({
   label = "Regions",
@@ -24,6 +25,7 @@ export default function RegionSelect({
   onChange,
   extraRegions,
   state,
+  selectBy = "id",
   disabled = false,
   helpText = "Choose every regional community that fits.",
   regionsUrl = REGIONS_URL,
@@ -32,6 +34,8 @@ export default function RegionSelect({
   const searchId = `${baseId}-search`
   const helpId = `${baseId}-help`
   const selectedIds = useMemo(() => (Array.isArray(value) ? value : []), [value])
+  // What `value` holds: region ids (forms) or region slugs (filters and shareable links).
+  const keyOf = (region) => (selectBy === "slug" ? region.slug : region.regionID)
 
   const [activeRegions, setActiveRegions] = useState([])
   const [status, setStatus] = useState("loading")
@@ -64,11 +68,11 @@ export default function RegionSelect({
 
   const options = useMemo(() => mergeRegionOptions(activeRegions, extraRegions), [activeRegions, extraRegions])
   const visibleOptions = useMemo(() => filterRegionOptions(options, query), [options, query])
-  const selectedRegions = options.filter((region) => selectedIds.includes(region.regionID))
+  const selectedRegions = options.filter((region) => selectedIds.includes(keyOf(region)))
 
   const toggle = (region) => {
-    const isChosen = selectedIds.includes(region.regionID)
-    onChange?.(toggleRegionId(selectedIds, region.regionID))
+    const isChosen = selectedIds.includes(keyOf(region))
+    onChange?.(toggleRegionId(selectedIds, keyOf(region)))
     setAnnouncement(`${isChosen ? "Removed" : "Added"} ${region.name}.`)
   }
 
@@ -102,6 +106,7 @@ export default function RegionSelect({
         placeholder="Search by name or state"
         value={query}
         onChange={(event) => setQuery(event.target.value)}
+        onKeyDown={(event) => { if (event.key === "Enter") event.preventDefault() }}
         aria-describedby={helpId}
         autoComplete="off"
       />
@@ -131,7 +136,7 @@ export default function RegionSelect({
                       id={optionId}
                       type="checkbox"
                       className="checkbox checkbox-sm"
-                      checked={selectedIds.includes(region.regionID)}
+                      checked={selectedIds.includes(keyOf(region))}
                       onChange={() => toggle(region)}
                     />
                     <span className="label-text">
