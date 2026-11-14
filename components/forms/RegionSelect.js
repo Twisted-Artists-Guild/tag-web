@@ -77,7 +77,7 @@ export default function RegionSelect({
   }
 
   return (
-    <fieldset className="form-control w-full" disabled={disabled}>
+    <fieldset className="form-control w-full min-w-0" disabled={disabled}>
       <legend className="label-text font-medium mb-1">{label}</legend>
 
       {selectedRegions.length > 0 ? (
@@ -131,15 +131,15 @@ export default function RegionSelect({
               const optionId = `${baseId}-region-${region.regionID}`
               return (
                 <li key={region.regionID}>
-                  <label htmlFor={optionId} className="label cursor-pointer justify-start gap-3 py-1">
+                  <label htmlFor={optionId} className="label w-full cursor-pointer justify-start gap-3 py-1">
                     <input
                       id={optionId}
                       type="checkbox"
-                      className="checkbox checkbox-sm"
+                      className="checkbox checkbox-sm shrink-0"
                       checked={selectedIds.includes(keyOf(region))}
                       onChange={() => toggle(region)}
                     />
-                    <span className="label-text">
+                    <span className="label-text min-w-0 whitespace-normal break-words">
                       {region.name}
                       <span className="ml-2 text-xs text-base-content/60">{describeRegion(region)}{region.isActive === false ? " · no longer available" : ""}</span>
                     </span>

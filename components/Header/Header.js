@@ -26,7 +26,7 @@ import BugReportControl from "@/components/forms/bug-report"
 import PalettePicker from "@/components/Header/PalettePicker"
 import MobileMenu from "@/components/Header/MobileMenu"
 import { buildHeaderNotifications } from "@/components/Header/notification-items"
-import { BLOOMSCROLL_HREF, BLOOMSCROLL_LOGO, NAV_LINKS, TAG_LOGO } from "@/components/Header/nav-links"
+import { BLOOMSCROLL_HREF, BLOOMSCROLL_LOGO, NAV_LINKS, TAG_LOGO, getActiveNavHref } from "@/components/Header/nav-links"
 
 export default function Header() {
   const { data: session } = useSession() // Use session for user data
@@ -423,11 +423,7 @@ export default function Header() {
     : null
 
   // The nav link for the current page or one of its sub-pages
-  const currentPath = router.asPath.split(/[?#]/)[0].replace(/\/+$/, "").toLowerCase() || "/"
-  const activeHref = NAV_LINKS.find((link) => {
-    const target = link.href.replace(/\/+$/, "").toLowerCase()
-    return currentPath === target || currentPath.startsWith(`${target}/`)
-  })?.href
+  const activeHref = getActiveNavHref(router.asPath)
 
   return (
     <>
