@@ -45,6 +45,12 @@ export default function StaffContextNav() {
       purpose: "Find venues and assign or remove their owners.",
     },
     {
+      key: "staff-venue-categories",
+      label: "Venue Categories",
+      href: "/portal/staff/venue-categories",
+      purpose: "Manage the list of venue categories.",
+    },
+    {
       key: "staff-ghl-index",
       label: "CRM Index",
       href: "/portal/staff/ghl-index",
