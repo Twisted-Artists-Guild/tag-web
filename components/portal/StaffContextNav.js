@@ -51,6 +51,12 @@ export default function StaffContextNav() {
       purpose: "Manage the list of venue categories.",
     },
     {
+      key: "staff-regions",
+      label: "Regions",
+      href: "/portal/staff/regions",
+      purpose: "Manage the regions shared by venues and artists.",
+    },
+    {
       key: "staff-ghl-index",
       label: "CRM Index",
       href: "/portal/staff/ghl-index",
