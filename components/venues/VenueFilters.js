@@ -70,7 +70,7 @@ export default function VenueFilters({ filters, onSearch, onClear, hasFilters, i
         />
       </div>
 
-      <fieldset className="space-y-1">
+      <fieldset className="space-y-1 min-w-0">
         <legend className="label-text font-medium mb-1">Category</legend>
         {categoriesFailed ? <p className="text-sm text-base-content/60">Categories could not be loaded.</p> : null}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-x-4">
@@ -108,7 +108,7 @@ export default function VenueFilters({ filters, onSearch, onClear, hasFilters, i
         helpText="A venue in any chosen region matches."
       />
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-3">
         <div className="form-control">
           <label htmlFor="venue-city" className="label-text font-medium mb-1">City</label>
           <input id="venue-city" className="input input-bordered w-full" value={draft.city} maxLength={100} onChange={(event) => update("city", event.target.value)} autoComplete="off" />

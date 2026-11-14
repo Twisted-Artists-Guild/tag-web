@@ -126,6 +126,18 @@
     width: auto;
   }
 
+  /* Narrow desktops (just above the mobile menu): tighter links keep the signed-in icons on screen */
+  @media (min-width: 1060px) and (max-width: 1279px) {
+    .tag-header__link {
+      padding: 10px 10px;
+    }
+
+    .tag-header__bloom {
+      padding: 7px 9px;
+      margin-right: 2px;
+    }
+  }
+
   @media (hover: hover) and (pointer: fine) {
     .tag-header__link:hover {
       color: var(--tag-text-strong);
