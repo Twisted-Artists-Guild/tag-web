@@ -8,6 +8,7 @@ import {
   getFileExtension,
   getVenueImageMaxBytes,
   getVenueMediaTarget,
+  hasUnsafeBlobPath,
   isAllowedVenueImageName,
   sniffImageType,
   validateVenueImage,
@@ -177,4 +178,48 @@ test('a move between venues needs permission on both, and a move into a venue fr
 test('the container is taken into account when finding the venue', async () => {
   const result = await authorizeVenueMediaChange({ req: reqWithCookie(), container: 'platformpics', blobNames: ['venue/4/cover/a.jpg'], fetchApi: async () => answer({ canManage: true }) })
   assert.deepEqual(result, { ok: true, venueIds: [4] })
+})
+
+test('paths with dot segments, control characters or backslash tricks are unsafe', () => {
+  for (const bad of [
+    'platformpics/./venue/12/cover/a.jpg',
+    'platformpics/venue/./12/cover/a.jpg',
+    'platformpics/venue/5/../12/cover/a.jpg',
+    'platformpics\\venue\\5\\..\\12\\cover\\a.jpg',
+    '../platformpics/venue/12/cover/',
+    'platformpics/venue/12/cover/..',
+    'platformpics/venue/12/ .. /a.jpg',
+    'platformpics/venue/12/cover/a\u0000.jpg',
+    'platformpics/venue/12/cover/a\n.jpg',
+  ]) {
+    assert.equal(hasUnsafeBlobPath(bad), true, bad)
+  }
+
+  for (const fine of ['platformpics/venue/12/cover/a.jpg', 'platformpics/venue/12/cover/my.photo..v2.jpg', 'platformpics/venue/12/gallery/', 'platformpics/artist/9/.hidden/a.jpg', '', null, undefined]) {
+    assert.equal(hasUnsafeBlobPath(fine), false, String(fine))
+  }
+})
+
+test('a path that could end up in another venue folder is refused before anyone is asked about it', async () => {
+  let called = false
+  const fetchApi = async () => { called = true; return answer({ canManage: true }) }
+
+  for (const sneaky of [
+    ['platformpics/./venue/12/cover/'],
+    ['platformpics/venue/5/../12/cover/a.jpg'],
+    ['platformpics/venue/5/cover/a.jpg', 'platformpics/venue/5/../12/cover/a.jpg'],
+    ['platformpics/artist/9/../../venue/12/cover/a.jpg'],
+  ]) {
+    const result = await authorizeVenueMediaChange({ req: reqWithCookie(), blobNames: sneaky, fetchApi })
+    assert.deepEqual(result, { ok: false, status: 400, error: 'Invalid file path.' }, sneaky.join(' | '))
+  }
+
+  assert.equal(called, false)
+})
+
+test('a plain path is still decided by the venue API', async () => {
+  const fetchApi = async (path) => answer({ canManage: path === '/venue/5/access' })
+
+  assert.deepEqual(await authorizeVenueMediaChange({ req: reqWithCookie(), blobNames: ['platformpics/venue/5/cover/my.photo..v2.jpg'], fetchApi }), { ok: true, venueIds: [5] })
+  assert.equal((await authorizeVenueMediaChange({ req: reqWithCookie(), blobNames: ['platformpics/venue/12/cover/a.jpg'], fetchApi })).status, 403)
 })
