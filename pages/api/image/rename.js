@@ -10,6 +10,8 @@
  Open source · low-profit · human-first*/
 
 import { BlobServiceClient } from "@azure/storage-blob"
+import serverFetch from "@/libs/serverFetch"
+import { authorizeVenueMediaChange, getVenueMediaTarget, isAllowedVenueImageName } from "@/utils/venue-media"
 
 export default async function handler(req, res) {
 	if (req.method !== "POST") {
@@ -29,6 +31,16 @@ export default async function handler(req, res) {
 	// Validate filename doesn't have path traversal or illegal chars
 	if (newName.includes("..") || newName.includes("\\") || !newName.trim()) {
 		return res.status(400).json({ error: "Invalid file name" })
+	}
+
+	// Moving a file into or out of a venue's folder is changing that venue's media: only its owners and staff may.
+	const authorization = await authorizeVenueMediaChange({ req, blobNames: [oldName, newName], container, fetchApi: serverFetch })
+	if (!authorization.ok) {
+		return res.status(authorization.status).json({ error: authorization.error })
+	}
+
+	if (getVenueMediaTarget(newName, container) && !isAllowedVenueImageName(newName)) {
+		return res.status(400).json({ error: "Only JPG, PNG, GIF and WebP images can be kept in a venue's media folders." })
 	}
 
 	const connectionString = process.env.AZURE_STORAGE_CONNECTION_STRING

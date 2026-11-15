@@ -1,6 +1,8 @@
 import { BlobServiceClient } from "@azure/storage-blob";
 import formidable from "formidable";
 import fs from "fs";
+import serverFetch from "@/libs/serverFetch";
+import { authorizeVenueMediaChange, getVenueImageMaxBytes, getVenueMediaTarget, validateVenueImage } from "@/utils/venue-media";
 
 const SAFE_SEGMENT_RE = /^[A-Za-z0-9_-]{1,64}$/;
 const ALLOWED_PREFIX_RE = /^[A-Za-z0-9/_\-.]*$/;
@@ -8,6 +10,21 @@ const CONTAINER_ROOTS = {
     tagpictures: "platformpics/",
     platformpics: "",
 };
+
+async function readFileHeader(filepath, length = 16) {
+    const handle = await fs.promises.open(filepath, "r");
+    try {
+        const buffer = Buffer.alloc(length);
+        const { bytesRead } = await handle.read(buffer, 0, length, 0);
+        return Array.from(buffer.subarray(0, bytesRead));
+    } finally {
+        await handle.close();
+    }
+}
+
+async function removeTempFile(file) {
+    await fs.promises.unlink(file?.filepath).catch(() => null);
+}
 
 function normalizePrefix(value) {
     if (!value) return "";
@@ -157,6 +174,29 @@ export default async function handler(req, res) {
 
         if (!SAFE_SEGMENT_RE.test(userID)) {
             return res.status(400).json({ error: "Invalid userID" });
+        }
+
+        // Uploading into a venue's folder is changing that venue's media: only its owners and staff may, and only
+        // real images of an accepted type and size are kept there.
+        const authorization = await authorizeVenueMediaChange({ req, blobNames: [targetPrefix, startPrefix], container, fetchApi: serverFetch });
+        if (!authorization.ok) {
+            await removeTempFile(file);
+            return res.status(authorization.status).json({ error: authorization.error });
+        }
+
+        const venueTarget = getVenueMediaTarget(targetPrefix, container);
+        if (venueTarget) {
+            const problem = validateVenueImage({
+                name: file.originalFilename,
+                type: file.mimetype,
+                size: file.size,
+                folder: venueTarget.folder,
+                header: await readFileHeader(file.filepath),
+            });
+            if (problem) {
+                await removeTempFile(file);
+                return res.status(file.size > getVenueImageMaxBytes(venueTarget.folder) ? 413 : 400).json({ error: problem });
+            }
         }
 
         // Construct the filename with the postfix

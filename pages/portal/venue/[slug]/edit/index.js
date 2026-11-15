@@ -303,6 +303,7 @@ export default function PortalVenueEditPage({ currentStep, venueData, routeSlug,
       {resolvedVenueId && currentStep === STEP_MEDIA ? (
         <OrganizationMediaStep
           context="venue"
+          title="Step 4: Media and Gallery"
           entityId={resolvedVenueId}
           entitySlug={resolvedSlug}
           sessionUser={sessionUser}

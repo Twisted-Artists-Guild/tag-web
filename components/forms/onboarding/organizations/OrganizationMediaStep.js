@@ -18,17 +18,22 @@ export default function OrganizationMediaStep({
   backLabel = "Back to Primary Contacts",
   continueHref,
   continueLabel = "Continue to Public Contacts",
+  title = "Step 5: Media and Gallery",
 }) {
   const entityLabel = `${context}: ${entitySlug || entityId}`
   const titlePrefix = `${context.charAt(0).toUpperCase()}${context.slice(1)}`
   const logoPrefix = profilePrefix
     ? profilePrefix.replace(/profile\/?$/i, "logo/")
     : `platformpics/${context}/${entityId}/logo/`
+  // Only venues can save an active profile and cover picture so far, so only they get "Set Active" on those two.
+  const isVenue = context === "venue"
 
   return (
     <OnboardingStepCard
-      title="Step 5: Media and Gallery"
-      description={`Manage ${context} media under platformpics/${context}/{ID}.`}
+      title={title}
+      description={isVenue
+        ? "Add your venue's pictures. JPG, PNG, GIF or WebP, up to 10 MB each (logos up to 5 MB). To change the profile or cover picture, upload a new one or select one and choose Set Active."
+        : `Manage ${context} media under platformpics/${context}/{ID}.`}
     >
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
         <GalleryManager
@@ -40,6 +45,7 @@ export default function OrganizationMediaStep({
           title={`${titlePrefix} Profile Picture`}
           allowVideo={false}
           basePrefix={profilePrefix}
+          singleImageMode={isVenue}
           onFilesChanged={setProfileFiles}
         />
 
@@ -52,6 +58,7 @@ export default function OrganizationMediaStep({
           title={`${titlePrefix} Cover Picture`}
           allowVideo={false}
           basePrefix={coverPrefix}
+          singleImageMode={isVenue}
           onFilesChanged={setCoverFiles}
         />
       </div>
@@ -77,7 +84,7 @@ export default function OrganizationMediaStep({
         currentUser={sessionUser}
         folderKind="gallery"
         title={`${titlePrefix} Gallery`}
-        allowVideo
+        allowVideo={!isVenue}
         basePrefix={galleryPrefix}
         onFilesChanged={setGalleryFiles}
       />
