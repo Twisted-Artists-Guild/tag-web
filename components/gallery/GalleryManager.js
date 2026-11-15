@@ -14,6 +14,8 @@ import Image from "next/image"
 import ContentTags, { WARNING_DEFINITIONS } from "@/components/social/ContentTags"
 import { invalidateEntityLogoCache } from "@/components/cards/useEntityLogo"
 import { invalidateEntityImageCache } from "@/hooks/useEntityProfileImage"
+import { getApiErrorMessage } from "@/utils/venue-form"
+import { VENUE_IMAGE_EXTENSIONS, validateVenueImage } from "@/utils/venue-media"
 
 const defaultFieldClass = "input input-bordered w-full"
 const LOGO_API_ENTITY_TYPES = {
@@ -595,7 +597,9 @@ export default function GalleryManager({ entityType, entityId, entityLabel, curr
   const normalizedFolderKind = String(folderKind || "gallery").trim().toLowerCase()
   const galleryPrefix = basePrefix || getManagedPrefix(entityType, entityId, normalizedFolderKind)
   const startPrefix = lockedRootPrefix || galleryPrefix
-  const canManageOrder = normalizedFolderKind === "gallery"
+  const isVenueMedia = String(entityType || "").toLowerCase() === "venue"
+  // Venues have no ordered gallery in the API: their gallery is the files in the folder, so there is nothing to reorder.
+  const canManageOrder = normalizedFolderKind === "gallery" && !isVenueMedia
   const isSingleImageMode = Boolean(singleImageMode)
   const canPostVideo = typeof allowVideo === "boolean" ? allowVideo : normalizedFolderKind === "gallery"
   const [currentPrefix, setCurrentPrefix] = useState(galleryPrefix)
@@ -1237,15 +1241,31 @@ export default function GalleryManager({ entityType, entityId, entityLabel, curr
   }, [entityType, entityId, videoMeta.title, videoMeta.byline, videoMeta.description])
 
   const uploadFiles = async (fileList) => {
-    const filesToUpload = Array.from(fileList || []).filter(Boolean)
+    let filesToUpload = Array.from(fileList || []).filter(Boolean)
     if (!filesToUpload.length) return
+
+    // Venue pictures are public, so type and size are checked before anything is archived or sent (the server checks again).
+    const rejected = []
+    if (isVenueMedia) {
+      filesToUpload = filesToUpload.filter((file) => {
+        const problem = validateVenueImage({ name: file.name, type: file.type, size: file.size, folder: normalizedFolderKind })
+        if (problem) rejected.push(problem)
+        return !problem
+      })
+
+      if (!filesToUpload.length) {
+        setUploadMessage("")
+        setUploadError(rejected.join(" | "))
+        return
+      }
+    }
 
     setUploadLoading(true)
     setUploadError("")
     setUploadMessage("")
     setUploadProgress(null)
 
-    const errors = []
+    const errors = [...rejected]
     const uploaded = []
 
     if (isSingleImageMode && normalizedFolderKind !== "logo" && isContextFolderView) {
@@ -1704,6 +1724,18 @@ export default function GalleryManager({ entityType, entityId, entityLabel, curr
         }
       }
 
+      if (entityType === "venue" && entityId && pictureId && (normalizedFolderKind === "profile" || normalizedFolderKind === "cover")) {
+        const venueResponse = await fetch(`/api/venue/${encodeURIComponent(entityId)}/pictures/${normalizedFolderKind}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ pictureID: pictureId }),
+        })
+
+        if (!venueResponse.ok) {
+          throw new Error(getApiErrorMessage(await venueResponse.text(), venueResponse.status, `set the active ${normalizedFolderKind} picture`))
+        }
+      }
+
       if (entityType === "user" && normalizedFolderKind === "profile" && typeof window !== "undefined") {
         window.dispatchEvent(new CustomEvent("entity-profile-picture-updated", {
           detail: { entityType, entityId, imageUrl: promotedUrl },
@@ -2073,7 +2105,7 @@ export default function GalleryManager({ entityType, entityId, entityLabel, curr
               <input
                 ref={fileInputRef}
                 type="file"
-                accept="image/*"
+                accept={isVenueMedia ? VENUE_IMAGE_EXTENSIONS.map((extension) => `.${extension}`).join(",") : "image/*"}
                 multiple
                 className="hidden"
                 onChange={(e) => {

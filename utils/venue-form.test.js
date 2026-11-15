@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { toNullableId, mapVenueOptionalFields, buildVenueOptionalPayload, getSessionTokenFromRequest, fetchVenueForPage, fetchJsonWithSession, fetchVenueAccess, getEditRedirect, splitVenueMedia, getApiErrorMessage } from './venue-form.js'
+import { toNullableId, mapVenueOptionalFields, buildVenueOptionalPayload, getSessionTokenFromRequest, fetchVenueForPage, fetchJsonWithSession, fetchVenueAccess, getEditRedirect, getActivePictureUrl, splitVenueMedia, getApiErrorMessage } from './venue-form.js'
 
 test('missing, zero and invalid IDs become null instead of 0', () => {
   for (const value of [undefined, null, '', 0, '0', -1, 1.5, 'abc', NaN]) {
@@ -141,6 +141,16 @@ test('media split tolerates empty, missing and malformed input', () => {
     assert.equal(media.profile, undefined)
     assert.equal(media.cover, undefined)
     assert.deepEqual(media.gallery, [])
+  }
+})
+
+test('the active picture comes from the venue record, in camelCase or PascalCase, or is empty', () => {
+  assert.equal(getActivePictureUrl({ profilePic: { url: 'https://s/p.jpg' } }, 'profile'), 'https://s/p.jpg')
+  assert.equal(getActivePictureUrl({ CoverPic: { URL: 'https://s/c.jpg' } }, 'cover'), 'https://s/c.jpg')
+  assert.equal(getActivePictureUrl({ coverPic: { normalizedURL: ' https://s/n.jpg ' } }, 'cover'), 'https://s/n.jpg')
+  assert.equal(getActivePictureUrl({ profilePic: { url: 'https://s/p.jpg' }, coverPic: { url: 'https://s/c.jpg' } }, 'cover'), 'https://s/c.jpg')
+  for (const venue of [undefined, null, {}, { profilePic: null }, { profilePic: {} }, { coverPic: { url: 'https://s/c.jpg' } }]) {
+    assert.equal(getActivePictureUrl(venue, 'profile'), '')
   }
 })
 

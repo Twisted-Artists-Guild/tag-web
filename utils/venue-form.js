@@ -55,6 +55,14 @@ export function splitVenueMedia(files = []) {
   }
 }
 
+// The venue's active profile or cover picture as saved by "Set Active", or '' when none is set. The public page prefers it
+// and falls back to the newest file in the folder for venues that have not set one.
+export function getActivePictureUrl(venue, kind) {
+  const key = kind === 'cover' ? 'cover' : 'profile'
+  const picture = venue?.[`${key}Pic`] ?? venue?.[`${key.charAt(0).toUpperCase()}${key.slice(1)}Pic`]
+  return String(picture?.url ?? picture?.URL ?? picture?.normalizedURL ?? picture?.NormalizedURL ?? '').trim()
+}
+
 // Turns an API error response body into text a person can read. The API answers with plain text, or JSON such as
 // { message }, { title } or { errors: { Field: ["..."] } }. The action names what was being attempted.
 export function getApiErrorMessage(body, status, action = "save venue") {
