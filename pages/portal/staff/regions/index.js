@@ -12,6 +12,7 @@ import Link from "next/link";
 import TagSEO from "@/components/TagSEO";
 import StaffContextNav from "@/components/portal/StaffContextNav";
 import RegionManager from "@/components/portal/RegionManager";
+import ArtistRegionMigration from "@/components/portal/ArtistRegionMigration";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/pages/api/auth/[...nextauth]";
 import { isAdmin, isStaff } from "@/utils/authHelpers";
@@ -54,6 +55,12 @@ export default function StaffRegionsIndex() {
 				<section className="card bg-base-100 shadow border border-base-300">
 					<div className="card-body">
 						<RegionManager />
+					</div>
+				</section>
+
+				<section className="card bg-base-100 shadow border border-base-300">
+					<div className="card-body">
+						<ArtistRegionMigration />
 					</div>
 				</section>
 			</div>

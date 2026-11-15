@@ -5,6 +5,7 @@ import TagSEO from "@/components/TagSEO";
 import serverFetch from "@/libs/serverFetch";
 import ProfileForm from "@/components/forms/onboarding/artists/ProfileForm";
 import BusinessDetailsForm from "@/components/forms/onboarding/artists/BusinessDetailsForm";
+import ArtistRegionsCard from "@/components/forms/onboarding/artists/ArtistRegionsCard";
 import PrivateContactsForm from "@/components/forms/onboarding/artists/PrivateContactsForm";
 import MediaUploadForm from "@/components/forms/onboarding/MediaUploadForm";
 import PublicContactsForm from "@/components/forms/onboarding/artists/PublicContactsForm";
@@ -828,6 +829,10 @@ export default function JoinArtistIndexPage({ sessionUser, currentStep, artistId
             }}
             backHref={buildArtistJoinHref(3, resolvedArtistSlug)}
           />
+        )}
+
+        {activeStep === 4 && resolvedArtistId && (
+          <ArtistRegionsCard artistId={resolvedArtistId} artistData={artistData} />
         )}
 
         {activeStep === 5 && resolvedArtistId && (

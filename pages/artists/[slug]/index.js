@@ -25,6 +25,7 @@ import DynamicComments, { CommentTargetType } from "@/components/social/DynamicC
 import { isArtist, isStaff, isAdmin } from "@/utils/authHelpers"
 import { sanitizeDefaultHtml } from "@/components/security/sanitize"
 import { pickContactCardData } from "@/utils/artistContactUtils"
+import { getArtistRegions } from "@/utils/artist-regions"
 import SendMessageButton from '@/components/messaging/SendMessageButton'
 import serverFetch from "@/libs/serverFetch"
 import { useEntityImage } from "@/hooks/useEntityProfileImage"
@@ -147,6 +148,8 @@ const Artist = (props) => {
       biography: biographyRichtext || props.artist.biography,
     }
   }, [props.artist])
+
+  const artistRegions = useMemo(() => getArtistRegions(props.artist), [props.artist])
 
   const listings = useMemo(() => (props.listings || []).map((listing) => {
     const titleRichtext = pickField(listing, "titleRichtext", "TitleRichtext")
@@ -319,6 +322,17 @@ const Artist = (props) => {
                 />
               </div>
             </div>
+
+            {artistRegions.length > 0 && (
+              <section id="regions" className="mt-6" aria-labelledby="artist-regions-heading">
+                <h2 id="artist-regions-heading" className="text-lg font-semibold mb-2">Regions</h2>
+                <ul className="flex flex-wrap gap-2">
+                  {artistRegions.map((region) => (
+                    <li key={region.regionID} className="badge badge-outline badge-lg">{region.name}</li>
+                  ))}
+                </ul>
+              </section>
+            )}
 
             {/* Artist Actions */}
             <div className="flex flex-wrap gap-3 mt-6">

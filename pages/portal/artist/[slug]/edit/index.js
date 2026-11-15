@@ -25,6 +25,7 @@ import SocialHandlesForm from "@/components/forms/contact/social-handles-form"
 import UrlLinksForm from "@/components/forms/contact/url-links-form"
 import GalleryManager from "@/components/gallery/GalleryManager"
 import TTTitleLine from "@/components/tiptap/TT_TitleLine"
+import ArtistRegionsCard from "@/components/forms/onboarding/artists/ArtistRegionsCard"
 import TTArticle from "@/components/tiptap/TT_Article"
 import serverFetch from "@/libs/serverFetch"
 
@@ -563,6 +564,9 @@ export default function PortalArtistEditPage({ artistId, artistData }) {
             </div>
           </div>
         )}
+
+        {/* Regions: part of the business details (location) step */}
+        {currentStep === 3 && <ArtistRegionsCard artistId={artistId} artistData={artistData} />}
 
         {/* Step 4: Media */}
         {currentStep === 4 && (
