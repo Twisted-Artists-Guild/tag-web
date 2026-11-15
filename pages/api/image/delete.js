@@ -1,5 +1,7 @@
 // pages/api/delete-image.js
 import { BlobServiceClient } from '@azure/storage-blob';
+import serverFetch from '@/libs/serverFetch';
+import { authorizeVenueMediaChange, blobNameFromUrl } from '@/utils/venue-media';
 
 export default async function handler(req, res) {
     if (req.method !== 'POST') return res.status(405).json({ message: 'Method not allowed' });
@@ -12,6 +14,11 @@ export default async function handler(req, res) {
         // URL: https://[account].blob.core.windows.net/tagpictures/[path/to/blob]
         const urlParts = imageUrl.split('/tagpictures/');
         const blobName = urlParts[1];
+        if (!blobName) return res.status(400).json({ message: 'Not a tagpictures image URL' });
+
+        // Deleting a file from a venue's folder is changing that venue's media: only its owners and staff may.
+        const authorization = await authorizeVenueMediaChange({ req, blobNames: [blobName, blobNameFromUrl(imageUrl)], fetchApi: serverFetch });
+        if (!authorization.ok) return res.status(authorization.status).json({ message: authorization.error, error: authorization.error });
 
         const blobServiceClient = BlobServiceClient.fromConnectionString(process.env.AZURE_STORAGE_CONNECTION_STRING);
         const containerClient = blobServiceClient.getContainerClient('tagpictures');
