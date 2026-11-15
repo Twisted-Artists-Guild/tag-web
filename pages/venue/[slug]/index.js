@@ -1,40 +1,22 @@
-import Link from "next/link"
+import Head from "next/head"
 import { useEffect, useMemo, useState } from "react"
-import { sanitizeCardHtml, stripHtmlText } from "@/components/security/sanitize"
+import TagSEO from "@/components/TagSEO"
+import VenueProfile from "@/components/venues/VenueProfile"
+import config from "@/config"
 import serverFetch from "@/libs/serverFetch"
-import useEntityLogo from "@/components/cards/useEntityLogo"
-import { fetchVenueForPage, getActivePictureUrl, splitVenueMedia } from "@/utils/venue-form"
+import { fetchVenueForPage, splitVenueMedia } from "@/utils/venue-form"
+import { buildVenueProfileView, selectVenueEvents, serializeJsonLd } from "@/utils/venue-page"
 
 function normalizeSlug(value) {
   return String(value || "").trim().toLowerCase()
 }
 
-function pickField(record, ...keys) {
-  for (const key of keys) {
-    const value = record?.[key]
-    if (value !== undefined && value !== null) {
-      return value
-    }
-  }
+const SITE_URL = `https://${config.domainName}`
 
-  return undefined
-}
-
-function splitMedia(files = []) {
-  return splitVenueMedia(files)
-}
-
-export default function VenueProfilePage({ venue }) {
+export default function VenueProfilePage({ venue, contacts, events }) {
   const [galleryState, setGalleryState] = useState({ loading: false, error: "", files: [] })
 
   const venueId = Number(venue?.venueID || venue?.VenueID || 0)
-  const venueName = String(venue?.name || venue?.Name || "Venue")
-  const venueNameRichtext = pickField(venue, "nameRichtext", "NameRichtext") || venueName
-  const activeLogoUrl = useEntityLogo({
-    logoImage: venue?.logoPic?.url || venue?.logoPic?.URL || venue?.logoPic?.normalizedURL || venue?.logoPic?.NormalizedURL || venue?.LogoPic?.url || venue?.LogoPic?.URL || venue?.LogoPic?.normalizedURL || venue?.LogoPic?.NormalizedURL || "",
-    entityType: "Venue",
-    entityId: venueId,
-  })
   const mediaPrefix = useMemo(() => (
     venueId > 0 ? `platformpics/venue/${venueId}/` : ""
   ), [venueId])
@@ -60,10 +42,9 @@ export default function VenueProfilePage({ venue }) {
           const data = await response.json()
           return Array.isArray(data?.files) ? data.files : []
         }))
-        const files = results.flat()
 
         if (!ignore) {
-          setGalleryState({ loading: false, error: "", files })
+          setGalleryState({ loading: false, error: "", files: results.flat() })
         }
       } catch (error) {
         if (!ignore) {
@@ -79,80 +60,49 @@ export default function VenueProfilePage({ venue }) {
     }
   }, [mediaPrefix])
 
-  const { profile, cover, gallery } = useMemo(() => splitMedia(galleryState.files), [galleryState.files])
-  const profileUrl = getActivePictureUrl(venue, "profile") || profile?.url || ""
-  const coverUrl = getActivePictureUrl(venue, "cover") || cover?.url || ""
+  // The newest file in a folder is the fallback for venues that have not chosen an active picture.
+  const folderMedia = useMemo(() => splitVenueMedia(galleryState.files), [galleryState.files])
+  const view = useMemo(() => buildVenueProfileView({ venue, contacts, events, folderMedia, siteUrl: SITE_URL }), [venue, contacts, events, folderMedia])
+  // Search engines and link previews only get what the server knew, so the head does not change as the gallery loads.
+  const headView = useMemo(() => buildVenueProfileView({ venue, contacts, events, siteUrl: SITE_URL }), [venue, contacts, events])
+
+  const pageMetaData = {
+    title: headView.seo.title,
+    description: headView.seo.description,
+    keywords: ["venue", "event space", ...headView.categories.map((category) => category.name), ...headView.tags].join(", "),
+    robots: headView.isPublic ? "index, follow" : "noindex, nofollow",
+    og: {
+      title: headView.seo.title,
+      description: headView.seo.description,
+      type: "website",
+      locale: "en_US",
+      site_name: "Twisted Artists Guild",
+      image: headView.seo.image || "/tag_logo.png",
+      url: `${SITE_URL}/venue/${headView.slug}`,
+    },
+  }
 
   return (
-    <div className="mx-auto max-w-6xl px-4 py-8 md:py-12 space-y-6">
-      <div className="flex items-center justify-between gap-2 flex-wrap">
-        <div className="flex min-w-0 items-center gap-3">
-          {activeLogoUrl ? <img src={activeLogoUrl} alt={`${venueName} logo`} className="h-14 w-14 rounded-box border border-base-300 bg-base-100 object-contain p-1" /> : null}
-          <h1
-            className="text-3xl font-bold"
-            dangerouslySetInnerHTML={{ __html: sanitizeCardHtml(venueNameRichtext) }}
-          />
-        </div>
-        <Link href="/search" className="btn btn-sm btn-outline">Back to Search</Link>
-      </div>
-
-      {coverUrl ? (
-        <div className="rounded-box overflow-hidden border border-base-300 bg-base-200/40">
-          <img src={coverUrl} alt={`${venueName} cover`} className="w-full h-56 md:h-72 object-cover" />
-        </div>
+    <>
+      <TagSEO metadataProp={pageMetaData} canonicalSlug={`venue/${headView.slug}`} />
+      {headView.jsonLd ? (
+        <Head>
+          <script key="venue-jsonld" type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(headView.jsonLd) }} />
+        </Head>
       ) : null}
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="rounded-box border border-base-300 bg-base-100 shadow p-4 space-y-3 lg:col-span-2">
-          <h2 className="text-xl font-semibold">Venue Profile</h2>
-          <p className="text-sm text-base-content/70">This basic venue page stays aligned with the lightweight venue API model while gallery and contact data are linked separately.</p>
-          <div className="text-sm space-y-2">
-            <div>
-              <span className="font-semibold">Venue:</span>{" "}
-              <span dangerouslySetInnerHTML={{ __html: sanitizeCardHtml(venueNameRichtext) }} />
-            </div>
-            <div><span className="font-semibold">Published:</span> {venue?.isPublished || venue?.IsPublished ? "Yes" : "No"}</div>
-            <div><span className="font-semibold">Address FK:</span> {venue?.addressID || venue?.AddressID || "Not linked"}</div>
-            <div><span className="font-semibold">Phone FK:</span> {venue?.phoneContactID || venue?.PhoneContactID || "Not linked"}</div>
-            <div><span className="font-semibold">External Link FK:</span> {venue?.externalLinkID || venue?.ExternalLinkID || "Not linked"}</div>
-          </div>
-        </div>
-
-        <div className="rounded-box border border-base-300 bg-base-100 shadow p-4">
-          <h3 className="font-semibold mb-3">Profile Image</h3>
-          <img
-            src={profileUrl || "/blank_image.png"}
-            alt={`${stripHtmlText(venueNameRichtext || venueName)} profile`}
-            className="w-full h-56 object-cover rounded-box border border-base-300"
-          />
-        </div>
-      </div>
-
-      <div className="rounded-box border border-base-300 bg-base-100 shadow p-4 space-y-3">
-        <div className="flex items-center justify-between gap-2 flex-wrap">
-          <h2 className="text-xl font-semibold">Gallery</h2>
-          <span className="text-xs text-base-content/60">Root: {mediaPrefix || "Unavailable"}</span>
-        </div>
-
-        {galleryState.loading ? <div className="text-sm text-base-content/70">Loading gallery...</div> : null}
-        {galleryState.error ? <div className="alert alert-error"><span>{galleryState.error}</span></div> : null}
-
-        {!galleryState.loading && gallery.length === 0 ? (
-          <div className="text-sm text-base-content/70">No gallery items yet.</div>
-        ) : null}
-
-        {gallery.length > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
-            {gallery.map((item) => (
-              <div key={item.url} className="rounded-box overflow-hidden border border-base-300 bg-base-200/40">
-                <img src={item.url} alt={item.name || "venue gallery item"} className="w-full h-36 object-cover" />
-              </div>
-            ))}
-          </div>
-        ) : null}
-      </div>
-    </div>
+      <VenueProfile view={view} gallery={{ loading: galleryState.loading, error: galleryState.error }} />
+    </>
   )
+}
+
+// A public call to the API. A failure only means that section is left out, never that the page fails.
+async function fetchPublicJson(path) {
+  try {
+    const response = await serverFetch(path)
+    return response.ok ? await response.json() : null
+  } catch {
+    return null
+  }
 }
 
 export async function getServerSideProps(context) {
@@ -163,14 +113,33 @@ export async function getServerSideProps(context) {
 
   try {
     // The venue API needs the session token, and serverFetch returns a Response, not the venue itself.
+    // A venue that is not published, or is blocked, is only returned to its owners and staff, so everyone else gets a 404.
     const venue = await fetchVenueForPage({ req: context.req, slug, fetchApi: serverFetch })
     if (!venue) {
       return { notFound: true }
     }
 
+    const venueId = Number(venue?.venueID || venue?.VenueID || 0)
+    const [contactData, eventData] = venueId > 0
+      ? await Promise.all([
+        fetchPublicJson(`/contact/venue/${venueId}`),
+        fetchPublicJson(`/event?venueId=${venueId}&upcoming=true&limit=10`),
+      ])
+      : [null, null]
+
+    // Only what the page shows is sent to the browser: the event list carries whole artist and venue records.
+    const events = selectVenueEvents(eventData, venueId).map((event) => ({
+      eventID: event?.eventID ?? event?.EventID ?? null,
+      title: event?.title ?? event?.Title ?? "",
+      startTime: event?.startTime ?? event?.StartTime ?? "",
+      artist: { title: event?.artist?.title ?? event?.Artist?.Title ?? "" },
+    }))
+
     return {
       props: {
         venue,
+        contacts: Array.isArray(contactData?.contacts) ? contactData.contacts : [],
+        events,
       },
     }
   } catch {
