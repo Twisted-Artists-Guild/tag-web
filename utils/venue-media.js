@@ -21,6 +21,15 @@ function normalizeBlobPath(value) {
   return String(value || '').trim().replace(/\\/g, '/').replace(/\/{2,}/g, '/').replace(/^\//, '')
 }
 
+// True for a blob name that is not a plain path: it has a "." or ".." segment, or a control character. The storage client
+// resolves dot segments into a different folder, so the venue that was checked would not be the venue that is changed
+// (platformpics/venue/5/../12/cover/a.jpg is venue 12's file). Backslashes count as slashes, as they do in a URL.
+export function hasUnsafeBlobPath(value) {
+  const raw = String(value ?? '').replace(/\\/g, '/')
+  if (/[\u0000-\u001f\u007f]/.test(raw)) return true
+  return raw.split('/').some((segment) => segment.trim() === '.' || segment.trim() === '..')
+}
+
 // Which venue a blob belongs to. Blob names look like platformpics/venue/12/profile/photo.jpg. The same files can also be
 // reached as the container "platformpics", whose names have no platformpics/ in front. Returns null for anything else.
 export function getVenueMediaTarget(blobName, container = 'tagpictures') {
@@ -109,6 +118,11 @@ export function validateVenueImage({ name, type, size, folder, header } = {}) {
 // Decides whether the caller may change venue media. Anything that touches a venue's folder needs the venue's owner or
 // staff, as the venue API says; blobs that are not venue media are not decided here. Returns { ok } or { ok: false, status, error }.
 export async function authorizeVenueMediaChange({ req, blobNames, container = 'tagpictures', fetchApi }) {
+  // Every name is checked, venue or not, because a path with dot segments can land in a venue's folder from anywhere.
+  if ((blobNames || []).some((name) => name && hasUnsafeBlobPath(name))) {
+    return { ok: false, status: 400, error: 'Invalid file path.' }
+  }
+
   const venueIds = [...new Set((blobNames || []).map((name) => getVenueMediaTarget(name, container)).filter(Boolean).map((target) => target.venueId))]
   if (venueIds.length === 0) return { ok: true, venueIds }
 
