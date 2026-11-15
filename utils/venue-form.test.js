@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { toNullableId, mapVenueOptionalFields, buildVenueOptionalPayload, getSessionTokenFromRequest, fetchVenueForPage, fetchJsonWithSession, splitVenueMedia, getApiErrorMessage } from './venue-form.js'
+import { toNullableId, mapVenueOptionalFields, buildVenueOptionalPayload, getSessionTokenFromRequest, fetchVenueForPage, fetchJsonWithSession, fetchVenueAccess, getEditRedirect, splitVenueMedia, getApiErrorMessage } from './venue-form.js'
 
 test('missing, zero and invalid IDs become null instead of 0', () => {
   for (const value of [undefined, null, '', 0, '0', -1, 1.5, 'abc', NaN]) {
@@ -180,4 +180,41 @@ test('session fetch returns null when signed out, on a failed response, or when 
 
   assert.equal(await fetchJsonWithSession({ req: reqWithCookie(), path: '/x', fetchApi: async () => failResponse(401) }), null)
   assert.equal(await fetchJsonWithSession({ req: reqWithCookie(), path: '/x', fetchApi: async () => { throw new Error('network down') } }), null)
+})
+
+test('the edit access check asks the API about the venue as the signed-in user', async () => {
+  const calls = []
+  const fetchApi = async (path, options) => { calls.push({ path, auth: options.headers.Authorization }); return okResponse({ canManage: true, isStaff: false, isOwner: true }) }
+
+  const access = await fetchVenueAccess({ req: reqWithCookie(), id: '13', fetchApi })
+
+  assert.deepEqual(access, { canManage: true, isStaff: false, isOwner: true })
+  assert.deepEqual(calls, [{ path: '/venue/13/access', auth: 'Bearer tok123' }])
+})
+
+test('the edit access check gives null, and sends no request, for a bad id or a signed-out visitor', async () => {
+  let called = false
+  const fetchApi = async () => { called = true; return okResponse({ canManage: true }) }
+
+  for (const id of [undefined, null, '', 0, '0', -3, 'abc', 1.5]) {
+    assert.equal(await fetchVenueAccess({ req: reqWithCookie(), id, fetchApi }), null)
+  }
+  assert.equal(await fetchVenueAccess({ req: { cookies: {} }, id: 13, fetchApi }), null)
+  assert.equal(called, false)
+})
+
+test('the edit access check gives null when the API refuses or fails', async () => {
+  assert.equal(await fetchVenueAccess({ req: reqWithCookie(), id: 13, fetchApi: async () => failResponse(404) }), null)
+  assert.equal(await fetchVenueAccess({ req: reqWithCookie(), id: 13, fetchApi: async () => { throw new Error('down') } }), null)
+})
+
+test('only someone the API says can manage the venue stays on the edit page', () => {
+  assert.equal(getEditRedirect({ canManage: true }), null)
+  assert.equal(getEditRedirect({ canManage: true, isStaff: true }), null)
+  assert.equal(getEditRedirect({ canManage: false }), '/portal/venue')
+  assert.equal(getEditRedirect(null), '/portal/venue')
+  assert.equal(getEditRedirect(undefined), '/portal/venue')
+  assert.equal(getEditRedirect({}), '/portal/venue')
+  assert.equal(getEditRedirect({ canManage: 'true' }), '/portal/venue')
+  assert.equal(getEditRedirect({ canManage: false }, '/somewhere'), '/somewhere')
 })

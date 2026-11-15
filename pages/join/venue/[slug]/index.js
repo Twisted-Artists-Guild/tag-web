@@ -4,8 +4,11 @@ import { useEffect, useMemo, useState } from "react"
 import OrganizationPrimaryContactsStep from "@/components/forms/onboarding/organizations/OrganizationPrimaryContactsStep"
 import OrganizationPublicContactsStep from "@/components/forms/onboarding/organizations/OrganizationPublicContactsStep"
 import OrganizationMediaStep from "@/components/forms/onboarding/organizations/OrganizationMediaStep"
+import VenueDiscoverabilityStep from "@/components/forms/onboarding/venues/VenueDiscoverabilityStep"
+import VenueProfileStep from "@/components/forms/onboarding/venues/VenueProfileStep"
 import JoinPageShell from "@/components/join/common/join-page-shell"
-import { mapVenueOptionalFields, buildVenueOptionalPayload, fetchVenueForPage, getApiErrorMessage } from "@/utils/venue-form"
+import { fetchVenueAccess, fetchVenueForPage, getEditRedirect } from "@/utils/venue-form"
+import { formatAddress, getPublishProblems, mapVenueToProfile, publishVenue, summarizeDescription } from "@/utils/venue-profile"
 import serverFetch from "@/libs/serverFetch"
 
 function getRequestOrigin(req) {
@@ -44,13 +47,21 @@ async function getSessionFromRequest(context) {
   }
 }
 
+// Steps 1 and 2 (terms and slug reservation) are on /join/venue; this page covers 3 to 8.
+const STEP_PROFILE = 3
+const STEP_DISCOVERABILITY = 4
+const STEP_MEDIA = 5
+const STEP_PRIMARY_CONTACTS = 6
+const STEP_PUBLIC_CONTACTS = 7
+const STEP_REVIEW = 8
+
 function getWizardStep(rawStep) {
-  const parsed = Number(rawStep || 3)
-  if (parsed >= 3 && parsed <= 7) {
+  const parsed = Number(rawStep || STEP_PROFILE)
+  if (parsed >= STEP_PROFILE && parsed <= STEP_REVIEW) {
     return parsed
   }
 
-  return 3
+  return STEP_PROFILE
 }
 
 function buildVenueJoinHref(step, slug, id) {
@@ -63,23 +74,10 @@ function buildVenueJoinHref(step, slug, id) {
   return "/join/venue?step=2"
 }
 
-function mapVenue(venueData) {
-  return {
-    venueID: Number(venueData?.venueID || venueData?.VenueID || 0),
-    name: String(venueData?.name || venueData?.Name || ""),
-    addressID: Number(venueData?.addressID || venueData?.AddressID || 0),
-    ...mapVenueOptionalFields(venueData),
-    isPublished: Boolean(venueData?.isPublished || venueData?.IsPublished),
-    isModerationBlocked: Boolean(venueData?.isModerationBlocked || venueData?.IsModerationBlocked),
-  }
-}
-
 export default function JoinVenueSlugPage({ currentStep, venueData, routeSlug, venueId, sessionUser }) {
-  const [venueForm, setVenueForm] = useState(mapVenue(venueData || {}))
-  const [formError, setFormError] = useState("")
+  const [venueForm, setVenueForm] = useState(() => mapVenueToProfile(venueData))
   const [contactError, setContactError] = useState("")
   const [publishError, setPublishError] = useState("")
-  const [isSaving, setIsSaving] = useState(false)
   const [isPublishing, setIsPublishing] = useState(false)
   const [loadingContacts, setLoadingContacts] = useState(false)
   const [contactsTab, setContactsTab] = useState("public-address")
@@ -118,29 +116,31 @@ export default function JoinVenueSlugPage({ currentStep, venueData, routeSlug, v
   const totalPublicContacts = publicAddressContacts.length + publicEmailContacts.length + publicPhoneContacts.length + publicSocialContacts.length + publicUrlContacts.length
   const hasRequiredContactTypes = businessAddressContacts.length > 0 && businessEmailContacts.length > 0 && businessPhoneContacts.length > 0
   const hasMedia = profileFiles.length > 0 || coverFiles.length > 0 || logoFiles.length > 0 || galleryFiles.length > 0
+  const publishProblems = useMemo(() => getPublishProblems(venueForm), [venueForm])
 
   const stepCompletionMap = useMemo(() => ({
-    3: Boolean(venueForm.name),
-    4: hasMedia,
-    5: true,
-    6: true,
-    7: Boolean(venueForm.isPublished),
-  }), [hasMedia, venueForm.isPublished, venueForm.name])
+    [STEP_PROFILE]: publishProblems.length === 0,
+    [STEP_DISCOVERABILITY]: venueForm.categoryIds.length > 0,
+    [STEP_MEDIA]: hasMedia,
+    [STEP_PRIMARY_CONTACTS]: true,
+    [STEP_PUBLIC_CONTACTS]: true,
+    [STEP_REVIEW]: Boolean(venueForm.isPublished),
+  }), [hasMedia, publishProblems.length, venueForm.categoryIds.length, venueForm.isPublished])
 
   const progressPercent = useMemo(() => {
-    const steps = [3, 4, 5, 6, 7]
+    const steps = [STEP_PROFILE, STEP_DISCOVERABILITY, STEP_MEDIA, STEP_PRIMARY_CONTACTS, STEP_PUBLIC_CONTACTS, STEP_REVIEW]
     const completeCount = steps.filter((step) => Boolean(stepCompletionMap[step])).length
     return Math.round((completeCount / steps.length) * 100)
   }, [stepCompletionMap])
 
   const pageMetaData = {
     title: "Join Venue",
-    description: "Venue onboarding workflow with profile details, media, primary contacts, and publishing.",
+    description: "Venue onboarding workflow with profile details, categories, amenities, regions, media, primary contacts, and publishing.",
     keywords: "join, venue, onboarding",
     robots: "noindex, nofollow",
     og: {
       title: "Join Venue",
-      description: "Venue onboarding workflow with profile details, media, primary contacts, and publishing.",
+      description: "Venue onboarding workflow with profile details, categories, amenities, regions, media, primary contacts, and publishing.",
     },
   }
 
@@ -179,81 +179,58 @@ export default function JoinVenueSlugPage({ currentStep, venueData, routeSlug, v
   }
 
   useEffect(() => {
-    if ((currentStep !== 5 && currentStep !== 6) || !resolvedVenueId) {
+    if ((currentStep !== STEP_PRIMARY_CONTACTS && currentStep !== STEP_PUBLIC_CONTACTS && currentStep !== STEP_REVIEW) || !resolvedVenueId) {
       return
     }
 
     refreshVenueContacts()
   }, [currentStep, resolvedVenueId])
 
-  const persistVenue = async (payload, setError) => {
-    // Without the loaded venue there is no address ID, and saving would overwrite the venue with an invalid record.
-    if (!payload?.addressID) {
-      setError("The venue details could not be loaded. Refresh the page and try again.")
-      return false
-    }
-
-    const response = await fetch(`/api/venue/${resolvedVenueId}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    })
-
-    if (!response.ok) {
-      setError(getApiErrorMessage(await response.text(), response.status))
-      return false
-    }
-
-    return true
-  }
-
-  const basePayload = {
-    venueID: resolvedVenueId,
-    name: String(venueForm.name || "").trim(),
-    addressID: venueForm.addressID,
-    ...buildVenueOptionalPayload(venueForm),
-    isPublished: Boolean(venueForm.isPublished),
-    isModerationBlocked: Boolean(venueForm.isModerationBlocked),
-  }
+  const stepHref = (step) => buildVenueJoinHref(step, resolvedSlug, resolvedVenueId)
+  const goToStep = (step) => { window.location.href = stepHref(step) }
 
   return (
     <JoinPageShell
       title="Join as a Venue"
-      description="Copying the artist workflow pattern: profile details, media, primary contacts, then review and publish."
+      description="Profile details, categories, amenities and regions, media, contacts, then review and publish."
       canonicalSlug="join/venue"
       metadata={pageMetaData}
       steps={[
         {
-          href: buildVenueJoinHref(3, resolvedSlug, resolvedVenueId),
+          href: stepHref(STEP_PROFILE),
           label: "Venue Profile",
-          isActive: currentStep === 3,
-          isWarning: currentStep !== 3 && !stepCompletionMap[3],
+          isActive: currentStep === STEP_PROFILE,
+          isWarning: currentStep !== STEP_PROFILE && !stepCompletionMap[STEP_PROFILE],
         },
         {
-          href: buildVenueJoinHref(4, resolvedSlug, resolvedVenueId),
+          href: stepHref(STEP_DISCOVERABILITY),
+          label: "Categories and Regions",
+          isActive: currentStep === STEP_DISCOVERABILITY,
+          isWarning: currentStep !== STEP_DISCOVERABILITY && !stepCompletionMap[STEP_DISCOVERABILITY],
+        },
+        {
+          href: stepHref(STEP_MEDIA),
           label: "Media and Gallery",
-          isActive: currentStep === 4,
-          isWarning: currentStep !== 4 && !stepCompletionMap[4],
+          isActive: currentStep === STEP_MEDIA,
+          isWarning: currentStep !== STEP_MEDIA && !stepCompletionMap[STEP_MEDIA],
         },
         {
-          href: buildVenueJoinHref(5, resolvedSlug, resolvedVenueId),
+          href: stepHref(STEP_PRIMARY_CONTACTS),
           label: "Primary Contacts",
-          isActive: currentStep === 5,
-          isWarning: currentStep !== 5 && !stepCompletionMap[5],
+          isActive: currentStep === STEP_PRIMARY_CONTACTS,
+          isWarning: currentStep !== STEP_PRIMARY_CONTACTS && !stepCompletionMap[STEP_PRIMARY_CONTACTS],
         },
         {
-          href: buildVenueJoinHref(6, resolvedSlug, resolvedVenueId),
+          href: stepHref(STEP_PUBLIC_CONTACTS),
           label: "Public Contacts",
-          isActive: currentStep === 6,
-          isWarning: currentStep !== 6 && !stepCompletionMap[6],
+          isActive: currentStep === STEP_PUBLIC_CONTACTS,
+          isWarning: currentStep !== STEP_PUBLIC_CONTACTS && !stepCompletionMap[STEP_PUBLIC_CONTACTS],
         },
         {
-          href: buildVenueJoinHref(7, resolvedSlug, resolvedVenueId),
+          href: stepHref(STEP_REVIEW),
           label: "Review and Publish",
-          isActive: currentStep === 7,
-          isWarning: currentStep !== 7 && !stepCompletionMap[7],
+          isActive: currentStep === STEP_REVIEW,
+          isWarning: currentStep !== STEP_REVIEW && !stepCompletionMap[STEP_REVIEW],
         },
       ]}
       badge={resolvedVenueId ? `Venue ID: ${resolvedVenueId}` : null}
@@ -265,87 +242,32 @@ export default function JoinVenueSlugPage({ currentStep, venueData, routeSlug, v
         </div>
       ) : null}
 
-      {resolvedVenueId && currentStep === 3 ? (
-        <div className="card bg-base-100 shadow border border-base-300">
-          <div className="card-body gap-4">
-            <div>
-              <h2 className="card-title">Step 3: Venue Profile</h2>
-              <p className="text-sm text-base-content/70">Venue name and moderation status. FK-linked contact/media rows are managed separately.</p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <label className="form-control w-full md:col-span-2">
-                <div className="label"><span className="label-text">Venue Name</span></div>
-                <input
-                  type="text"
-                  className="input input-bordered w-full"
-                  value={venueForm.name}
-                  onChange={(event) => setVenueForm((prev) => ({ ...prev, name: event.target.value }))}
-                />
-              </label>
-
-              <label className="form-control w-full">
-                <div className="label"><span className="label-text">Moderation Blocked</span></div>
-                <select
-                  className="select select-bordered w-full"
-                  value={venueForm.isModerationBlocked ? "true" : "false"}
-                  onChange={(event) => setVenueForm((prev) => ({ ...prev, isModerationBlocked: event.target.value === "true" }))}
-                >
-                  <option value="false">No</option>
-                  <option value="true">Yes</option>
-                </select>
-              </label>
-
-              <label className="form-control w-full">
-                <div className="label"><span className="label-text">Published</span></div>
-                <select
-                  className="select select-bordered w-full"
-                  value={venueForm.isPublished ? "true" : "false"}
-                  onChange={(event) => setVenueForm((prev) => ({ ...prev, isPublished: event.target.value === "true" }))}
-                >
-                  <option value="false">No</option>
-                  <option value="true">Yes</option>
-                </select>
-              </label>
-            </div>
-
-            {formError ? (
-              <div className="alert alert-error"><span>{formError}</span></div>
-            ) : null}
-
-            <div className="flex gap-2 justify-between flex-wrap">
-              <Link href="/join/venue?step=2" className="btn btn-sm btn-outline">Back to Reservation</Link>
-              <button
-                type="button"
-                className="btn btn-sm btn-primary"
-                disabled={isSaving}
-                onClick={async () => {
-                  if (!venueForm.name.trim()) {
-                    setFormError("Venue name is required.")
-                    return
-                  }
-
-                  setFormError("")
-                  setIsSaving(true)
-
-                  try {
-                    const saved = await persistVenue(basePayload, setFormError)
-                    if (saved) {
-                      window.location.href = buildVenueJoinHref(4, resolvedSlug, resolvedVenueId)
-                    }
-                  } finally {
-                    setIsSaving(false)
-                  }
-                }}
-              >
-                {isSaving ? "Saving..." : "Continue to Media and Gallery"}
-              </button>
-            </div>
-          </div>
-        </div>
+      {resolvedVenueId && currentStep === STEP_PROFILE ? (
+        <VenueProfileStep
+          initialForm={venueForm}
+          title="Step 3: Venue Profile"
+          intro="Tell people about your space: its name, a description, and where it is. The address is what puts your venue in search results."
+          backHref="/join/venue?step=2"
+          backLabel="Back to Reservation"
+          continueLabel="Save and continue to Categories"
+          onContinue={() => goToStep(STEP_DISCOVERABILITY)}
+        />
       ) : null}
 
-      {resolvedVenueId && currentStep === 4 ? (
+      {resolvedVenueId && currentStep === STEP_DISCOVERABILITY ? (
+        <VenueDiscoverabilityStep
+          initialForm={venueForm}
+          venueId={resolvedVenueId}
+          title="Step 4: Categories, Amenities and Regions"
+          intro="Help artists and organizers find your venue: what kind of space it is, what it offers, and which regions it serves."
+          backHref={stepHref(STEP_PROFILE)}
+          backLabel="Back to Venue Profile"
+          continueLabel="Save and continue to Media"
+          onContinue={() => goToStep(STEP_MEDIA)}
+        />
+      ) : null}
+
+      {resolvedVenueId && currentStep === STEP_MEDIA ? (
         <OrganizationMediaStep
           context="venue"
           entityId={resolvedVenueId}
@@ -358,14 +280,14 @@ export default function JoinVenueSlugPage({ currentStep, venueData, routeSlug, v
           setCoverFiles={setCoverFiles}
           setLogoFiles={setLogoFiles}
           setGalleryFiles={setGalleryFiles}
-          backHref={buildVenueJoinHref(3, resolvedSlug, resolvedVenueId)}
-          backLabel="Back to Venue Profile"
-          continueHref={buildVenueJoinHref(5, resolvedSlug, resolvedVenueId)}
+          backHref={stepHref(STEP_DISCOVERABILITY)}
+          backLabel="Back to Categories and Regions"
+          continueHref={stepHref(STEP_PRIMARY_CONTACTS)}
           continueLabel="Continue to Primary Contacts"
         />
       ) : null}
 
-      {resolvedVenueId && currentStep === 5 ? (
+      {resolvedVenueId && currentStep === STEP_PRIMARY_CONTACTS ? (
         <OrganizationPrimaryContactsStep
           context="venue"
           entityId={resolvedVenueId}
@@ -378,13 +300,13 @@ export default function JoinVenueSlugPage({ currentStep, venueData, routeSlug, v
           hasRequiredContactTypes={hasRequiredContactTypes}
           contactError={contactError}
           setContactError={setContactError}
-          backHref={buildVenueJoinHref(4, resolvedSlug, resolvedVenueId)}
+          backHref={stepHref(STEP_MEDIA)}
           backLabel="Back to Media"
-          continueHref={buildVenueJoinHref(6, resolvedSlug, resolvedVenueId)}
+          continueHref={stepHref(STEP_PUBLIC_CONTACTS)}
         />
       ) : null}
 
-      {resolvedVenueId && currentStep === 6 ? (
+      {resolvedVenueId && currentStep === STEP_PUBLIC_CONTACTS ? (
         <OrganizationPublicContactsStep
           context="venue"
           entityId={resolvedVenueId}
@@ -397,38 +319,54 @@ export default function JoinVenueSlugPage({ currentStep, venueData, routeSlug, v
           publicSocialContacts={publicSocialContacts}
           publicUrlContacts={publicUrlContacts}
           refreshContacts={refreshVenueContacts}
-          backHref={buildVenueJoinHref(5, resolvedSlug, resolvedVenueId)}
-          continueHref={buildVenueJoinHref(7, resolvedSlug, resolvedVenueId)}
+          backHref={stepHref(STEP_PRIMARY_CONTACTS)}
+          continueHref={stepHref(STEP_REVIEW)}
         />
       ) : null}
 
-      {resolvedVenueId && currentStep === 7 ? (
+      {resolvedVenueId && currentStep === STEP_REVIEW ? (
         <div className="card bg-base-100 shadow border border-base-300">
           <div className="card-body gap-4">
             <div>
-              <h2 className="card-title">Step 7: Review and Publish</h2>
-              <p className="text-sm text-base-content/70">Final check before publish.</p>
+              <h2 className="card-title">Step 8: Review and Publish</h2>
+              <p className="text-sm text-base-content/70">Final check before publish. Your venue is listed as soon as you publish; there is no approval step.</p>
             </div>
 
-            <div className="rounded-box border border-base-300 bg-base-200/40 p-4 space-y-2 text-sm">
-              <div><span className="font-semibold">Venue name:</span> {venueForm.name || "Missing"}</div>
-              <div><span className="font-semibold">Business contacts saved:</span> {totalBusinessContacts}</div>
-              <div><span className="font-semibold">Public contacts saved:</span> {totalPublicContacts}</div>
-              <div><span className="font-semibold">Profile files:</span> {profileFiles.length}</div>
-              <div><span className="font-semibold">Cover files:</span> {coverFiles.length}</div>
-              <div><span className="font-semibold">Gallery files:</span> {galleryFiles.length}</div>
-              <div><span className="font-semibold">Published:</span> {venueForm.isPublished ? "Yes" : "No"}</div>
-            </div>
+            {publishProblems.length > 0 ? (
+              <div role="alert" className="alert alert-warning items-start">
+                <div>
+                  <p className="font-semibold">Finish the venue profile before publishing:</p>
+                  <ul className="list-disc ml-5 text-sm">
+                    {publishProblems.map((problem) => <li key={problem.field}>{problem.message}</li>)}
+                  </ul>
+                  <Link href={stepHref(STEP_PROFILE)} className="link text-sm">Go to Venue Profile</Link>
+                </div>
+              </div>
+            ) : null}
+
+            <dl className="rounded-box border border-base-300 bg-base-200/40 p-4 space-y-2 text-sm">
+              <div><dt className="inline font-semibold">Venue name: </dt><dd className="inline">{venueForm.name || "Missing"}</dd></div>
+              <div><dt className="inline font-semibold">Address: </dt><dd className="inline">{formatAddress(venueForm) || "Missing"}</dd></div>
+              <div><dt className="inline font-semibold">Description: </dt><dd className="inline">{summarizeDescription(venueForm.description) || "None"}</dd></div>
+              <div><dt className="inline font-semibold">Events page: </dt><dd className="inline break-all">{venueForm.eventSourceUrl || "None"}</dd></div>
+              <div><dt className="inline font-semibold">Categories: </dt><dd className="inline">{venueForm.extraCategories.map((category) => category.name ?? category.Name).join(", ") || "None"}</dd></div>
+              <div><dt className="inline font-semibold">Amenities: </dt><dd className="inline">{venueForm.tags.join(", ") || "None"}</dd></div>
+              <div><dt className="inline font-semibold">Regions: </dt><dd className="inline">{venueForm.extraRegions.map((region) => region.name ?? region.Name).join(", ") || "None"}</dd></div>
+              <div><dt className="inline font-semibold">Business contacts saved: </dt><dd className="inline">{totalBusinessContacts}</dd></div>
+              <div><dt className="inline font-semibold">Public contacts saved: </dt><dd className="inline">{totalPublicContacts}</dd></div>
+              <div><dt className="inline font-semibold">Published: </dt><dd className="inline">{venueForm.isPublished ? "Yes" : "No"}</dd></div>
+            </dl>
 
             <div className="rounded-box border border-base-300 bg-base-200/40 p-4">
               <h3 className="font-semibold mb-2">Step Completion</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
-                {[3, 4, 5, 6].map((step) => {
+                {[STEP_PROFILE, STEP_DISCOVERABILITY, STEP_MEDIA, STEP_PRIMARY_CONTACTS, STEP_PUBLIC_CONTACTS].map((step) => {
                   const labels = {
-                    3: "Venue Profile",
-                    4: "Media and Gallery",
-                    5: "Primary Contacts",
-                    6: "Public Contacts",
+                    [STEP_PROFILE]: "Venue Profile",
+                    [STEP_DISCOVERABILITY]: "Categories and Regions",
+                    [STEP_MEDIA]: "Media and Gallery",
+                    [STEP_PRIMARY_CONTACTS]: "Primary Contacts",
+                    [STEP_PUBLIC_CONTACTS]: "Public Contacts",
                   }
                   const done = Boolean(stepCompletionMap[step])
                   return (
@@ -442,30 +380,29 @@ export default function JoinVenueSlugPage({ currentStep, venueData, routeSlug, v
             </div>
 
             {publishError ? (
-              <div className="alert alert-error"><span>{publishError}</span></div>
+              <div role="alert" className="alert alert-error"><span>{publishError}</span></div>
             ) : null}
 
             <div className="flex gap-2 justify-between flex-wrap">
-              <Link href={buildVenueJoinHref(6, resolvedSlug, resolvedVenueId)} className="btn btn-sm btn-outline">Back to Public Contacts</Link>
+              <Link href={stepHref(STEP_PUBLIC_CONTACTS)} className="btn btn-sm btn-outline">Back to Public Contacts</Link>
               <button
                 type="button"
                 className="btn btn-sm btn-success"
-                disabled={isPublishing || venueForm.isPublished}
+                disabled={isPublishing || venueForm.isPublished || publishProblems.length > 0}
                 onClick={async () => {
                   setPublishError("")
                   setIsPublishing(true)
 
                   try {
-                    const saved = await persistVenue({
-                      ...basePayload,
-                      isPublished: true,
-                    }, setPublishError)
-
-                    if (saved) {
-                      setVenueForm((prev) => ({ ...prev, isPublished: true }))
-                      const portalUrl = resolvedSlug ? `/portal/venue/${encodeURIComponent(resolvedSlug)}` : "/portal"
-                      window.location.href = portalUrl
+                    const result = await publishVenue({ form: venueForm })
+                    if (!result.ok) {
+                      setPublishError(result.message)
+                      return
                     }
+
+                    setVenueForm((prev) => ({ ...prev, isPublished: true }))
+                    const portalUrl = resolvedSlug ? `/portal/venue/${encodeURIComponent(resolvedSlug)}` : "/portal"
+                    window.location.href = portalUrl
                   } finally {
                     setIsPublishing(false)
                   }
@@ -507,6 +444,15 @@ export async function getVenueJoinServerProps(context, routeSlug = null) {
   })
   if (venueData) {
     venueId = Number(venueData?.venueID || venueData?.VenueID || venueId || 0)
+  }
+
+  // Only the venue's owners and staff may build or edit it. When the API can't confirm that, the visitor is sent away.
+  if (venueId > 0) {
+    const access = await fetchVenueAccess({ req: context.req, id: venueId, fetchApi: serverFetch })
+    const destination = getEditRedirect(access)
+    if (destination) {
+      return { redirect: { destination, permanent: false } }
+    }
   }
 
   return {

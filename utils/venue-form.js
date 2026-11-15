@@ -92,6 +92,19 @@ export async function fetchJsonWithSession({ req, path, fetchApi }) {
   }
 }
 
+// Whether the signed-in user may edit this venue (owner or staff), asked of the API. Null when it can't be told, which
+// callers must treat as "no": a venue is only editable when the API says so.
+export async function fetchVenueAccess({ req, id, fetchApi }) {
+  const numericId = Number(id)
+  if (!Number.isInteger(numericId) || numericId <= 0) return null
+  return fetchJsonWithSession({ req, path: `/venue/${numericId}/access`, fetchApi })
+}
+
+// Where to send someone who may not edit the venue, or null when they may stay.
+export function getEditRedirect(access, destination = "/portal/venue") {
+  return access?.canManage === true ? null : destination
+}
+
 // Published venues are public, so a signed-out visitor is looked up by slug without a token.
 async function fetchPublicVenueBySlug(slug, fetchApi) {
   const normalizedSlug = String(slug || "").trim().toLowerCase()

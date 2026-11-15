@@ -133,7 +133,8 @@ export default function TiptapEditor({
   onPickImageFromLibrary,
   onGalleryPreviewClick,
   resizable = false,
-  containerStyle
+  containerStyle,
+  ariaLabel = ""
 }) {
   const [isUploading, setIsUploading] = useState(false);
   const [isSelectingImage, setIsSelectingImage] = useState(false);
@@ -166,6 +167,7 @@ export default function TiptapEditor({
       attributes: {
         class: editorClassName,
         style: `min-height: ${minHeight}px;`,
+        ...(ariaLabel ? { "aria-label": ariaLabel, role: "textbox", "aria-multiline": "true" } : {}),
       },
         handleDrop: (view, event, slice, moved) => {
             if (!moved && event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files[0]) {
