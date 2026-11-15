@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react"
 import { sanitizeCardHtml, stripHtmlText } from "@/components/security/sanitize"
 import serverFetch from "@/libs/serverFetch"
 import useEntityLogo from "@/components/cards/useEntityLogo"
-import { fetchVenueForPage, splitVenueMedia } from "@/utils/venue-form"
+import { fetchVenueForPage, getActivePictureUrl, splitVenueMedia } from "@/utils/venue-form"
 
 function normalizeSlug(value) {
   return String(value || "").trim().toLowerCase()
@@ -80,6 +80,8 @@ export default function VenueProfilePage({ venue }) {
   }, [mediaPrefix])
 
   const { profile, cover, gallery } = useMemo(() => splitMedia(galleryState.files), [galleryState.files])
+  const profileUrl = getActivePictureUrl(venue, "profile") || profile?.url || ""
+  const coverUrl = getActivePictureUrl(venue, "cover") || cover?.url || ""
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 md:py-12 space-y-6">
@@ -94,9 +96,9 @@ export default function VenueProfilePage({ venue }) {
         <Link href="/search" className="btn btn-sm btn-outline">Back to Search</Link>
       </div>
 
-      {cover?.url ? (
+      {coverUrl ? (
         <div className="rounded-box overflow-hidden border border-base-300 bg-base-200/40">
-          <img src={cover.url} alt={`${venueName} cover`} className="w-full h-56 md:h-72 object-cover" />
+          <img src={coverUrl} alt={`${venueName} cover`} className="w-full h-56 md:h-72 object-cover" />
         </div>
       ) : null}
 
@@ -119,7 +121,7 @@ export default function VenueProfilePage({ venue }) {
         <div className="rounded-box border border-base-300 bg-base-100 shadow p-4">
           <h3 className="font-semibold mb-3">Profile Image</h3>
           <img
-            src={profile?.url || "/blank_image.png"}
+            src={profileUrl || "/blank_image.png"}
             alt={`${stripHtmlText(venueNameRichtext || venueName)} profile`}
             className="w-full h-56 object-cover rounded-box border border-base-300"
           />
