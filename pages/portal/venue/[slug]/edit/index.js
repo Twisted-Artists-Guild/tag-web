@@ -6,10 +6,13 @@ import { authOptions } from "@/pages/api/auth/[...nextauth]"
 import OrganizationMediaStep from "@/components/forms/onboarding/organizations/OrganizationMediaStep"
 import OrganizationPrimaryContactsStep from "@/components/forms/onboarding/organizations/OrganizationPrimaryContactsStep"
 import OrganizationPublicContactsStep from "@/components/forms/onboarding/organizations/OrganizationPublicContactsStep"
+import VenueDiscoverabilityStep from "@/components/forms/onboarding/venues/VenueDiscoverabilityStep"
+import VenueProfileStep from "@/components/forms/onboarding/venues/VenueProfileStep"
 import JoinPageShell from "@/components/join/common/join-page-shell"
 import RegisterSlug from "@/components/forms/onboarding/register-slug"
 import serverFetch from "@/libs/serverFetch"
-import { mapVenueOptionalFields, buildVenueOptionalPayload, fetchVenueForPage, getApiErrorMessage } from "@/utils/venue-form"
+import { fetchVenueAccess, fetchVenueForPage, getEditRedirect } from "@/utils/venue-form"
+import { getPublishProblems, mapVenueToProfile } from "@/utils/venue-profile"
 
 function getRequestOrigin(req) {
   const forwardedProto = String(req?.headers?.["x-forwarded-proto"] || "").split(",")[0].trim()
@@ -47,13 +50,20 @@ async function getSessionFromRequest(context) {
   }
 }
 
+const STEP_SLUG = 1
+const STEP_PROFILE = 2
+const STEP_DISCOVERABILITY = 3
+const STEP_MEDIA = 4
+const STEP_PRIMARY_CONTACTS = 5
+const STEP_PUBLIC_CONTACTS = 6
+
 function getPortalStep(rawStep) {
-  const parsed = Number(rawStep || 1)
-  if (parsed >= 1 && parsed <= 5) {
+  const parsed = Number(rawStep || STEP_SLUG)
+  if (parsed >= STEP_SLUG && parsed <= STEP_PUBLIC_CONTACTS) {
     return parsed
   }
 
-  return 1
+  return STEP_SLUG
 }
 
 function buildVenuePortalHref(step, slug, id) {
@@ -66,21 +76,9 @@ function buildVenuePortalHref(step, slug, id) {
   return "/portal/venue"
 }
 
-function mapVenue(venueData) {
-  return {
-    venueID: Number(venueData?.venueID || venueData?.VenueID || 0),
-    name: String(venueData?.name || venueData?.Name || ""),
-    addressID: Number(venueData?.addressID || venueData?.AddressID || 0),
-    ...mapVenueOptionalFields(venueData),
-    isModerationBlocked: Boolean(venueData?.isModerationBlocked || venueData?.IsModerationBlocked),
-  }
-}
-
 export default function PortalVenueEditPage({ currentStep, venueData, routeSlug, venueId, sessionUser }) {
-  const [venueForm, setVenueForm] = useState(mapVenue(venueData || {}))
-  const [formError, setFormError] = useState("")
+  const [venueForm] = useState(() => mapVenueToProfile(venueData))
   const [contactError, setContactError] = useState("")
-  const [isSaving, setIsSaving] = useState(false)
   const [loadingContacts, setLoadingContacts] = useState(false)
   const [contactsTab, setContactsTab] = useState("public-address")
 
@@ -115,16 +113,18 @@ export default function PortalVenueEditPage({ currentStep, venueData, routeSlug,
   ), [venueRootPrefix])
 
   const hasMedia = profileFiles.length > 0 || coverFiles.length > 0 || logoFiles.length > 0 || galleryFiles.length > 0
+  const publishProblems = useMemo(() => getPublishProblems(venueForm), [venueForm])
   const stepCompletionMap = useMemo(() => ({
-    1: Boolean(resolvedSlug),
-    2: Boolean(venueForm.name),
-    3: hasMedia,
-    4: true,
-    5: true,
-  }), [hasMedia, resolvedSlug, venueForm.name])
+    [STEP_SLUG]: Boolean(resolvedSlug),
+    [STEP_PROFILE]: publishProblems.length === 0,
+    [STEP_DISCOVERABILITY]: venueForm.categoryIds.length > 0,
+    [STEP_MEDIA]: hasMedia,
+    [STEP_PRIMARY_CONTACTS]: true,
+    [STEP_PUBLIC_CONTACTS]: true,
+  }), [hasMedia, publishProblems.length, resolvedSlug, venueForm.categoryIds.length])
 
   const progressPercent = useMemo(() => {
-    const steps = [1, 2, 3, 4, 5]
+    const steps = [STEP_SLUG, STEP_PROFILE, STEP_DISCOVERABILITY, STEP_MEDIA, STEP_PRIMARY_CONTACTS, STEP_PUBLIC_CONTACTS]
     const completeCount = steps.filter((step) => Boolean(stepCompletionMap[step])).length
     return Math.round((completeCount / steps.length) * 100)
   }, [stepCompletionMap])
@@ -175,43 +175,15 @@ export default function PortalVenueEditPage({ currentStep, venueData, routeSlug,
   }
 
   useEffect(() => {
-    if ((currentStep !== 4 && currentStep !== 5) || !resolvedVenueId) {
+    if ((currentStep !== STEP_PRIMARY_CONTACTS && currentStep !== STEP_PUBLIC_CONTACTS) || !resolvedVenueId) {
       return
     }
 
     refreshVenueContacts()
   }, [currentStep, resolvedVenueId])
 
-  const persistVenue = async (payload, setError) => {
-    // Without the loaded venue there is no address ID, and saving would overwrite the venue with an invalid record.
-    if (!payload?.addressID) {
-      setError("The venue details could not be loaded. Refresh the page and try again.")
-      return false
-    }
-
-    const response = await fetch(`/api/venue/${resolvedVenueId}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
-    })
-
-    if (!response.ok) {
-      setError(getApiErrorMessage(await response.text(), response.status))
-      return false
-    }
-
-    return true
-  }
-
-  const basePayload = {
-    venueID: resolvedVenueId,
-    name: String(venueForm.name || "").trim(),
-    addressID: venueForm.addressID,
-    ...buildVenueOptionalPayload(venueForm),
-    isModerationBlocked: Boolean(venueForm.isModerationBlocked),
-  }
+  const stepHref = (step) => buildVenuePortalHref(step, resolvedSlug, resolvedVenueId)
+  const goToStep = (step) => { window.location.href = stepHref(step) }
 
   return (
     <JoinPageShell
@@ -223,34 +195,40 @@ export default function PortalVenueEditPage({ currentStep, venueData, routeSlug,
       backLabel="Back to Venue"
       steps={[
         {
-          href: buildVenuePortalHref(1, resolvedSlug, resolvedVenueId),
+          href: stepHref(STEP_SLUG),
           label: "Slug",
-          isActive: currentStep === 1,
-          isWarning: currentStep !== 1 && !stepCompletionMap[1],
+          isActive: currentStep === STEP_SLUG,
+          isWarning: currentStep !== STEP_SLUG && !stepCompletionMap[STEP_SLUG],
         },
         {
-          href: buildVenuePortalHref(2, resolvedSlug, resolvedVenueId),
+          href: stepHref(STEP_PROFILE),
           label: "Venue Profile",
-          isActive: currentStep === 2,
-          isWarning: currentStep !== 2 && !stepCompletionMap[2],
+          isActive: currentStep === STEP_PROFILE,
+          isWarning: currentStep !== STEP_PROFILE && !stepCompletionMap[STEP_PROFILE],
         },
         {
-          href: buildVenuePortalHref(3, resolvedSlug, resolvedVenueId),
+          href: stepHref(STEP_DISCOVERABILITY),
+          label: "Categories and Regions",
+          isActive: currentStep === STEP_DISCOVERABILITY,
+          isWarning: currentStep !== STEP_DISCOVERABILITY && !stepCompletionMap[STEP_DISCOVERABILITY],
+        },
+        {
+          href: stepHref(STEP_MEDIA),
           label: "Media and Gallery",
-          isActive: currentStep === 3,
-          isWarning: currentStep !== 3 && !stepCompletionMap[3],
+          isActive: currentStep === STEP_MEDIA,
+          isWarning: currentStep !== STEP_MEDIA && !stepCompletionMap[STEP_MEDIA],
         },
         {
-          href: buildVenuePortalHref(4, resolvedSlug, resolvedVenueId),
+          href: stepHref(STEP_PRIMARY_CONTACTS),
           label: "Primary Contacts",
-          isActive: currentStep === 4,
-          isWarning: currentStep !== 4 && !stepCompletionMap[4],
+          isActive: currentStep === STEP_PRIMARY_CONTACTS,
+          isWarning: currentStep !== STEP_PRIMARY_CONTACTS && !stepCompletionMap[STEP_PRIMARY_CONTACTS],
         },
         {
-          href: buildVenuePortalHref(5, resolvedSlug, resolvedVenueId),
+          href: stepHref(STEP_PUBLIC_CONTACTS),
           label: "Public Contacts",
-          isActive: currentStep === 5,
-          isWarning: currentStep !== 5 && !stepCompletionMap[5],
+          isActive: currentStep === STEP_PUBLIC_CONTACTS,
+          isWarning: currentStep !== STEP_PUBLIC_CONTACTS && !stepCompletionMap[STEP_PUBLIC_CONTACTS],
         },
       ]}
       badge={resolvedVenueId ? `Venue ID: ${resolvedVenueId}` : null}
@@ -295,75 +273,34 @@ export default function PortalVenueEditPage({ currentStep, venueData, routeSlug,
         </div>
       ) : null}
 
-      {resolvedVenueId && currentStep === 2 ? (
-        <div className="card bg-base-100 shadow border border-base-300">
-          <div className="card-body gap-4">
-            <div>
-              <h2 className="card-title">Step 2: Venue Profile</h2>
-              <p className="text-sm text-base-content/70">Venue name and moderation status. FK-linked contact/media rows are managed separately.</p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <label className="form-control w-full md:col-span-2">
-                <div className="label"><span className="label-text">Venue Name</span></div>
-                <input
-                  type="text"
-                  className="input input-bordered w-full"
-                  value={venueForm.name}
-                  onChange={(event) => setVenueForm((prev) => ({ ...prev, name: event.target.value }))}
-                />
-              </label>
-
-              <label className="form-control w-full">
-                <div className="label"><span className="label-text">Moderation Blocked</span></div>
-                <select
-                  className="select select-bordered w-full"
-                  value={venueForm.isModerationBlocked ? "true" : "false"}
-                  onChange={(event) => setVenueForm((prev) => ({ ...prev, isModerationBlocked: event.target.value === "true" }))}
-                >
-                  <option value="false">No</option>
-                  <option value="true">Yes</option>
-                </select>
-              </label>
-            </div>
-
-            {formError ? (
-              <div className="alert alert-error"><span>{formError}</span></div>
-            ) : null}
-
-            <div className="flex gap-2 justify-between flex-wrap">
-              <Link href={buildVenuePortalHref(1, resolvedSlug, resolvedVenueId)} className="btn btn-sm btn-outline">Back to Slug</Link>
-              <button
-                type="button"
-                className="btn btn-sm btn-primary"
-                disabled={isSaving}
-                onClick={async () => {
-                  if (!venueForm.name.trim()) {
-                    setFormError("Venue name is required.")
-                    return
-                  }
-
-                  setFormError("")
-                  setIsSaving(true)
-
-                  try {
-                    const saved = await persistVenue(basePayload, setFormError)
-                    if (saved) {
-                      window.location.href = buildVenuePortalHref(3, resolvedSlug, resolvedVenueId)
-                    }
-                  } finally {
-                    setIsSaving(false)
-                  }
-                }}
-              >
-                {isSaving ? "Saving..." : "Continue to Media and Gallery"}
-              </button>
-            </div>
-          </div>
-        </div>
+      {resolvedVenueId && currentStep === STEP_PROFILE ? (
+        <VenueProfileStep
+          initialForm={venueForm}
+          title="Step 2: Venue Profile"
+          intro="Update your venue's name, description, address and events page. Changes show on your public venue page once saved."
+          backHref={stepHref(STEP_SLUG)}
+          backLabel="Back to Slug"
+          continueLabel="Save and continue to Categories"
+          onContinue={() => goToStep(STEP_DISCOVERABILITY)}
+          showSaveOnly
+        />
       ) : null}
 
-      {resolvedVenueId && currentStep === 3 ? (
+      {resolvedVenueId && currentStep === STEP_DISCOVERABILITY ? (
+        <VenueDiscoverabilityStep
+          initialForm={venueForm}
+          venueId={resolvedVenueId}
+          title="Step 3: Categories, Amenities and Regions"
+          intro="Choose how your venue is found: its categories, the amenities it offers, and the regions it serves."
+          backHref={stepHref(STEP_PROFILE)}
+          backLabel="Back to Venue Profile"
+          continueLabel="Save and continue to Media"
+          onContinue={() => goToStep(STEP_MEDIA)}
+          showSaveOnly
+        />
+      ) : null}
+
+      {resolvedVenueId && currentStep === STEP_MEDIA ? (
         <OrganizationMediaStep
           context="venue"
           entityId={resolvedVenueId}
@@ -376,14 +313,14 @@ export default function PortalVenueEditPage({ currentStep, venueData, routeSlug,
           setCoverFiles={setCoverFiles}
           setLogoFiles={setLogoFiles}
           setGalleryFiles={setGalleryFiles}
-          backHref={buildVenuePortalHref(2, resolvedSlug, resolvedVenueId)}
-          backLabel="Back to Venue Profile"
-          continueHref={buildVenuePortalHref(4, resolvedSlug, resolvedVenueId)}
+          backHref={stepHref(STEP_DISCOVERABILITY)}
+          backLabel="Back to Categories and Regions"
+          continueHref={stepHref(STEP_PRIMARY_CONTACTS)}
           continueLabel="Continue to Primary Contacts"
         />
       ) : null}
 
-      {resolvedVenueId && currentStep === 4 ? (
+      {resolvedVenueId && currentStep === STEP_PRIMARY_CONTACTS ? (
         <OrganizationPrimaryContactsStep
           context="venue"
           entityId={resolvedVenueId}
@@ -394,13 +331,13 @@ export default function PortalVenueEditPage({ currentStep, venueData, routeSlug,
           refreshContacts={refreshVenueContacts}
           contactError={contactError}
           setContactError={setContactError}
-          backHref={buildVenuePortalHref(3, resolvedSlug, resolvedVenueId)}
+          backHref={stepHref(STEP_MEDIA)}
           backLabel="Back to Media"
-          continueHref={buildVenuePortalHref(5, resolvedSlug, resolvedVenueId)}
+          continueHref={stepHref(STEP_PUBLIC_CONTACTS)}
         />
       ) : null}
 
-      {resolvedVenueId && currentStep === 5 ? (
+      {resolvedVenueId && currentStep === STEP_PUBLIC_CONTACTS ? (
         <OrganizationPublicContactsStep
           context="venue"
           entityId={resolvedVenueId}
@@ -413,7 +350,7 @@ export default function PortalVenueEditPage({ currentStep, venueData, routeSlug,
           publicSocialContacts={publicSocialContacts}
           publicUrlContacts={publicUrlContacts}
           refreshContacts={refreshVenueContacts}
-          backHref={buildVenuePortalHref(4, resolvedSlug, resolvedVenueId)}
+          backHref={stepHref(STEP_PRIMARY_CONTACTS)}
           backLabel="Back to Primary Contacts"
           continueHref={resolvedSlug ? `/portal/venue/${encodeURIComponent(resolvedSlug)}` : "/portal/venue"}
           continueLabel="Done - Back to Venue"
@@ -448,6 +385,13 @@ export async function getServerSideProps(context) {
 
     if (!venueId) {
       return { notFound: true }
+    }
+
+    // Only the venue's owners and staff may edit it. When the API can't confirm that, the visitor is sent away.
+    const access = await fetchVenueAccess({ req: context.req, id: venueId, fetchApi: serverFetch })
+    const destination = getEditRedirect(access)
+    if (destination) {
+      return { redirect: { destination, permanent: false } }
     }
 
     return {
