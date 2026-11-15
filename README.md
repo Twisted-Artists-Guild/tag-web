@@ -114,6 +114,7 @@ See the [npm dependency audit](./docs/dependency-audit.md) for the full dependen
 - Backend: [tag-api](https://github.com/TwistedArtistsGuild/tag-api)
 - Env template: `.env.example`
 - Env details: see `/docs/env.md`
+- Venues (pages, code layout, security notes, tests): see `/docs/venues.md`
 
 ### Environment Variable Policy
 - Commit placeholders only in `.env.example`.
