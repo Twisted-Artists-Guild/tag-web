@@ -12,6 +12,7 @@
 import TagSEO from "@/components/TagSEO"
 import BlogCard from "@/components/cards/card_blog"
 import serverFetch from "@/libs/serverFetch"
+import PageManagementPanel from "@/components/page-management-panel"
 
 const Blog = (props) => {
   const pageMetaData = {
@@ -31,6 +32,9 @@ const Blog = (props) => {
     
       <div className="min-h-screen flex flex-col bg-base-100 text-base-content">
         <TagSEO metadataProp={pageMetaData} canonicalSlug="blogs" />
+        <div className="container mx-auto px-4 pt-2">
+          <PageManagementPanel entityType="blog" isIndex />
+        </div>
         
         {/* Hero Section */}
         <section className="text-center py-12 bg-linear-to-br from-base-200 to-base-100">
