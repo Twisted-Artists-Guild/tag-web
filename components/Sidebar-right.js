@@ -12,11 +12,78 @@
 
 import Image from "next/image"
 import Link from "next/link"
+import { useEffect, useState } from "react"
 import { ShoppingCart, Trash2 } from "lucide-react"
 import { CART_PANEL_ID, useLayout } from "./LayoutProvider"
 import { useCart } from "@/components/cart/CartContext"
+import { useEntityImage } from "@/hooks/useEntityProfileImage"
 
 const formatMoney = (value) => `$${(Number.isFinite(value) ? value : 0).toFixed(2)}`
+
+function CartItem({ item, updateQuantity, removeFromCart, onNavigate }) {
+  const listing = item.listing || {}
+  const listingId = item.listingId || listing.listingID || listing.listingid || listing.id
+  const [resolvedLink, setResolvedLink] = useState(null)
+  const profileImage = useEntityImage("listing", listingId, "profile")
+  const title = listing.title || listing.titleID || "Unknown item"
+  const artist = listing.artist?.title || listing.vendor?.title || ""
+  const price = Number(listing.price)
+  const unitPrice = Number.isFinite(price) ? price : 0
+  const quantity = Number(item.quantity) || 1
+  const imageUrl = profileImage || listing.profilePic?.url || listing.profilePic?.URL || listing.defaultImageURL || listing.pictures?.[0]?.url || "/blank_image.png"
+  const knownListingPath = listing.artist?.path && listing.path
+    ? `/artists/${encodeURIComponent(listing.artist.path)}/listings/${encodeURIComponent(listing.path)}`
+    : ""
+  const listingPath = knownListingPath || (resolvedLink?.listingId === listingId ? resolvedLink.path : "")
+
+  useEffect(() => {
+    if (knownListingPath || !listingId) return undefined
+
+    const controller = new AbortController()
+    const resolveListingLink = async () => {
+      try {
+        const response = await fetch(`/api/listing/byID/${encodeURIComponent(listingId)}`, { signal: controller.signal })
+        if (!response.ok) throw new Error(`Listing lookup failed: ${response.status}`)
+        const details = await response.json()
+        if (!details.artist?.path || !details.path) throw new Error("Listing URL paths are missing")
+        if (!controller.signal.aborted) {
+          setResolvedLink({
+            listingId,
+            path: `/artists/${encodeURIComponent(details.artist.path)}/listings/${encodeURIComponent(details.path)}`,
+          })
+        }
+      } catch (error) {
+        if (!controller.signal.aborted) console.error(`Failed to load cart listing link for ${listingId}`, error)
+      }
+    }
+
+    resolveListingLink()
+    return () => controller.abort()
+  }, [knownListingPath, listingId])
+
+  return (
+    <li className="tag-cart__item">
+      <Image src={imageUrl} alt="" width={64} height={64} unoptimized className="tag-cart__image" />
+      <div className="tag-cart__meta">
+        <strong title={title}>
+          {listingPath ? <Link href={listingPath} className="link" onClick={onNavigate}>{title}</Link> : title}
+        </strong>
+        {artist ? <span title={artist}>{artist}</span> : null}
+        <div className="tag-cart__stepper" role="group" aria-label={`Quantity of ${title}`}>
+          <button type="button" aria-label={`Decrease quantity of ${title}`} onClick={() => updateQuantity(item.listingId, quantity - 1)}>−</button>
+          <output aria-live="polite">{quantity}</output>
+          <button type="button" aria-label={`Increase quantity of ${title}`} onClick={() => updateQuantity(item.listingId, quantity + 1)}>+</button>
+        </div>
+      </div>
+      <div className="tag-cart__right">
+        <b>{formatMoney(unitPrice * quantity)}</b>
+        <button type="button" className="tag-row__action" aria-label={`Remove ${title}`} title="Remove from cart" onClick={() => removeFromCart(item.listingId)}>
+          <Trash2 aria-hidden="true" />
+        </button>
+      </div>
+    </li>
+  )
+}
 
 /** Cart panel: items with a quantity stepper, totals and checkout, or an empty state. */
 export default function RightSidebar() {
@@ -65,37 +132,15 @@ export default function RightSidebar() {
         <div className="tag-panel__body">
           {hasItems ? (
             <ul className="tag-cart__list">
-              {items.map((item, index) => {
-                const listing = item.listing || {}
-                const title = listing.title || listing.titleID || "Unknown item"
-                const artist = listing.artist?.title || listing.vendor?.title || ""
-                const price = Number(listing.price)
-                const unitPrice = Number.isFinite(price) ? price : 0
-                const quantity = Number(item.quantity) || 1
-                const imageUrl = listing.defaultImageURL || listing.pictures?.[0]?.url || "/blank_image.png"
-                const key = item.listingId || item.id || `cart-item-${index}`
-
-                return (
-                  <li key={key} className="tag-cart__item">
-                    <Image src={imageUrl} alt="" width={64} height={64} unoptimized className="tag-cart__image" />
-                    <div className="tag-cart__meta">
-                      <strong title={title}>{title}</strong>
-                      {artist ? <span title={artist}>{artist}</span> : null}
-                      <div className="tag-cart__stepper" role="group" aria-label={`Quantity of ${title}`}>
-                        <button type="button" aria-label={`Decrease quantity of ${title}`} onClick={() => updateQuantity(item.listingId, quantity - 1)}>−</button>
-                        <output aria-live="polite">{quantity}</output>
-                        <button type="button" aria-label={`Increase quantity of ${title}`} onClick={() => updateQuantity(item.listingId, quantity + 1)}>+</button>
-                      </div>
-                    </div>
-                    <div className="tag-cart__right">
-                      <b>{formatMoney(unitPrice * quantity)}</b>
-                      <button type="button" className="tag-row__action" aria-label={`Remove ${title}`} title="Remove from cart" onClick={() => removeFromCart(item.listingId)}>
-                        <Trash2 aria-hidden="true" />
-                      </button>
-                    </div>
-                  </li>
-                )
-              })}
+              {items.map((item, index) => (
+                <CartItem
+                  key={item.listingId || item.id || `cart-item-${index}`}
+                  item={item}
+                  updateQuantity={updateQuantity}
+                  removeFromCart={removeFromCart}
+                  onNavigate={() => toggleRightSidebar(false)}
+                />
+              ))}
             </ul>
           ) : (
             <div className="tag-cart__empty">
