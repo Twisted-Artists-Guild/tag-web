@@ -436,16 +436,16 @@ export default function Header() {
       <header ref={headerRef} className={`tag-header${isHeaderVisible ? "" : " is-hidden"}`}>
         <div className="tag-container">
           <nav className="tag-header__nav" aria-label="Main">
-            <Link href="/" className="tag-header__brand" aria-label="Twisted Artists Guild home">
-              <Image src={TAG_LOGO} alt="" width={137} height={34} loading="eager" className="tag-logo" />
-            </Link>
+            <div className="tag-header__brands">
+              <Link href="/" className="tag-header__brand" aria-label="Twisted Artists Guild home">
+                <Image src={TAG_LOGO} alt="" width={137} height={34} loading="eager" className="tag-logo" />
+              </Link>
+              <Link href={BLOOMSCROLL_HREF} className="tag-header__brand tag-header__wide-only" aria-label="Bloomscroll, the art feed">
+                <Image src={BLOOMSCROLL_LOGO} alt="" width={183} height={34} className="tag-logo" />
+              </Link>
+            </div>
 
             <ul className="tag-header__links">
-              <li>
-                <Link href={BLOOMSCROLL_HREF} className="tag-header__bloom" aria-label="Bloomscroll, the art feed">
-                  <Image src={BLOOMSCROLL_LOGO} alt="" width={97} height={18} className="tag-logo" />
-                </Link>
-              </li>
               {NAV_LINKS.map((link) => (
                 <li key={link.href}>
                   <Link

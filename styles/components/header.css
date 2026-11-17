@@ -49,11 +49,22 @@
     transform: translateY(-100%);
   }
 
+  .tag-header > .tag-container {
+    max-width: none;
+  }
+
   .tag-header__nav {
+    display: grid;
+    grid-template-columns: minmax(max-content, 1fr) auto minmax(max-content, 1fr);
+    align-items: center;
+    gap: 16px;
+    height: 72px;
+  }
+
+  .tag-header__brands {
     display: flex;
     align-items: center;
-    gap: 24px;
-    height: 72px;
+    gap: 16px;
   }
 
   .tag-header__brand {
@@ -72,7 +83,8 @@
     display: flex;
     align-items: center;
     gap: 4px;
-    margin: 0 auto;
+    justify-content: center;
+    margin: 0;
     padding: 0;
     list-style: none;
     contain: layout paint;
@@ -109,32 +121,18 @@
     opacity: 1;
   }
 
-  .tag-header__bloom {
-    display: inline-flex;
-    align-items: center;
-    padding: 7px 12px;
-    margin-right: 6px;
-    border-radius: 10px;
-    border: 1px solid transparent;
-    background:
-      linear-gradient(var(--tag-bg-2), var(--tag-bg-2)) padding-box,
-      linear-gradient(135deg, rgba(var(--tag-indigo-rgb), 0.9), rgba(var(--tag-acc-rgb), 0.7)) border-box;
-  }
-
-  .tag-header__bloom img {
-    height: 18px;
-    width: auto;
-  }
-
   /* Narrow desktops (just above the mobile menu): tighter links keep the signed-in icons on screen */
   @media (min-width: 1060px) and (max-width: 1279px) {
     .tag-header__link {
-      padding: 10px 10px;
+      padding: 10px 8px;
     }
 
-    .tag-header__bloom {
-      padding: 7px 9px;
-      margin-right: 2px;
+    .tag-header__brands {
+      gap: 12px;
+    }
+
+    .tag-header__brand img {
+      height: 22px;
     }
   }
 
@@ -150,6 +148,7 @@
 
   .tag-header__actions {
     display: flex;
+    justify-self: end;
     align-items: center;
     gap: 8px;
   }
@@ -270,6 +269,7 @@
     }
 
     .tag-header__nav {
+      display: flex;
       height: 64px;
       justify-content: space-between;
     }
