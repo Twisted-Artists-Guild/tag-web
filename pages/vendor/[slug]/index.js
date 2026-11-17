@@ -3,6 +3,8 @@ import { useEffect, useMemo, useState } from "react"
 import { sanitizeCardHtml, sanitizeDefaultHtml, stripHtmlText } from "@/components/security/sanitize"
 import serverFetch from "@/libs/serverFetch"
 import useEntityLogo from "@/components/cards/useEntityLogo"
+import PageManagementPanel from "@/components/page-management-panel"
+import { splitVenueMedia } from "@/utils/venue-form"
 
 function normalizeSlug(value) {
   return String(value || "").trim().toLowerCase()
@@ -19,20 +21,7 @@ function pickField(record, ...keys) {
   return undefined
 }
 
-function splitMedia(files = []) {
-  const items = Array.isArray(files) ? files : []
-  const profile = items.find((item) => String(item?.name || item?.url || "").toLowerCase().includes("/profile/"))
-  const cover = items.find((item) => String(item?.name || item?.url || "").toLowerCase().includes("/cover/"))
-  const gallery = items.filter((item) => String(item?.name || item?.url || "").toLowerCase().includes("/gallery/"))
-
-  return {
-    profile,
-    cover,
-    gallery,
-  }
-}
-
-export default function VendorProfilePage({ vendor }) {
+export default function VendorProfilePage({ vendor, routeSlug }) {
   const [galleryState, setGalleryState] = useState({ loading: false, error: "", files: [] })
 
   const vendorId = Number(vendor?.vendorID || vendor?.VendorID || 0)
@@ -62,7 +51,7 @@ export default function VendorProfilePage({ vendor }) {
       setGalleryState({ loading: true, error: "", files: [] })
 
       try {
-        const folders = [""]
+        const folders = ["profile/", "cover/", "gallery/"]
         const results = await Promise.all(folders.map(async (folder) => {
           const prefix = `${mediaPrefix}${folder}`
           const query = new URLSearchParams({ container: "tagpictures", startPrefix: mediaPrefix, prefix })
@@ -90,10 +79,11 @@ export default function VendorProfilePage({ vendor }) {
     }
   }, [mediaPrefix])
 
-  const { profile, cover, gallery } = useMemo(() => splitMedia(galleryState.files), [galleryState.files])
+  const { profile, cover, gallery } = useMemo(() => splitVenueMedia(galleryState.files), [galleryState.files])
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 md:py-12 space-y-6">
+      <PageManagementPanel entityType="vendor" entity={vendor} slug={routeSlug} />
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex min-w-0 items-center gap-3">
           {activeLogoUrl ? <img src={activeLogoUrl} alt={`${vendorName} logo`} className="h-14 w-14 rounded-box border border-base-300 bg-base-100 object-contain p-1" /> : null}
@@ -183,14 +173,16 @@ export async function  getServerSideProps(context) {
   }
 
   try {
-    const vendor = await serverFetch(`/vendor/by-slug/${encodeURIComponent(slug)}`)
-    if (!vendor) {
+    const response = await serverFetch(`/vendor/by-slug/${encodeURIComponent(slug)}`)
+    if (!response.ok) {
       return { notFound: true }
     }
+    const vendor = await response.json()
 
     return {
       props: {
         vendor,
+        routeSlug: slug,
       },
     }
   } catch {

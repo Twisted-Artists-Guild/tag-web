@@ -10,7 +10,6 @@
  Open source · low-profit · human-first*/
 
 
-import Link from "next/link"
 import Image from "next/image"
 import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react"
@@ -21,9 +20,7 @@ import DynamicComments, { CommentTargetType } from "@/components/social/DynamicC
 import ImpressionReactions from "@/components/social/ImpressionReactions"
 import { useImpressions, ImpressionTargetType } from "@/hooks/useImpressions"
 import { useCommentCount } from "@/hooks/useCommentCount"
-import { defaultFieldClass } from "@/utils/formSettings"
-import { PERMISSIONS } from "@/utils/permissions";
-import { hasPermission } from "@/utils/authHelpers";
+import PageManagementPanel from "@/components/page-management-panel"
 import { sanitizeDefaultHtml, sanitizeCardHtml } from "@/components/security/sanitize";
 import serverFetch from "@/libs/serverFetch"
 
@@ -100,8 +97,6 @@ const BlogByslug = props => {
 		return () => window.cancelAnimationFrame(frameId)
 	}, [])
 
-	const canUpdate = hasPermission(session, PERMISSIONS.BLOG.UPDATE);
-	
 	// Get the blog ID - try multiple property names
 	const blogId = blog?.blogID || blog?.id || blog?.BlogID;
 	
@@ -178,7 +173,10 @@ const BlogByslug = props => {
 		/* suppressHydrationWarning prevents React from logging a hydration mismatch for this subtree.
 		   We also only render the rich `body` HTML after mount to avoid SSR/CSR mismatch. */
 		
-		<div className="flex flex-col items-center min-h-screen w-full py-8 gap-8" suppressHydrationWarning>
+		<div className="flex flex-col items-center min-h-screen w-full pb-8" suppressHydrationWarning>
+			<div className="w-full max-w-6xl px-4">
+				<PageManagementPanel entityType="blog" entity={blog} slug={blog.path} />
+			</div>
 			<style jsx global>{`
 				.blog-rich-content h3,
 				.blog-rich-content h4,
@@ -364,17 +362,8 @@ const BlogByslug = props => {
 				)}
 			</div>
 
-			{mounted && canUpdate && (
-			<Link
-				href={`/portal/staff/tagblog/${blogId}/update`}
-				className={`${defaultFieldClass} font-fredoka text-xl text-[#e9ecef] transition hover:tracking-wider hover:text-transparent hover:bg-linear-to-r from-[#f1c0e8] to-[#8EECF5] hover:font-bold`}
-			>
-				Update this blog
-			</Link>
-			)}
-
 			{/* Comments Section - Updated to use DynamicComments */}
-			<div id="comments-section" className="w-[75%] rounded-box border border-base-300 bg-base-100 p-4">
+			<div id="comments-section" className="mt-8 w-[75%] rounded-box border border-base-300 bg-base-100 p-4">
 				<div className="mb-2 text-xs font-semibold uppercase tracking-wide text-base-content/60">Comments</div>
 				{blogId ? (
 					<DynamicComments

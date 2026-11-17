@@ -50,6 +50,45 @@ test('session token is read from the secure or plain next-auth cookie, and is em
   assert.equal(getSessionTokenFromRequest(undefined), '')
 })
 
+test('session chunks are joined numerically for both NextRequest and server-side cookie objects', () => {
+  for (const name of ['next-auth.session-token', '__Secure-next-auth.session-token']) {
+    const entries = Array.from({ length: 12 }, (_, index) => ({
+      name: `${name}.${index}`,
+      value: `${index}-`,
+    })).reverse()
+    const expected = '0-1-2-3-4-5-6-7-8-9-10-11-'
+    assert.equal(getSessionTokenFromRequest({ cookies: { getAll: () => entries } }), expected)
+    assert.equal(getSessionTokenFromRequest({ cookies: Object.fromEntries(entries.map(({ name, value }) => [name, value])) }), expected)
+  }
+})
+
+test('session cookie families are never mixed and incomplete chunks are not forwarded', () => {
+  assert.equal(getSessionTokenFromRequest({ cookies: {
+    '__Secure-next-auth.session-token.0': 'secure-',
+    '__Secure-next-auth.session-token.1': 'token',
+    'next-auth.session-token': 'plain',
+  } }), 'secure-token')
+  assert.equal(getSessionTokenFromRequest({ cookies: {
+    'next-auth.session-token.0': 'first',
+    'next-auth.session-token.2': 'third',
+  } }), '')
+  assert.equal(getSessionTokenFromRequest({ cookies: { 'next-auth.session-token.1': 'missing-first' } }), '')
+  assert.equal(getSessionTokenFromRequest({ cookies: { 'next-auth.session-token.invalid': 'ignored' } }), '')
+})
+
+test('venue access forwards a chunked session as a complete bearer token', async () => {
+  const req = { cookies: {
+    'next-auth.session-token.1': 'signature',
+    'next-auth.session-token.0': 'header.payload.',
+  } }
+  const access = await fetchVenueAccess({ req, id: 25, fetchApi: async (path, options) => {
+    assert.equal(path, '/venue/25/access')
+    assert.equal(options.headers.Authorization, 'Bearer header.payload.signature')
+    return okResponse({ canManage: true, isOwner: true })
+  } })
+  assert.equal(access.isOwner, true)
+})
+
 test('venue lookup sends the session token and prefers the numeric id over a stale slug', async () => {
   const calls = []
   const fetchApi = async (path, options) => {
