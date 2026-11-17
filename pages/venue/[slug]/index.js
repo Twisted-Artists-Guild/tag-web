@@ -6,6 +6,7 @@ import config from "@/config"
 import serverFetch from "@/libs/serverFetch"
 import { fetchVenueForPage, splitVenueMedia } from "@/utils/venue-form"
 import { buildVenueProfileView, selectVenueEvents, serializeJsonLd } from "@/utils/venue-page"
+import PageManagementPanel from "@/components/page-management-panel"
 
 function normalizeSlug(value) {
   return String(value || "").trim().toLowerCase()
@@ -90,6 +91,9 @@ export default function VenueProfilePage({ venue, contacts, events }) {
           <script key="venue-jsonld" type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(headView.jsonLd) }} />
         </Head>
       ) : null}
+      <div className="mx-auto max-w-6xl px-4 pt-4">
+        <PageManagementPanel entityType="venue" entity={venue} slug={headView.slug} />
+      </div>
       <VenueProfile view={view} gallery={{ loading: galleryState.loading, error: galleryState.error }} />
     </>
   )

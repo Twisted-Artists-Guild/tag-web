@@ -593,7 +593,7 @@ function CreditsAdder({ credits, onChange, artists, users, onSave, saving, roleO
   )
 }
 
-export default function GalleryManager({ entityType, entityId, entityLabel, currentUser, basePrefix, lockedRootPrefix, folderKind = "gallery", title = "Gallery Manager", allowVideo, singleImageMode = false, allowDeleteSingleImage = false, showFolderBrowser = false, onFilesChanged }) {
+export default function GalleryManager({ entityType, entityId, entityLabel, currentUser, basePrefix, lockedRootPrefix, folderKind = "gallery", title = "Gallery Manager", allowVideo, singleImageMode = false, allowDeleteSingleImage = false, showFolderBrowser = false, onFilesChanged, onSaved }) {
   const normalizedFolderKind = String(folderKind || "gallery").trim().toLowerCase()
   const galleryPrefix = basePrefix || getManagedPrefix(entityType, entityId, normalizedFolderKind)
   const startPrefix = lockedRootPrefix || galleryPrefix
@@ -1091,6 +1091,7 @@ export default function GalleryManager({ entityType, entityId, entityLabel, curr
       localStorage.setItem(localWarningsKey, JSON.stringify(next))
       setWarningsDirty(false)
       showMessage("Content warning tags saved.")
+      onSaved?.()
     } catch {
       showError("Failed to save content warning tags.")
     } finally {
@@ -1559,6 +1560,7 @@ export default function GalleryManager({ entityType, entityId, entityLabel, curr
       await loadFiles()
       setOrderDirty(false)
       showMessage("Gallery order saved.")
+      onSaved?.()
     } catch (err) {
       showError(err.message || "Failed to save order.")
     } finally {
@@ -1750,6 +1752,7 @@ export default function GalleryManager({ entityType, entityId, entityLabel, curr
 
       showMessage(`${folderDisplayName} image set as active.`)
       await loadFiles()
+      onSaved?.()
     } catch (err) {
       showError(err.message || `Failed to set active ${folderDisplayName.toLowerCase()} image.`)
     } finally {
@@ -1813,6 +1816,7 @@ export default function GalleryManager({ entityType, entityId, entityLabel, curr
 
       setPicMetaDirty(false)
       showMessage("Image metadata saved.")
+      onSaved?.()
     } catch (err) {
       showError(err.message || "Failed to save metadata.")
     } finally {
@@ -1858,6 +1862,7 @@ export default function GalleryManager({ entityType, entityId, entityLabel, curr
       localStorage.setItem(localCreditsKey, JSON.stringify(next))
       setPicCreditsDirty(false)
       showMessage("Image credits saved.")
+      onSaved?.()
     } catch (err) {
       showError(err.message || "Failed to save credits.")
     } finally {
@@ -1987,6 +1992,7 @@ export default function GalleryManager({ entityType, entityId, entityLabel, curr
       localStorage.setItem(localCreditsKey, JSON.stringify(next))
       setVideoCreditsDirty(false)
       showMessage("Video credits saved.")
+      onSaved?.()
     } catch (err) {
       showError(err.message || "Failed to save video credits.")
     } finally {

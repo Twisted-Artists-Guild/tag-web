@@ -12,6 +12,7 @@ import TagSEO from "@/components/TagSEO"
 import longDateOptions from "@/utils/longdateoptions"
 import ListingCardSmall from "@/components/cards/card_listing_small"
 import serverFetch from "@/libs/serverFetch"
+import PageManagementPanel from "@/components/page-management-panel"
 
 function ContestView(props) {
   const [contestState, setContestState] = useState(props.contest || {})
@@ -108,6 +109,9 @@ function ContestView(props) {
   return (
     <div className="min-h-screen bg-base-100 text-base-content">
       <TagSEO metadataProp={pageMetaData} canonicalSlug={canonicalSlug} />
+      <div className="container mx-auto px-4">
+        <PageManagementPanel entityType="contest" entity={contest} slug={slug} />
+      </div>
 
       <header className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">

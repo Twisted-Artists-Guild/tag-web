@@ -10,7 +10,6 @@
  Open source · low-profit · human-first*/
 
 import Image from "next/image"
-import Link from "next/link"
 import { useSession } from "next-auth/react"
 import { useState, useEffect, useMemo } from "react"
 import dynamic from "next/dynamic"
@@ -22,7 +21,7 @@ import ArtistCard from "@/components/cards/card_artist"
 import ListingCardSmall from "@/components/cards/card_listing_small"
 import ContactCard from "@/components/cards/card_contactList"
 import DynamicComments, { CommentTargetType } from "@/components/social/DynamicComments"
-import { isArtist, isStaff, isAdmin } from "@/utils/authHelpers"
+import PageManagementPanel from "@/components/page-management-panel"
 import { sanitizeDefaultHtml } from "@/components/security/sanitize"
 import { pickContactCardData } from "@/utils/artistContactUtils"
 import { getArtistRegions } from "@/utils/artist-regions"
@@ -96,12 +95,6 @@ const TopListingCard = ({ listing }) => {
 const Artist = (props) => {
   const { data: session } = useSession()
   const { setPageSections } = useAppContext()
-
-  const isArtistOnly = isArtist(session) && !isStaff(session) && !isAdmin(session)
-  const canUpdate =
-    (isArtistOnly && props.artist.userId == session?.user?.id) ||
-    isStaff(session) ||
-    isAdmin(session)
 
   const [searchTerm, setSearchTerm] = useState("")
 
@@ -273,6 +266,7 @@ const Artist = (props) => {
     
       <div className="mx-auto p-4 relative max-w-6xl bg-base-200 text-base-content">
         <TagSEO metadataProp={pageMetaData} canonicalSlug={`artists/${props.slug}`} />
+        <PageManagementPanel entityType="artist" entity={props.artist} slug={props.slug} />
 
         {/* Cover Picture */}
         <div className="relative w-full h-60 md:h-96 overflow-hidden rounded-lg shadow-lg">
@@ -336,12 +330,6 @@ const Artist = (props) => {
 
             {/* Artist Actions */}
             <div className="flex flex-wrap gap-3 mt-6">
-              {canUpdate && (
-                <Link href={`/portal/artist/${props.slug}/`} className="btn btn-primary">
-                  Update Artist Page
-                </Link>
-              )}
-              
               {/* Send Message Button */}
               {session?.user && session.user.id !== props.artist.userId && (
                 <SendMessageButton
@@ -463,13 +451,6 @@ const Artist = (props) => {
               </div>
             </div>
 
-            {canUpdate && (
-              <div className="mt-8 text-center">
-                <Link href={`/artists/${props.slug}/update`} className="btn btn-primary">
-                  Update this artist page
-                </Link>
-              </div>
-            )}
           </>
         )}
       </div>
