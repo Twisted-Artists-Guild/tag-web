@@ -14,8 +14,8 @@
 export const NAV_LINKS = [
   { href: "/artists", label: "Artists" },
   { href: "/art/", label: "Browse Art" },
-  { href: "/events", label: "Events" },
   { href: "/venues", label: "Venues", alsoActiveOn: ["/venue"] },
+  { href: "/events", label: "Events" },
   { href: "/blogs", label: "Blog" },
   { href: "/news", label: "News" },
   { href: "/contests/", label: "Contests" },

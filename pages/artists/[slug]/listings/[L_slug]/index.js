@@ -19,6 +19,7 @@ import { PERMISSIONS } from "@/utils/permissions"
 import { hasPermission } from "@/utils/authHelpers"
 import DynamicComments, { CommentTargetType } from "@/components/social/DynamicComments"
 import { useEntityImage } from "@/hooks/useEntityProfileImage"
+import PageManagementPanel from "@/components/page-management-panel"
 
 const PhotoGallery = dynamic(() => import("@/components/cards/card_photoGallery"), { ssr: false })
 
@@ -421,6 +422,7 @@ const ListingDetails = () => {
     
       <div className="container mx-auto px-4 py-6 bg-base-200 text-base-content">
         <TagSEO metadataProp={pageMetaData} canonicalSlug={canonicalSlug} />
+        <PageManagementPanel entityType="listing" entity={listing} slug={L_slug} artistSlug={slug} />
         <div className="mb-8">
           {coverImage ? (
             <figure className="relative mb-8 aspect-video overflow-hidden rounded-box bg-base-100">

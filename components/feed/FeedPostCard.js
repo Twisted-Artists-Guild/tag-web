@@ -9,7 +9,7 @@
 
  Open source - low-profit - human-first*/
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -22,6 +22,7 @@ import SharedPreview from '@/components/feed/SharedPreview';
 import SharePopover from '@/components/feed/SharePopover';
 import FeedPostComments from '@/components/feed/FeedPostComments';
 import { getIdentityGlowStyle } from '@/utils/identityGlow';
+import { useEntityProfileImage } from '@/hooks/useEntityProfileImage';
 import {
     IoPersonOutline,
     IoStorefrontOutline,
@@ -44,12 +45,47 @@ const ENTITY_ICONS = {
     Listing: IoImageOutline,
 };
 
+const authorProfiles = new Map();
+
 export default function FeedPostCard({ post, showIdentityGlow = true }) {
     const { data: session } = useSession();
     const [showShare, setShowShare] = useState(false);
     const [showComments, setShowComments] = useState(false);
     const [postDeleted, setPostDeleted] = useState(false);
+    const [resolvedAuthor, setResolvedAuthor] = useState(null);
+    const authorUserId = Number(post.authorUserID);
+    const profileImage = useEntityProfileImage('user', authorUserId);
+    const authorProfile = resolvedAuthor?.userId === authorUserId ? resolvedAuthor.profile : null;
+    const authorName = authorProfile?.preferredName?.trim() || authorProfile?.username?.trim() || post.authorName || 'Anonymous';
+    const authorImage = profileImage || authorProfile?.profilePic || post.authorImage;
     const EntityIcon = ENTITY_ICONS[post.authorEntityType] || IoPersonOutline;
+
+    useEffect(() => {
+        if (!Number.isInteger(authorUserId) || authorUserId <= 0) return undefined;
+
+        let cancelled = false;
+        if (!authorProfiles.has(authorUserId)) {
+            const request = fetch(`/api/user-details/${authorUserId}`)
+                .then(async (response) => {
+                    if (!response.ok) throw new Error(`Author profile lookup failed: ${response.status}`);
+                    return response.json();
+                })
+                .catch((error) => {
+                    authorProfiles.delete(authorUserId);
+                    console.error(`Failed to load feed author ${authorUserId}`, error);
+                    return null;
+                });
+            authorProfiles.set(authorUserId, request);
+        }
+
+        authorProfiles.get(authorUserId).then((profile) => {
+            if (!cancelled && profile) setResolvedAuthor({ userId: authorUserId, profile });
+        });
+
+        return () => {
+            cancelled = true;
+        };
+    }, [authorUserId]);
 
     const {
         impressions,
@@ -100,15 +136,15 @@ export default function FeedPostCard({ post, showIdentityGlow = true }) {
                         id: post.authorUserID || post.authorEntityName,
                     }) : undefined}
                 >
-                    {post.authorImage ? (
-                        <Image src={post.authorImage} alt={post.authorName || 'User'} width={42} height={42} />
+                    {authorImage ? (
+                        <Image src={authorImage} alt={authorName} width={42} height={42} />
                     ) : (
-                        <span role="img" aria-label={post.authorName || 'User'}>{(post.authorName || 'A').trim().charAt(0).toUpperCase()}</span>
+                        <span role="img" aria-label={authorName}>{authorName.trim().charAt(0).toUpperCase()}</span>
                     )}
                 </div>
                 <div className="tag-bs-post__who">
                     <span className="tag-bs-post__name">
-                        {post.authorName || 'Anonymous'}
+                        {authorName}
                         {post.authorEntityName && (
                             <Link href={post.authorEntityPath || '#'} className="tag-bs-post__entity">
                                 <EntityIcon aria-hidden="true" /> {post.authorEntityName}

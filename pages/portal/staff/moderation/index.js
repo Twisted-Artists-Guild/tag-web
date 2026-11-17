@@ -13,6 +13,8 @@ import { useState, useEffect, useCallback } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import TagSEO from '@/components/TagSEO';
+import Link from 'next/link';
+import { getModerationPageContext } from '@/utils/page-management';
 import {
     IoFlagOutline,
     IoShieldCheckmarkOutline,
@@ -30,7 +32,7 @@ import {
 } from 'react-icons/io5';
 
 const STATUS_OPTIONS = ['New', 'UnderReview', 'Resolved', 'Dismissed'];
-const TARGET_TYPES = ['Listing', 'Artist', 'User', 'Comment', 'Message', 'Blog', 'Event', 'FeedPost'];
+const TARGET_TYPES = ['Listing', 'Artist', 'User', 'Comment', 'Message', 'Blog', 'Event', 'FeedPost', 'Vendor', 'Venue', 'Contest'];
 const PRIORITY_LABELS = { 0: 'Low', 1: 'Normal', 2: 'High', 3: 'Critical' };
 const PRIORITY_COLORS = { 0: 'badge-ghost', 1: 'badge-info', 2: 'badge-warning', 3: 'badge-error' };
 const STATUS_COLORS = { New: 'badge-warning', UnderReview: 'badge-info', Resolved: 'badge-success', Dismissed: 'badge-ghost' };
@@ -48,6 +50,7 @@ const ACTION_TYPES = [
 export default function ModerationDashboard() {
     const { data: session, status: authStatus } = useSession();
     const router = useRouter();
+    const pageContext = getModerationPageContext(router.query);
 
     const [reports, setReports] = useState([]);
     const [totalCount, setTotalCount] = useState(0);
@@ -57,8 +60,11 @@ export default function ModerationDashboard() {
 
     // Filters
     const [filterStatus, setFilterStatus] = useState('');
-    const [filterTargetType, setFilterTargetType] = useState('');
+    const [targetTypeOverride, setTargetTypeOverride] = useState(null);
     const [filterPriority, setFilterPriority] = useState('');
+    const contextTargetType = pageContext?.targetType || '';
+    const filterTargetType = targetTypeOverride?.context === contextTargetType
+        ? targetTypeOverride.value : contextTargetType;
 
     // Detail view
     const [selectedReport, setSelectedReport] = useState(null);
@@ -74,6 +80,7 @@ export default function ModerationDashboard() {
     }, [authStatus, router]);
 
     const fetchReports = useCallback(async () => {
+        if (!router.isReady) return;
         setLoading(true);
         try {
             const params = new URLSearchParams({ page, pageSize: 25 });
@@ -92,7 +99,7 @@ export default function ModerationDashboard() {
             console.error("Failed to load reports", err);
         }
         setLoading(false);
-    }, [page, filterStatus, filterTargetType, filterPriority]);
+    }, [page, filterStatus, filterTargetType, filterPriority, router.isReady]);
 
     useEffect(() => { fetchReports(); }, [fetchReports]);
 
@@ -168,6 +175,13 @@ export default function ModerationDashboard() {
                     </div>
                 </div>
 
+                {pageContext ? (
+                    <div className="rounded-box border border-base-300 bg-base-200 p-3 mb-4 text-sm">
+                        <p>Page context: {pageContext.targetType} #{pageContext.targetId}. Use the content-type filter below; reports are not restricted to this individual page.</p>
+                        {pageContext.targetUrl ? <Link href={pageContext.targetUrl} className="link">Return to source page</Link> : null}
+                    </div>
+                ) : null}
+
                 {/* Filters */}
                 <div className="card bg-base-100 shadow-sm border border-base-300 mb-6">
                     <div className="card-body py-3 flex flex-row flex-wrap items-center gap-3">
@@ -176,7 +190,7 @@ export default function ModerationDashboard() {
                             <option value="">All Statuses</option>
                             {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
                         </select>
-                        <select className="select select-bordered select-sm" value={filterTargetType} onChange={(e) => { setFilterTargetType(e.target.value); setPage(1); }}>
+                        <select className="select select-bordered select-sm" value={filterTargetType} onChange={(e) => { setTargetTypeOverride({ context: contextTargetType, value: e.target.value }); setPage(1); }}>
                             <option value="">All Types</option>
                             {TARGET_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                         </select>
