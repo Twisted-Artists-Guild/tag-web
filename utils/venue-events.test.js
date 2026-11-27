@@ -178,6 +178,36 @@ test('a description that is only empty markup does not count', () => {
   assert.ok(getEventPublishProblems({ ...validForm(), description: '<p> </p><p><br></p>' }, NOW).includes('Add a description.'))
 })
 
+test('a blank form checks nothing about the new ticketing fields, and bad values are named', () => {
+  assert.deepEqual(validateEventForm({ ...validForm(), timeZoneId: 'America/Chicago', checkInWindowMinutes: '120', salesStart: '2026-06-20T09:00', salesEnd: '2026-07-01T18:00' }), {})
+  assert.ok(validateEventForm({ ...validForm(), checkInWindowMinutes: '361' }).checkInWindowMinutes)
+  assert.ok(validateEventForm({ ...validForm(), checkInWindowMinutes: '-1' }).checkInWindowMinutes)
+  assert.ok(validateEventForm({ ...validForm(), salesStart: '2026-06-20T09:00', salesEnd: '2026-06-19T09:00' }).salesEnd)
+  assert.ok(validateEventForm({ ...validForm(), salesEnd: '2026-07-02T09:00' }).salesEnd)
+})
+
+test('the time zone, sales window and check-in window round-trip, and unset sales times are not sent', () => {
+  const form = eventToForm({
+    eventID: 9,
+    title: 'Class',
+    timeZoneId: 'America/Chicago',
+    salesStart: '2026-06-20T09:00:00Z',
+    checkInWindowMinutes: 90,
+    startTime: '2026-07-01T19:00:00Z',
+    endTime: '2026-07-01T22:00:00Z',
+  })
+  assert.equal(form.timeZoneId, 'America/Chicago')
+  assert.equal(form.salesStart, '2026-06-20T09:00')
+  assert.equal(form.salesEnd, '')
+
+  const payload = buildEventPayload(form)
+  assert.equal(payload.timeZoneId, 'America/Chicago')
+  assert.equal(payload.salesStart, '2026-06-20T09:00:00Z')
+  assert.equal(payload.checkInWindowMinutes, 90)
+  assert.ok(!('salesEnd' in payload))
+  assert.equal(buildEventPayload({ ...validForm(), checkInWindowMinutes: '' }).checkInWindowMinutes, 60)
+})
+
 test('doors after the start, an end before the start and an event long over are all reasons not to publish', () => {
   assert.ok(getEventPublishProblems({ ...validForm(), doors: '2026-07-01T20:00' }, NOW).includes('Doors must open at or before the start time.'))
   assert.ok(getEventPublishProblems({ ...validForm(), endTime: '2026-07-01T18:00' }, NOW).includes('The end time must be after the start time.'))

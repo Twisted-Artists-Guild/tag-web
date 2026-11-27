@@ -78,6 +78,10 @@ export function normalizeEvent(raw) {
     artistId: Number(read('artistID', 'ArtistID')) || null,
     artistName: text(raw?.artist?.title ?? raw?.Artist?.Title ?? raw?.artist?.Title ?? raw?.Artist?.title),
     canManage: read('canManage', 'CanManage') === true,
+    timeZoneId: text(read('timeZoneId', 'TimeZoneId')),
+    salesStart: text(read('salesStart', 'SalesStart')),
+    salesEnd: text(read('salesEnd', 'SalesEnd')),
+    checkInWindowMinutes: read('checkInWindowMinutes', 'CheckInWindowMinutes') ?? DEFAULT_CHECK_IN_WINDOW_MINUTES,
   }
 }
 
@@ -109,8 +113,43 @@ export function describeWhen(event) {
 
 // ---- the form
 
+export const MAX_CHECK_IN_WINDOW_MINUTES = 360
+export const DEFAULT_CHECK_IN_WINDOW_MINUTES = 60
+
+// Zones offered in the form. The API accepts any IANA zone, so an event that already has another one still shows it.
+export const TIME_ZONES = [
+  'America/New_York',
+  'America/Chicago',
+  'America/Denver',
+  'America/Phoenix',
+  'America/Los_Angeles',
+  'America/Anchorage',
+  'Pacific/Honolulu',
+  'America/Toronto',
+  'America/Vancouver',
+  'Europe/London',
+  'Europe/Paris',
+  'Europe/Berlin',
+  'Australia/Sydney',
+  'UTC',
+]
+
 export function emptyEventForm() {
-  return { title: '', description: '', pointOfContact: '', startTime: '', endTime: '', doors: '', cost: '', minimumAge: '', maxOccupancy: '' }
+  return {
+    title: '',
+    description: '',
+    pointOfContact: '',
+    startTime: '',
+    endTime: '',
+    doors: '',
+    cost: '',
+    minimumAge: '',
+    maxOccupancy: '',
+    timeZoneId: '',
+    salesStart: '',
+    salesEnd: '',
+    checkInWindowMinutes: '',
+  }
 }
 
 // A date-time input wants YYYY-MM-DDTHH:mm.
@@ -131,6 +170,10 @@ export function eventToForm(raw) {
     cost: number(event.cost),
     minimumAge: number(event.minimumAge),
     maxOccupancy: number(event.maxOccupancy),
+    timeZoneId: event.timeZoneId,
+    salesStart: toInputTime(event.salesStart),
+    salesEnd: toInputTime(event.salesEnd),
+    checkInWindowMinutes: String(event.checkInWindowMinutes ?? DEFAULT_CHECK_IN_WINDOW_MINUTES),
   }
 }
 
@@ -160,6 +203,17 @@ export function validateEventForm(form) {
   if (start && end && end <= start) errors.endTime = 'The end must be after the start.'
   if (text(form?.doors) && !clock(form.doors)) errors.doors = 'Choose a valid time for doors.'
 
+  const salesStart = clock(form?.salesStart)
+  const salesEnd = clock(form?.salesEnd)
+  if (text(form?.salesStart) && !salesStart) errors.salesStart = 'Choose a valid time.'
+  if (text(form?.salesEnd) && !salesEnd) errors.salesEnd = 'Choose a valid time.'
+  if (salesStart && salesEnd && salesEnd <= salesStart) errors.salesEnd = 'Sales must end after they start.'
+  else if (salesEnd && end && salesEnd > end) errors.salesEnd = 'Sales must end before the event ends.'
+
+  const checkIn = checkNumber(form?.checkInWindowMinutes, { min: 0, max: MAX_CHECK_IN_WINDOW_MINUTES, integer: true, label: 'Check-in' })
+  if (checkIn) errors.checkInWindowMinutes = checkIn
+  if (text(form?.timeZoneId).length > 64) errors.timeZoneId = 'Choose a time zone from the list.'
+
   const cost = checkNumber(form?.cost, { min: 0, max: 1000000, integer: false, label: 'The cost' })
   if (cost) errors.cost = cost
   const age = checkNumber(form?.minimumAge, { min: 0, max: 120, integer: true, label: 'The minimum age' })
@@ -184,6 +238,7 @@ export function getEventPublishProblems(form, now = new Date()) {
   if (!start || !end) problems.push('Choose when the event starts and ends.')
   else if (end <= start) problems.push('The end time must be after the start time.')
   if (start && clock(form?.doors) && clock(form.doors) > start) problems.push('Doors must open at or before the start time.')
+  if (end && clock(form?.salesEnd) && clock(form.salesEnd) > end) problems.push('Ticket sales must end before the event ends.')
   if (end && end < new Date(now.getTime() - 14 * 3600 * 1000).toISOString().slice(0, 16)) problems.push('The event has already ended.')
   return problems
 }
@@ -201,6 +256,11 @@ export function buildEventPayload(form) {
     cost: number(form.cost),
     minimumAge: number(form.minimumAge),
     maxOccupancy: number(form.maxOccupancy),
+    timeZoneId: text(form.timeZoneId),
+    checkInWindowMinutes: text(form.checkInWindowMinutes) ? Number(form.checkInWindowMinutes) : DEFAULT_CHECK_IN_WINDOW_MINUTES,
+    // The API keeps a sales time that is left out, so only send the ones that are set.
+    ...(clock(form.salesStart) ? { salesStart: fromInputTime(clock(form.salesStart)) } : {}),
+    ...(clock(form.salesEnd) ? { salesEnd: fromInputTime(clock(form.salesEnd)) } : {}),
   }
 }
 
