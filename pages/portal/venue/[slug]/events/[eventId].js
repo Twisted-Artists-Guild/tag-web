@@ -12,6 +12,7 @@
 import { getServerSession } from "next-auth/next"
 import TagSEO from "@/components/TagSEO"
 import VenueEventForm from "@/components/venues/VenueEventForm"
+import EventHostsPanel from "@/components/venues/EventHostsPanel"
 import serverFetch from "@/libs/serverFetch"
 import { authOptions } from "@/pages/api/auth/[...nextauth]"
 import { fetchJsonWithSession } from "@/utils/venue-form"
@@ -30,8 +31,9 @@ export default function VenueEventPage({ venue, event, notice }) {
 	return (
 		<div className="min-h-screen bg-base-200 p-4 md:p-8">
 			<TagSEO metadataProp={pageMetaData} canonicalSlug={`portal/venue/${venue.slug}/events/${event ? event.id : "new"}`} />
-			<div className="mx-auto max-w-3xl">
+			<div className="mx-auto max-w-3xl space-y-6">
 				<VenueEventForm key={event ? event.id : "new"} venue={venue} event={event} notice={notice} />
+				{event ? <EventHostsPanel eventId={event.id} /> : null}
 			</div>
 		</div>
 	)

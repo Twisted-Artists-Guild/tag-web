@@ -4,6 +4,15 @@ export const VENUE_PAGE_SIZE = 12
 const MAX_VALUES = 10
 const MAX_TEXT = 100
 
+export const SORT_OPTIONS = Object.freeze([
+  { value: 'name', label: 'Name (A to Z)' },
+  { value: 'newest', label: 'Newest first' },
+  { value: 'oldest', label: 'Oldest first' },
+  { value: 'category', label: 'Category' },
+])
+const SORT_VALUES = SORT_OPTIONS.map((option) => option.value)
+export const DEFAULT_SORT = 'name'
+
 export const EMPTY_FILTERS = Object.freeze({
   q: '',
   category: [],
@@ -12,10 +21,16 @@ export const EMPTY_FILTERS = Object.freeze({
   city: '',
   state: '',
   zip: '',
+  sort: DEFAULT_SORT,
 })
 
 const LIST_KEYS = ['category', 'tag', 'region']
 const TEXT_KEYS = ['q', 'city', 'state', 'zip']
+
+function cleanSort(value) {
+  const sort = String(Array.isArray(value) ? value[0] ?? '' : value ?? '').trim().toLowerCase()
+  return SORT_VALUES.includes(sort) ? sort : DEFAULT_SORT
+}
 
 function asArray(value) {
   if (Array.isArray(value)) return value
@@ -41,10 +56,11 @@ export function parseVenueListQuery(query) {
   const filters = { ...EMPTY_FILTERS, category: [], tag: [], region: [] }
   for (const key of TEXT_KEYS) filters[key] = cleanText(source[key])
   for (const key of LIST_KEYS) filters[key] = cleanList(key, source[key])
+  filters.sort = cleanSort(source.sort)
   return filters
 }
 
-// The query for the page URL: only the filters that are set, under the same names the API uses.
+// The query for the page URL: only the filters that are set, under the same names the API uses. The default sort is left out.
 export function buildPageQuery(filters) {
   const query = {}
   for (const key of TEXT_KEYS) {
@@ -55,6 +71,8 @@ export function buildPageQuery(filters) {
     const values = cleanList(key, filters?.[key])
     if (values.length > 0) query[key] = values
   }
+  const sort = cleanSort(filters?.sort)
+  if (sort !== DEFAULT_SORT) query.sort = sort
   return query
 }
 
@@ -64,6 +82,7 @@ export function buildApiQuery(filters, { cursor = '', limit = VENUE_PAGE_SIZE } 
   const query = buildPageQuery(filters)
   for (const key of TEXT_KEYS) if (query[key]) params.set(key, query[key])
   for (const key of LIST_KEYS) for (const value of query[key] || []) params.append(key, value)
+  if (query.sort) params.set('sort', query.sort)
   if (cursor) params.set('cursor', cursor)
   params.set('limit', String(limit))
   return params.toString()
@@ -73,9 +92,10 @@ export function hasActiveFilters(filters) {
   return activeFilterCount(filters) > 0
 }
 
-// How many separate filters are set (a search box counts once, a list of categories counts once).
+// How many separate filters are set (a search box counts once, a list of categories counts once). The sort order is not a filter.
 export function activeFilterCount(filters) {
   const query = buildPageQuery(filters)
+  delete query.sort
   return Object.keys(query).length
 }
 
