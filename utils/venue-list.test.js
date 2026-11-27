@@ -32,6 +32,7 @@ test('filters are read from the URL, as a single value or repeated values', () =
     city: 'Atlanta',
     state: 'GA',
     zip: '303',
+    sort: 'name',
   })
   assert.deepEqual(filters, {
     q: 'Terminal',
@@ -41,6 +42,7 @@ test('filters are read from the URL, as a single value or repeated values', () =
     city: 'Atlanta',
     state: 'GA',
     zip: '303',
+    sort: 'name',
   })
 })
 
@@ -75,7 +77,7 @@ test('the page query keeps only the filters that are set', () => {
 })
 
 test('filters survive a round trip through the URL', () => {
-  const filters = { q: 'west', category: ['theaters', 'bars'], tag: ['parking', 'wheelchair accessible'], region: ['atlanta-metro'], city: 'Atlanta', state: 'GA', zip: '303' }
+  const filters = { q: 'west', category: ['theaters', 'bars'], tag: ['parking', 'wheelchair accessible'], region: ['atlanta-metro'], city: 'Atlanta', state: 'GA', zip: '303', sort: 'name' }
   assert.deepEqual(parseVenueListQuery(buildPageQuery(filters)), filters)
 })
 
@@ -93,7 +95,7 @@ test('the API query repeats list filters, adds the cursor and uses the page size
 test('counting filters counts each kind once', () => {
   assert.equal(activeFilterCount(EMPTY_FILTERS), 0)
   assert.equal(activeFilterCount({ ...EMPTY_FILTERS, q: 'x', category: ['a', 'b'], state: 'GA' }), 3)
-  assert.equal(hasActiveFilters({ ...EMPTY_FILTERS, zip: '303' }), true)
+  assert.equal(hasActiveFilters({ ...EMPTY_FILTERS, zip: '303', sort: 'name' }), true)
 })
 
 test('two sets of filters are equal when they mean the same thing', () => {
@@ -144,4 +146,22 @@ test('toggling a value adds or removes it without changing the given list', () =
   assert.deepEqual(toggleValue(values, 'a'), ['b'])
   assert.deepEqual(values, ['a', 'b'])
   assert.deepEqual(toggleValue(undefined, 'x'), ['x'])
+})
+
+test('the sort order is read from the URL, defaults to name, and is kept out of the URL when it is the default', () => {
+  assert.equal(parseVenueListQuery({}).sort, 'name')
+  assert.equal(parseVenueListQuery({ sort: 'Newest' }).sort, 'newest')
+  assert.equal(parseVenueListQuery({ sort: ['oldest', 'x'] }).sort, 'oldest')
+  assert.equal(parseVenueListQuery({ sort: 'drop table' }).sort, 'name')
+  assert.deepEqual(buildPageQuery({ ...EMPTY_FILTERS, sort: 'name' }), {})
+  assert.deepEqual(buildPageQuery({ ...EMPTY_FILTERS, sort: 'category' }), { sort: 'category' })
+  assert.match(buildApiQuery({ ...EMPTY_FILTERS, sort: 'newest' }), /sort=newest/)
+  assert.doesNotMatch(buildApiQuery(EMPTY_FILTERS), /sort=/)
+})
+
+test('choosing a sort order is not an active filter, but it does make two searches differ', () => {
+  const sorted = { ...EMPTY_FILTERS, sort: 'oldest' }
+  assert.equal(hasActiveFilters(sorted), false)
+  assert.equal(activeFilterCount({ ...sorted, q: 'hall' }), 1)
+  assert.equal(filtersEqual(sorted, EMPTY_FILTERS), false)
 })
