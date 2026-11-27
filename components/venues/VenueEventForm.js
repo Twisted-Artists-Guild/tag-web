@@ -14,8 +14,11 @@ import { useRouter } from "next/router"
 import { useId, useState } from "react"
 import TiptapEditor from "@/components/tiptap/tiptap-editor"
 import {
+  DEFAULT_CHECK_IN_WINDOW_MINUTES,
+  MAX_CHECK_IN_WINDOW_MINUTES,
   MAX_POINT_OF_CONTACT_LENGTH,
   MAX_TITLE_LENGTH,
+  TIME_ZONES,
   changeEventStatus,
   createVenueEvent,
   deleteVenueEvent,
@@ -230,6 +233,24 @@ export default function VenueEventForm({ venue, event, notice }) {
             </Field>
             <Field id={idOf("maxOccupancy")} label="Capacity" hint="Optional." error={errors.maxOccupancy}>
               <input id={idOf("maxOccupancy")} type="number" inputMode="numeric" min="0" step="1" className={inputClass("maxOccupancy")} value={form.maxOccupancy} onChange={(e) => update("maxOccupancy", e.target.value)} aria-invalid={errors.maxOccupancy ? "true" : "false"} aria-describedby={describedBy("maxOccupancy", true)} />
+            </Field>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Field id={idOf("timeZoneId")} label="Time zone" hint="Where the event takes place." error={errors.timeZoneId}>
+              <select id={idOf("timeZoneId")} className={`select select-bordered w-full ${errors.timeZoneId ? "select-error" : ""}`} value={form.timeZoneId} onChange={(e) => update("timeZoneId", e.target.value)} aria-describedby={describedBy("timeZoneId", true)}>
+                <option value="">Not set</option>
+                {(TIME_ZONES.includes(form.timeZoneId) || !form.timeZoneId ? TIME_ZONES : [form.timeZoneId, ...TIME_ZONES]).map((zone) => <option key={zone} value={zone}>{zone.replace(/_/g, " ")}</option>)}
+              </select>
+            </Field>
+            <Field id={idOf("checkInWindowMinutes")} label="Check-in opens (minutes before)" hint={`Default ${DEFAULT_CHECK_IN_WINDOW_MINUTES}. At most ${MAX_CHECK_IN_WINDOW_MINUTES}.`} error={errors.checkInWindowMinutes}>
+              <input id={idOf("checkInWindowMinutes")} type="number" inputMode="numeric" min="0" max={MAX_CHECK_IN_WINDOW_MINUTES} step="1" className={inputClass("checkInWindowMinutes")} value={form.checkInWindowMinutes} onChange={(e) => update("checkInWindowMinutes", e.target.value)} aria-invalid={errors.checkInWindowMinutes ? "true" : "false"} aria-describedby={describedBy("checkInWindowMinutes", true)} />
+            </Field>
+            <Field id={idOf("salesStart")} label="Ticket sales start" hint="Optional. Blank means no limit." error={errors.salesStart}>
+              <input id={idOf("salesStart")} type="datetime-local" className={inputClass("salesStart")} value={form.salesStart} onChange={(e) => update("salesStart", e.target.value)} aria-invalid={errors.salesStart ? "true" : "false"} aria-describedby={describedBy("salesStart", true)} />
+            </Field>
+            <Field id={idOf("salesEnd")} label="Ticket sales end" hint="Optional. Must be before the event ends." error={errors.salesEnd}>
+              <input id={idOf("salesEnd")} type="datetime-local" className={inputClass("salesEnd")} value={form.salesEnd} onChange={(e) => update("salesEnd", e.target.value)} aria-invalid={errors.salesEnd ? "true" : "false"} aria-describedby={describedBy("salesEnd", true)} />
             </Field>
           </div>
         </fieldset>
