@@ -22,6 +22,7 @@ import {
   describeResults,
   hasActiveFilters,
   parseVenueListQuery,
+  SORT_OPTIONS,
 } from "@/utils/venue-list"
 
 const LIST_API = "/api/venue/list"
@@ -107,8 +108,9 @@ export default function VenuesPage({ initialPage }) {
     }
   }
 
-  const search = (nextFilters) => router.push({ pathname: "/venues", query: buildPageQuery(nextFilters) }, undefined, { shallow: true })
-  const clear = () => router.push({ pathname: "/venues" }, undefined, { shallow: true })
+  const search = (nextFilters) => router.push({ pathname: "/venues", query: buildPageQuery({ ...nextFilters, sort: filters.sort }) }, undefined, { shallow: true })
+  const clear = () => router.push({ pathname: "/venues", query: buildPageQuery({ sort: filters.sort }) }, undefined, { shallow: true })
+  const changeSort = (event) => router.push({ pathname: "/venues", query: buildPageQuery({ ...filters, sort: event.target.value }) }, undefined, { shallow: true })
   const filtersAreSet = hasActiveFilters(filters)
 
   const pageMetaData = {
@@ -144,9 +146,17 @@ export default function VenuesPage({ initialPage }) {
 
         <section aria-labelledby="venue-results-heading" aria-busy={status === "loading"}>
           <h2 id="venue-results-heading" className="sr-only">Results</h2>
-          <p role="status" aria-live="polite" className="mb-3 min-h-6 text-sm text-base-content/70">
-            {status === "ready" ? describeResults(items.length, Boolean(nextCursor)) : ""}
-          </p>
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <p role="status" aria-live="polite" className="min-h-6 text-sm text-base-content/70">
+              {status === "ready" ? describeResults(items.length, Boolean(nextCursor)) : ""}
+            </p>
+            <label className="flex items-center gap-2 text-sm">
+              <span className="font-medium">Sort by</span>
+              <select className="select select-bordered select-sm" value={filters.sort} onChange={changeSort} disabled={status === "loading"}>
+                {SORT_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+              </select>
+            </label>
+          </div>
 
           {status === "loading" ? (
             <div className="flex items-center justify-center gap-3 py-16" role="status">

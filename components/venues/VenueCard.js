@@ -26,8 +26,8 @@ export default function VenueCard({ venue }) {
     <article className="card bg-base-100 border border-base-300 shadow-sm h-full">
       <div className="card-body gap-3 p-4">
         <div className="flex items-start gap-3">
-          {venue?.logoUrl ? (
-            <Image src={venue.logoUrl} alt="" width={56} height={56} unoptimized className="h-14 w-14 flex-none rounded-box border border-base-300 bg-base-100 object-contain p-1" />
+          {venue?.profilePicUrl || venue?.logoUrl ? (
+            <Image src={venue.profilePicUrl || venue.logoUrl} alt="" width={56} height={56} unoptimized className={`h-14 w-14 flex-none rounded-box border border-base-300 bg-base-100 ${venue.profilePicUrl ? "object-cover" : "object-contain p-1"}`} />
           ) : (
             <span aria-hidden="true" className="flex h-14 w-14 flex-none items-center justify-center rounded-box bg-base-200 text-xl font-bold text-base-content/50">{initial}</span>
           )}
